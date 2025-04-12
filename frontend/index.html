@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyWallet - Login</title>
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --secondary-color: #0ea5e9;
+            --text-color: #f8fafc;
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            background-color: #0f172a;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin-right: 0.5rem;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--secondary-color);
+            color: var(--secondary-color);
+        }
+        
+        .form-container {
+            margin-top: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.25rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #0284c7;
+        }
+        
+        .form-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .form-footer a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        #login-form, #signup-form {
+            display: none;
+        }
+        
+        #login-form.active, #signup-form.active {
+            display: block;
+        }
+        
+        .alert {
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .alert-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+        
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-wallet"></i>
+                <h1>PyWallet</h1>
+            </div>
+            <p>Gerencie seus investimentos de forma inteligente</p>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tab active" id="login-tab">Login</div>
+            <div class="tab" id="signup-tab">Cadastro</div>
+        </div>
+        
+        <div class="form-container">
+            <div id="alert-container"></div>
+            
+            <form id="login-form" class="active">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+                <div class="form-footer">
+                    <a href="#">Esqueceu sua senha?</a>
+                </div>
+            </form>
+            
+            <form id="signup-form">
+                <div class="form-group">
+                    <label for="signup-name">Nome completo</label>
+                    <input type="text" id="signup-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Senha</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirmar senha</label>
+                    <input type="password" id="signup-confirm-password" required>
+                </div>
+                <button type="submit" class="btn">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { authAPI } from './js/api.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginTab = document.getElementById('login-tab');
+            const signupTab = document.getElementById('signup-tab');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const alertContainer = document.getElementById('alert-container');
+            
+            // Verificar se já está logado
+            checkLoggedInStatus();
+            
+            loginTab.addEventListener('click', function() {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                loginForm.classList.add('active');
+                signupForm.classList.remove('active');
+            });
+            
+            signupTab.addEventListener('click', function() {
+                signupTab.classList.add('active');
+                loginTab.classList.remove('active');
+                signupForm.classList.add('active');
+                loginForm.classList.remove('active');
+            });
+            
+            // Função para mostrar mensagens
+            function showAlert(message, type) {
+                alertContainer.innerHTML = `
+                    <div class="alert ${type === 'error' ? 'alert-error' : 'alert-success'}">
+                        ${message}
+                    </div>
+                `;
+                
+                // Remover alerta após 5 segundos
+                setTimeout(() => {
+                    alertContainer.innerHTML = '';
+                }, 5000);
+            }
+            
+            // Função para verificar status de login
+            async function checkLoggedInStatus() {
+                try {
+                    const user = await authAPI.getCurrentUser();
+                    // Se chegar aqui, o usuário já está logado
+                    if (user.has_portfolio) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        window.location.href = 'file-upload.html';
+                    }
+                } catch (error) {
+                    // Usuário não está logado, então mostra a página de login
+                    console.log('Usuário não está logado');
+                }
+            }
+            
+            // Form submission handling
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (!email || !password) {
+                    showAlert('Por favor, preencha todos os campos', 'error');
+                    return;
+                }
+                
+                try {
+                    const response = await authAPI.login({ email, password });
+                    
+                    showAlert('Login realizado com sucesso! Redirecionando...', 'success');
+                    
+                    // Verificar se tem portfólio para redirecionar
+                    if (response.has_portfolio) {
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000);
+                    } else {
+                        setTimeout(() => {
+                            window.location.href = 'file-upload.html';
+                        }, 1000);
+                    }
+                } catch (error) {
+                    showAlert(error.message || 'Erro ao fazer login', 'error');
+                }
+            });
+            
+            signupForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                const confirmPassword = document.getElementById('signup-confirm-password').value;
+                
+                if (!name || !email || !password || !confirmPassword) {
+                    showAlert('Por favor, preencha todos os campos', 'error');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    showAlert('As senhas não coincidem', 'error');
+                    return;
+                }
+                
+                try {
+                    await authAPI.register({ name, email, password });
+                    
+                    showAlert('Conta criada com sucesso! Faça login para continuar.', 'success');
+                    
+                    // Limpar formulário
+                    document.getElementById('signup-name').value = '';
+                    document.getElementById('signup-email').value = '';
+                    document.getElementById('signup-password').value = '';
+                    document.getElementById('signup-confirm-password').value = '';
+                    
+                    // Mudar para a aba de login
+                    loginTab.click();
+                } catch (error) {
+                    showAlert(error.message || 'Erro ao criar conta', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
