@@ -148,78 +148,94 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
 
 def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange_rate=None, format_ticker_func=None):
     """
-    Calcula a evolução histórica do valor do portfólio.
-    
-    Args:
-        portfolio_data: Lista de ativos no portfólio
-        start_date: Data inicial (string no formato 'YYYY-MM-DD')
-        end_date: Data final (string no formato 'YYYY-MM-DD')
-        exchange_rate: Taxa de câmbio para conversão de moeda (opcional)
-        format_ticker_func: Função para formatar o ticker para API (opcional)
-        
-    Returns:
-        list: Lista de dicionários com a evolução do portfólio
+    Calcula a evolução histórica do valor do portfólio usando download em lote (multi-ticker) para máxima performance.
     """
     try:
-        # Converter strings para objetos datetime
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-        
-        # Determinar frequência baseada no tamanho do período
         days_diff = (end_date_obj - start_date_obj).days
-        
         if days_diff > 365:
-            # Para períodos > 1 ano, usar dados semanais
             freq = 'W-MON'
         elif days_diff > 90:
-            # Para períodos entre 3 meses e 1 ano, usar dados a cada 3 dias
             freq = '3D'
         else:
-            # Para períodos curtos, usar dados diários
             freq = 'D'
-            
-        # Criar range de datas
         date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
-        
-        # Adicionar data final se não estiver no range
         if end_date_obj not in date_range:
             date_range = date_range.append(pd.DatetimeIndex([end_date_obj]))
-        
-        # Inicializar série com zeros
-        total_values = pd.Series(0.0, index=date_range)
-        
-        # Fazer uma cópia do portfolio_data para evitar problemas de concorrência
+        # Preparar lista de ativos válidos
         safe_portfolio_data = copy.deepcopy(portfolio_data)
-        
-        # Processar cada ativo sequencialmente para evitar problemas de concorrência
+        tickers = []
+        ticker_map = {}
         for asset in safe_portfolio_data:
+            ticker_orig = asset['ticker'].strip().upper()
+            if format_ticker_func:
+                try:
+                    final_ticker = format_ticker_func(ticker_orig)
+                except Exception:
+                    final_ticker = ticker_orig
+            else:
+                final_ticker = ticker_orig
+                if not ticker_orig.endswith('.SA') and not '.' in ticker_orig and not '=' in ticker_orig:
+                    final_ticker += '.SA'
+            tickers.append(final_ticker)
+            ticker_map[final_ticker] = asset
+        # Download em lote
+        if exchange_rate is None:
+            exchange_rate = 5.8187
+        buffer_days = 14
+        start_with_buffer = (start_date_obj - timedelta(days=buffer_days)).strftime('%Y-%m-%d')
+        try:
+            data = yf.download(tickers=list(set(tickers)), start=start_with_buffer, end=end_date, interval='1d', group_by='ticker', progress=False, threads=True)
+        except Exception as e:
+            print(f"Erro no download em lote do yfinance: {e}")
+            data = None
+        total_values = pd.Series(0.0, index=date_range)
+        for final_ticker, asset in ticker_map.items():
             try:
-                asset_values = process_asset_historical_data(
-                    asset, 
-                    start_date, 
-                    end_date,
-                    date_range,
-                    exchange_rate,
-                    format_ticker_func
-                )
-                if asset_values is not None:
-                    total_values = total_values.add(asset_values, fill_value=0)
+                qty = float(asset.get('quantidade', 0))
+                avg_price = float(asset.get('preco_medio', 0))
+                is_us = not final_ticker.endswith('.SA')
+                conv_factor = exchange_rate if is_us else 1.0
+                # Obter preços históricos
+                if data is not None:
+                    if len(tickers) == 1:
+                        close_prices = data['Close'].copy()
+                    else:
+                        if (final_ticker, 'Close') in data:
+                            close_prices = data[(final_ticker, 'Close')].copy()
+                        elif final_ticker in data and 'Close' in data[final_ticker]:
+                            close_prices = data[final_ticker]['Close'].copy()
+                        else:
+                            close_prices = pd.Series(dtype=float)
+                    close_prices.index = pd.to_datetime(close_prices.index).tz_localize(None)
+                    close_prices = close_prices.fillna(method='ffill')
+                    try:
+                        asset_prices = close_prices.reindex(date_range, method='ffill')
+                    except Exception as e:
+                        last_price = close_prices.iloc[-1] if not close_prices.empty else avg_price
+                        asset_prices = pd.Series(last_price, index=date_range)
+                    if asset_prices.isna().any():
+                        first_valid = asset_prices.first_valid_index()
+                        if first_valid is not None:
+                            first_value = asset_prices.loc[first_valid]
+                            asset_prices = asset_prices.fillna(first_value)
+                        else:
+                            asset_prices = pd.Series(avg_price, index=date_range)
+                    asset_values = asset_prices * qty * conv_factor
+                else:
+                    asset_values = pd.Series(avg_price * qty * conv_factor, index=date_range)
+                total_values = total_values.add(asset_values, fill_value=0)
             except Exception as e:
-                print(f"Erro ao processar {asset.get('ticker', 'ativo desconhecido')}: {e}")
-        
-        # Converter para lista de dicionários
+                print(f"Erro ao processar {final_ticker}: {e}")
         evolution_list = [
-            {'date': d.strftime('%Y-%m-%d'), 'value': float(v)} 
+            {'date': d.strftime('%Y-%m-%d'), 'value': float(v)}
             for d, v in total_values.items()
         ]
-        
-        # Ordenar por data
         evolution_list.sort(key=lambda x: x['date'])
-        
         return evolution_list
-    
     except Exception as e:
-        print(f"Erro ao calcular evolução do portfólio: {e}")
+        print(f"Erro ao calcular evolução do portfólio (multi-ticker): {e}")
         return []
 
 def generate_simulated_evolution(start_date, end_date, start_value, end_value, num_points=30):

@@ -49,6 +49,24 @@ evolution_cache_lock = threading.Lock()
 _evolution_cache = {}  # Cache global para evolução do portfólio
 
 # =============================================================================
+# Cache para cotação do dólar (USDBRL=X)
+# =============================================================================
+dollar_cache = {'rate': 5.8187, 'timestamp': datetime(2000, 1, 1)}
+dollar_cache_lock = threading.Lock()
+
+def get_cached_dollar_rate():
+    with dollar_cache_lock:
+        now = datetime.now()
+        if (now - dollar_cache['timestamp']).total_seconds() < 600:
+            return dollar_cache['rate']
+        rate = get_price("USDBRL=X")
+        if rate and rate > 0:
+            dollar_cache['rate'] = rate
+            dollar_cache['timestamp'] = now
+            return rate
+        return dollar_cache['rate']
+
+# =============================================================================
 # Modelos do Banco de Dados
 # =============================================================================
 class User(db.Model):
@@ -236,9 +254,7 @@ def get_current_user():
 # =============================================================================
 @app.route('/api/exchange-rate', methods=['GET'])
 def exchange_rate():
-    rate = get_price("USDBRL=X")
-    if rate is None:
-        rate = 5.8187
+    rate = get_cached_dollar_rate()
     return jsonify({'rate': rate}), 200
 
 # =============================================================================
@@ -364,17 +380,17 @@ def portfolio_distribution():
     except Exception as e:
         return jsonify({'distribution': []}), 200
 
-    # Protege a leitura do cache com lock
+    # Otimização: use cache de preços se disponível e recente (até 10 minutos)
     cached = None
     with portfolio_cache_lock:
-        if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
+        if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 600:
             try:
                 cached = json.loads(portfolio.cached_prices)
-            except:
-                pass
+            except Exception:
+                cached = None
 
-    exch_rate = get_price("USDBRL=X") or 5.8187
-
+    # Se não houver cache, use preço médio do usuário (não chama yfinance em request)
+    exch_rate = get_cached_dollar_rate()
     total_invested = 0.0
     dist_map = {}
     for asset in portfolio_data:
@@ -386,7 +402,8 @@ def portfolio_distribution():
         if cached and ticker in cached and cached[ticker] is not None:
             current_price = cached[ticker]
         else:
-            current_price = get_price(final_ticker) or 0
+            # Não chama get_price aqui! Usa preço médio como fallback
+            current_price = avg_price
 
         is_us = not final_ticker.endswith('.SA')
         invest = current_price * exch_rate * quantity if is_us else current_price * quantity
@@ -450,7 +467,7 @@ def portfolio_summary():
             except Exception:
                 pass
 
-    exch_rate = get_price("USDBRL=X") or 5.8187
+    exch_rate = get_cached_dollar_rate()
 
     total_invested = 0.0
     total_current_value = 0.0
@@ -617,10 +634,9 @@ def get_dividends():
     return jsonify({'dividends': dividends})
 
 # =============================================================================
-# Hook para verificar atualização do código
+# Hook para verificar atualização do código (apenas no startup)
 # =============================================================================
-@app.before_request
-def check_code_update():
+def print_code_update_info_once():
     try:
         current_file = os.path.abspath(__file__)
         last_modified = os.path.getmtime(current_file)
@@ -639,6 +655,7 @@ def protect_cache():
 # Inicialização
 # =============================================================================
 if __name__ == '__main__':
+    print_code_update_info_once()
     with app.app_context():
         db.create_all()
         test_email = 'root@example.com'
