@@ -17,6 +17,7 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import Column, String, Integer, Float, Date, DateTime, Text
 
 # Importar o módulo de evolução do portfólio
 from portfolio_evolution import calculate_portfolio_evolution, generate_simulated_evolution
@@ -84,6 +85,40 @@ class Portfolio(db.Model):
     filename = db.Column(db.String(255), nullable=False)
     cached_prices = db.Column(db.Text, nullable=True)  # JSON string com preços atualizados
     cache_timestamp = db.Column(db.DateTime, nullable=True)
+
+# =============================================================================
+# Modelo para cache de dividendos
+# =============================================================================
+class DividendsCache(db.Model):
+    __tablename__ = 'dividends_cache'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), nullable=False, index=True)
+    ticker = db.Column(db.String(32), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    value = db.Column(db.Float, nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    event_type = db.Column(db.String(32), nullable=True)
+    last_updated = db.Column(db.DateTime, nullable=False, index=True)
+
+    def to_dict(self):
+        return {
+            'ticker': self.ticker,
+            'date': self.date.strftime('%Y-%m-%d'),
+            'value': self.value,
+            'quantity': self.quantity,
+            'event_type': self.event_type or 'Dividendo'
+        }
+
+# =============================================================================
+# Modelo para cache de preços dos ativos
+# =============================================================================
+class PriceCache(db.Model):
+    __tablename__ = 'price_cache'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), nullable=False, index=True)
+    ticker = db.Column(db.String(32), nullable=False, index=True)
+    price = db.Column(db.Float, nullable=False)
+    last_updated = db.Column(db.DateTime, nullable=False, index=True)
 
 # =============================================================================
 # Helpers para yfinance
@@ -176,18 +211,154 @@ def update_all_portfolios():
                         final_ticker = format_ticker(ticker_orig)
                         price = get_price(final_ticker)
                         updated_prices[ticker_orig] = price
+                        # Atualiza também o PriceCache
+                        obj = PriceCache.query.filter_by(user_id=portfolio.user_id, ticker=ticker_orig).first()
+                        if obj:
+                            obj.price = price
+                            obj.last_updated = datetime.now()
+                        else:
+                            db.session.add(PriceCache(
+                                user_id=portfolio.user_id,
+                                ticker=ticker_orig,
+                                price=price,
+                                last_updated=datetime.now()
+                            ))
                     # Protege a escrita do cache com lock
                     with portfolio_cache_lock:
                         portfolio.cached_prices = json.dumps(updated_prices)
                         portfolio.cache_timestamp = datetime.now()
                         db.session.commit()
                         print(f"Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
-            time.sleep(60)
+            time.sleep(15)  # Atualiza a cada 15 segundos
         else:
             if last_market_status != False:
                 print("Mercado fechado, não atualizando preços.")
                 last_market_status = False
             time.sleep(600)  # 10 minutos
+
+# =============================================================================
+# Atualização de dividendos na inicialização
+# =============================================================================
+def update_dividends_cache_for_all_users():
+    print('[DIVIDENDS] Verificando necessidade de atualização do cache de dividendos...')
+    users = User.query.all()
+    for user in users:
+        portfolio = Portfolio.query.filter_by(user_id=user.id).order_by(Portfolio.uploaded_at.desc()).first()
+        if not portfolio:
+            continue
+        try:
+            portfolio_data = json.loads(portfolio.data)
+        except Exception:
+            continue
+        # Verifica se já existe dividendos para hoje
+        today = datetime.now().date()
+        last_div = DividendsCache.query.filter_by(user_id=user.id).order_by(DividendsCache.last_updated.desc()).first()
+        if last_div and last_div.last_updated.date() >= today:
+            continue  # Já atualizado hoje
+        # Atualiza o cache de dividendos desse usuário
+        ticker_qty_map = {}
+        tickers = []
+        for asset in portfolio_data:
+            ticker_str = asset['ticker'].strip().upper()
+            final_ticker = format_ticker(ticker_str)
+            qty = float(asset.get('quantidade', 0))
+            ticker_qty_map[final_ticker] = {'ticker': ticker_str, 'quantity': int(qty)}
+            tickers.append(final_ticker)
+        tickers = list(set(tickers))
+        start_date = datetime(2023, 1, 1)
+        dividends_to_insert = []
+        try:
+            df = yf.download(tickers=tickers, start=start_date.strftime('%Y-%m-%d'), group_by='ticker', actions=True, progress=False, threads=True)
+            for final_ticker in tickers:
+                info = ticker_qty_map[final_ticker]
+                ticker_str = info['ticker']
+                qty = info['quantity']
+                if len(tickers) == 1:
+                    div_series = df['Dividends'] if 'Dividends' in df else None
+                else:
+                    if (final_ticker, 'Dividends') in df:
+                        div_series = df[(final_ticker, 'Dividends')]
+                    elif final_ticker in df and 'Dividends' in df[final_ticker]:
+                        div_series = df[final_ticker]['Dividends']
+                    else:
+                        div_series = None
+                if div_series is not None:
+                    for date, amount in div_series.items():
+                        if amount > 0 and qty > 0 and date >= start_date:
+                            exists = DividendsCache.query.filter_by(user_id=user.id, ticker=ticker_str, date=date.date() if hasattr(date, 'date') else date).first()
+                            if not exists:
+                                dividends_to_insert.append(DividendsCache(
+                                    user_id=user.id,
+                                    ticker=ticker_str,
+                                    date=date.date() if hasattr(date, 'date') else date,
+                                    value=round(float(amount) * qty, 2),
+                                    quantity=qty,
+                                    event_type='Dividendo',
+                                    last_updated=datetime.now()
+                                ))
+            if dividends_to_insert:
+                db.session.bulk_save_objects(dividends_to_insert)
+                db.session.commit()
+                print(f'[DIVIDENDS] {len(dividends_to_insert)} dividendos inseridos para {user.email}')
+        except Exception as e:
+            print(f'[DIVIDENDS] Erro ao atualizar dividendos para {user.email}: {e}')
+
+# =============================================================================
+# Atualização de preços na inicialização
+# =============================================================================
+def update_price_cache_for_all_users():
+    print('[PRICECACHE] Atualizando cache de preços dos ativos para todos os usuários...')
+    users = User.query.all()
+    for user in users:
+        portfolio = Portfolio.query.filter_by(user_id=user.id).order_by(Portfolio.uploaded_at.desc()).first()
+        if not portfolio:
+            continue
+        try:
+            portfolio_data = json.loads(portfolio.data)
+        except Exception:
+            continue
+        ticker_qty_map = {}
+        tickers = []
+        for asset in portfolio_data:
+            ticker_str = asset['ticker'].strip().upper()
+            final_ticker = format_ticker(ticker_str)
+            ticker_qty_map[final_ticker] = ticker_str
+            tickers.append(final_ticker)
+        tickers = list(set(tickers))
+        try:
+            df = yf.download(tickers=tickers, period='5d', group_by='ticker', progress=False, threads=True)
+            for final_ticker in tickers:
+                ticker_str = ticker_qty_map[final_ticker]
+                # Suporte para 1 ativo (DataFrame simples) ou vários (MultiIndex)
+                if len(tickers) == 1:
+                    close_series = df['Close'] if 'Close' in df else None
+                else:
+                    if (final_ticker, 'Close') in df:
+                        close_series = df[(final_ticker, 'Close')]
+                    elif final_ticker in df and 'Close' in df[final_ticker]:
+                        close_series = df[final_ticker]['Close']
+                    else:
+                        close_series = None
+                price = None
+                if close_series is not None and not close_series.empty:
+                    price = float(close_series.dropna().iloc[-1])
+                if price is not None:
+                    # Atualiza ou insere no cache
+                    obj = PriceCache.query.filter_by(user_id=user.id, ticker=ticker_str).first()
+                    if obj:
+                        obj.price = price
+                        obj.last_updated = datetime.now()
+                    else:
+                        db.session.add(PriceCache(
+                            user_id=user.id,
+                            ticker=ticker_str,
+                            price=price,
+                            last_updated=datetime.now()
+                        ))
+            db.session.commit()
+            print(f'[PRICECACHE] Preços atualizados para {user.email}')
+        except Exception as e:
+            print(f'[PRICECACHE] Erro ao atualizar preços para {user.email}: {e}')
 
 # =============================================================================
 # Endpoints de Autenticação
@@ -458,15 +629,8 @@ def portfolio_summary():
     if not portfolio_data:
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
 
-    # Lê o cache protegido pelo lock
-    cached = None
-    with portfolio_cache_lock:
-        if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
-            try:
-                cached = json.loads(portfolio.cached_prices)
-            except Exception:
-                pass
-
+    # Busca preços do cache PriceCache
+    price_cache = {p.ticker: p.price for p in PriceCache.query.filter_by(user_id=user_id).all()}
     exch_rate = get_cached_dollar_rate()
 
     total_invested = 0.0
@@ -490,10 +654,8 @@ def portfolio_summary():
         else:
             is_us = True
 
-        if cached and ticker_orig in cached and cached[ticker_orig] is not None:
-            current_price_original = cached[ticker_orig]
-        else:
-            current_price_original = get_price(final_ticker) or 0
+        # Busca preço do cache, fallback para preço médio
+        current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
 
         if is_us:
             invested_value = avg_price * quantity * exch_rate
@@ -603,40 +765,20 @@ def get_dividends():
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
 
-    portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
-    if not portfolio:
-        return jsonify({'error': 'Portfólio não encontrado'}), 404
-
-    try:
-        portfolio_data = json.loads(portfolio.data)
-    except Exception as e:
-        return jsonify({'error': f'Erro ao ler dados do portfólio: {e}'}), 500
-
-    dividends = []
-    for asset in portfolio_data:
-        ticker_str = asset['ticker'].strip().upper()
-        final_ticker = format_ticker(ticker_str)
-        try:
-            qty = float(asset.get('quantidade', 0))
-            yf_ticker = yf.Ticker(final_ticker)
-            df_div = yf_ticker.dividends
-            for date, amount in df_div.items():
-                if amount > 0 and qty > 0:
-                    dividends.append({
-                        'ticker': ticker_str,
-                        'date': date.strftime('%Y-%m-%d'),
-                        'value': round(float(amount) * qty, 2),
-                        'quantity': int(qty)
-                    })
-        except Exception as e:
-            print(f"[DIVIDENDS] Falha ao buscar {final_ticker}: {e}")
-    dividends.sort(key=lambda x: x['date'])
+    # Buscar dividendos do cache (apenas de 2023 em diante)
+    start_date = datetime(2023, 1, 1).date()
+    cache_query = DividendsCache.query.filter(
+        DividendsCache.user_id == user_id,
+        DividendsCache.date >= start_date
+    ).order_by(DividendsCache.date.asc())
+    dividends = [d.to_dict() for d in cache_query]
     return jsonify({'dividends': dividends})
 
 # =============================================================================
-# Hook para verificar atualização do código (apenas no startup)
+# Hook para verificar atualização do código
 # =============================================================================
-def print_code_update_info_once():
+@app.before_request
+def check_code_update():
     try:
         current_file = os.path.abspath(__file__)
         last_modified = os.path.getmtime(current_file)
@@ -655,7 +797,6 @@ def protect_cache():
 # Inicialização
 # =============================================================================
 if __name__ == '__main__':
-    print_code_update_info_once()
     with app.app_context():
         db.create_all()
         test_email = 'root@example.com'
@@ -670,6 +811,9 @@ if __name__ == '__main__':
             db.session.add(test_user)
             db.session.commit()
             print("Usuário de teste criado: root@example.com / password123")
+        # Atualiza dividendos e preços na inicialização
+        update_dividends_cache_for_all_users()
+        update_price_cache_for_all_users()
 
     updater_thread = threading.Thread(target=update_all_portfolios, daemon=True)
     updater_thread.start()

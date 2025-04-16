@@ -891,8 +891,10 @@
           }
         }
     
-        async function loadPortfolioData() {
-          loadingOverlay.classList.remove('hidden');
+        async function updatePage(showOverlay) {
+          if (showOverlay) {
+            loadingOverlay.classList.remove('hidden');
+          }
           try {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
@@ -1067,7 +1069,9 @@
             document.getElementById('table-total-return-pct').textContent = `${totalReturnPct >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%`;
             document.getElementById('table-total-return-pct').className = totalReturnClass;
     
-            loadingOverlay.classList.add('hidden');
+            if (showOverlay) {
+              loadingOverlay.classList.add('hidden');
+            }
           } catch (error) {
             console.error('Erro ao carregar dados:', error);
             showAlert('Erro ao carregar dados do portfólio. Verifique se você já fez o upload da sua carteira.', 'error');
@@ -1280,7 +1284,7 @@
         }
     
         // Configurar eventos de UI
-        refreshBtn.addEventListener('click', loadPortfolioData);
+        refreshBtn.addEventListener('click', () => updatePage(true));
         
         importBtn.addEventListener('click', function () {
           window.location.href = 'file-upload.html';
@@ -1296,12 +1300,17 @@
         });
         
         // Adicionar listeners para os campos de data
-        startDateInput.addEventListener('change', loadPortfolioData);
-        endDateInput.addEventListener('change', loadPortfolioData);
+        startDateInput.addEventListener('change', () => updatePage(true));
+        endDateInput.addEventListener('change', () => updatePage(true));
+        
+        // Atualização automática a cada 15 segundos (sem overlay)
+        setInterval(() => {
+          updatePage(false); // Atualiza silenciosamente, sem overlay
+        }, 15000);
         
         // Inicializar a aplicação
         await loadExchangeRate();
-        await loadPortfolioData();
+        await updatePage(true); // Primeira vez mostra overlay
       });
     </script>
   </body>
