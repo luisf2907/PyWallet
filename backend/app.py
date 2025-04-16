@@ -142,11 +142,21 @@ def get_price(ticker, formatar=True):
 
     try:
         yf_ticker = format_ticker_local(ticker) if formatar else ticker
+        print(f"[get_price] Buscando preço para {yf_ticker}")
+        
+        # Tenta primeiro com download
         df = yf.download(yf_ticker, period="5d", interval="1d", progress=False)
         if not df.empty and 'Close' in df.columns:
-            return float(df['Close'].dropna().iloc[-1])
+            price = float(df['Close'].dropna().iloc[-1])
+            print(f"[get_price] Preço obtido via download: {price}")
+            return price
+            
+        # Se falhar, tenta com info
         tinfo = yf.Ticker(yf_ticker).info
-        return float(tinfo.get('regularMarketPrice') or tinfo.get('currentPrice') or 0)
+        price = float(tinfo.get('regularMarketPrice') or tinfo.get('currentPrice') or 0)
+        print(f"[get_price] Preço obtido via info: {price}")
+        return price
+        
     except Exception as e:
         print(f"[get_price] Erro ao buscar {ticker}: {e}")
         return None
@@ -192,49 +202,75 @@ def is_market_open():
 def update_all_portfolios():
     last_market_status = None  # None, True (aberto) ou False (fechado)
     while True:
-        market_is_open_flag = is_market_open()
-        if market_is_open_flag:
-            if last_market_status is False:
-                print("Mercado abriu. Atualizando preços...")
-            last_market_status = True
-            with app.app_context():
-                portfolios = Portfolio.query.all()
-                for portfolio in portfolios:
-                    try:
-                        portfolio_data = json.loads(portfolio.data)
-                    except Exception as e:
-                        print(f"Erro ao decodificar o portfólio ID {portfolio.id}: {e}")
-                        continue
-                    updated_prices = {}
-                    for asset in list(portfolio_data):
-                        ticker_orig = asset['ticker'].strip().upper()
-                        final_ticker = format_ticker(ticker_orig)
-                        price = get_price(final_ticker)
-                        updated_prices[ticker_orig] = price
-                        # Atualiza também o PriceCache
-                        obj = PriceCache.query.filter_by(user_id=portfolio.user_id, ticker=ticker_orig).first()
-                        if obj:
-                            obj.price = price
-                            obj.last_updated = datetime.now()
-                        else:
-                            db.session.add(PriceCache(
-                                user_id=portfolio.user_id,
-                                ticker=ticker_orig,
-                                price=price,
-                                last_updated=datetime.now()
-                            ))
-                    # Protege a escrita do cache com lock
-                    with portfolio_cache_lock:
-                        portfolio.cached_prices = json.dumps(updated_prices)
-                        portfolio.cache_timestamp = datetime.now()
-                        db.session.commit()
-                        print(f"Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
-            time.sleep(15)  # Atualiza a cada 15 segundos
-        else:
-            if last_market_status != False:
-                print("Mercado fechado, não atualizando preços.")
-                last_market_status = False
-            time.sleep(600)  # 10 minutos
+        try:
+            market_is_open_flag = is_market_open()
+            if market_is_open_flag:
+                if last_market_status is False:
+                    print("[update_all_portfolios] Mercado abriu. Iniciando atualização de preços...")
+                last_market_status = True
+                
+                with app.app_context():
+                    portfolios = Portfolio.query.all()
+                    print(f"[update_all_portfolios] Encontrados {len(portfolios)} portfólios para atualizar")
+                    
+                    for portfolio in portfolios:
+                        try:
+                            portfolio_data = json.loads(portfolio.data)
+                            print(f"[update_all_portfolios] Processando portfólio ID {portfolio.id}")
+                        except Exception as e:
+                            print(f"[update_all_portfolios] Erro ao decodificar o portfólio ID {portfolio.id}: {e}")
+                            continue
+                            
+                        updated_prices = {}
+                        for asset in list(portfolio_data):
+                            ticker_orig = asset['ticker'].strip().upper()
+                            final_ticker = format_ticker(ticker_orig)
+                            
+                            # Tenta obter o preço até 3 vezes
+                            price = None
+                            for attempt in range(3):
+                                price = get_price(final_ticker)
+                                if price is not None:
+                                    break
+                                print(f"[update_all_portfolios] Tentativa {attempt + 1} falhou para {ticker_orig}")
+                                time.sleep(1)  # Espera 1 segundo entre tentativas
+                            
+                            if price is not None:
+                                updated_prices[ticker_orig] = price
+                                print(f"[update_all_portfolios] Preço atualizado para {ticker_orig}: {price}")
+                                
+                                # Atualiza o PriceCache
+                                obj = PriceCache.query.filter_by(user_id=portfolio.user_id, ticker=ticker_orig).first()
+                                if obj:
+                                    obj.price = price
+                                    obj.last_updated = datetime.now()
+                                else:
+                                    db.session.add(PriceCache(
+                                        user_id=portfolio.user_id,
+                                        ticker=ticker_orig,
+                                        price=price,
+                                        last_updated=datetime.now()
+                                    ))
+                            else:
+                                print(f"[update_all_portfolios] Não foi possível obter preço para {ticker_orig} após 3 tentativas")
+                        
+                        # Protege a escrita do cache com lock
+                        with portfolio_cache_lock:
+                            portfolio.cached_prices = json.dumps(updated_prices)
+                            portfolio.cache_timestamp = datetime.now()
+                            db.session.commit()
+                            print(f"[update_all_portfolios] Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
+                            
+            else:
+                if last_market_status != False:
+                    print("[update_all_portfolios] Mercado fechado, não atualizando preços.")
+                    last_market_status = False
+                    
+            time.sleep(15 if market_is_open_flag else 600)  # 15s se aberto, 10min se fechado
+            
+        except Exception as e:
+            print(f"[update_all_portfolios] Erro na thread de atualização: {e}")
+            time.sleep(60)  # Espera 1 minuto em caso de erro
 
 # =============================================================================
 # Atualização de dividendos na inicialização
@@ -521,6 +557,48 @@ def upload_portfolio():
         db.session.add(portfolio)
         db.session.commit()
 
+        # Atualiza o cache de preços imediatamente após o upload
+        print(f"[upload_portfolio] Atualizando cache de preços para o usuário {user_id}")
+        updated_prices = {}
+        for asset in portfolio_data:
+            ticker_orig = asset['ticker'].strip().upper()
+            final_ticker = format_ticker(ticker_orig)
+            
+            # Tenta obter o preço até 3 vezes
+            price = None
+            for attempt in range(3):
+                price = get_price(final_ticker)
+                if price is not None:
+                    break
+                print(f"[upload_portfolio] Tentativa {attempt + 1} falhou para {ticker_orig}")
+                time.sleep(1)  # Espera 1 segundo entre tentativas
+            
+            if price is not None:
+                updated_prices[ticker_orig] = price
+                print(f"[upload_portfolio] Preço atualizado para {ticker_orig}: {price}")
+                
+                # Atualiza o PriceCache
+                obj = PriceCache.query.filter_by(user_id=user_id, ticker=ticker_orig).first()
+                if obj:
+                    obj.price = price
+                    obj.last_updated = datetime.now()
+                else:
+                    db.session.add(PriceCache(
+                        user_id=user_id,
+                        ticker=ticker_orig,
+                        price=price,
+                        last_updated=datetime.now()
+                    ))
+            else:
+                print(f"[upload_portfolio] Não foi possível obter preço para {ticker_orig} após 3 tentativas")
+        
+        # Atualiza o cache do portfólio
+        with portfolio_cache_lock:
+            portfolio.cached_prices = json.dumps(updated_prices)
+            portfolio.cache_timestamp = datetime.now()
+            db.session.commit()
+            print(f"[upload_portfolio] Cache do portfólio atualizado em {portfolio.cache_timestamp}")
+
         return jsonify({
             'message': 'Portfólio carregado com sucesso',
             'portfolio_summary': {
@@ -655,7 +733,12 @@ def portfolio_summary():
             is_us = True
 
         # Busca preço do cache, fallback para preço médio
-        current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
+        current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker)
+        
+        # Se não encontrou preço no cache, pula o ativo
+        if current_price_original is None:
+            print(f"[portfolio_summary] Preço não encontrado para {ticker_orig}, pulando...")
+            continue
 
         if is_us:
             invested_value = avg_price * quantity * exch_rate

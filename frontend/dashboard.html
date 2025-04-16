@@ -891,7 +891,7 @@
           }
         }
     
-        async function updatePage(showOverlay) {
+        async function updatePage(showOverlay, updateCharts = true) {
           if (showOverlay) {
             loadingOverlay.classList.remove('hidden');
           }
@@ -945,79 +945,6 @@
             }
             document.getElementById('cdi-percentage').textContent = `% do CDI: ${formatPercent(portfolioData.summary.percentage_of_cdi)}`;
     
-            // Carregar dados de distribuição
-            const distributionData = await portfolioAPI.getDistribution();
-            const distributionLabels = [];
-            const distributionValues = [];
-            // Gera as cores em escala entre amarelo, laranja e vermelho
-            const maxValDist = Math.max(...distributionData.distribution.map(d => d.percentage));
-            const distributionColors = distributionData.distribution.map(d => {
-              const ratio = maxValDist === 0 ? 0 : (d.percentage / maxValDist);
-              return getColorFromRatio(ratio);
-            });
-            const topAssets = distributionData.distribution.slice(0, 25);
-            topAssets.forEach(asset => {
-              distributionLabels.push(asset.ticker);
-              distributionValues.push(asset.percentage);
-            });
-            createDistributionChart(distributionLabels, distributionValues, distributionColors);
-    
-            // Preparar dados para o gráfico de evolução
-            const evolutionLabels = [];
-            const evolutionValues = [];
-            
-            // Verificar se há dados de evolução
-            if (portfolioData.evolution && portfolioData.evolution.length > 0) {
-              console.log(`Dados de evolução recebidos: ${portfolioData.evolution.length} pontos`);
-              
-              // Processar dados de evolução
-              portfolioData.evolution.forEach(item => {
-                if (item && item.date && item.value !== undefined) {
-                  // Converter data ISO para objeto Date
-                  const dateParts = item.date.split('-');
-                  const date = new Date(
-                    parseInt(dateParts[0]), 
-                    parseInt(dateParts[1]) - 1, // Mês em JS é 0-indexed
-                    parseInt(dateParts[2])
-                  );
-                  // Formatar data para exibição
-                  evolutionLabels.push(date.toLocaleDateString('pt-BR'));
-                  evolutionValues.push(item.value);
-                }
-              });
-            } else {
-              console.warn("Dados de evolução do portfólio não disponíveis ou vazios.");
-              showAlert("Não foi possível obter dados históricos para o período selecionado.", "info");
-              
-              // Gerar dados simulados
-              const start = new Date(startDate);
-              const end = new Date(endDate);
-              const dayDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-              const stepSize = Math.max(1, Math.floor(dayDiff / 20)); // No máximo 20 pontos
-              
-              let currentValue = portfolioData.summary.total_invested * 0.95;
-              const targetValue = portfolioData.summary.total_current_value;
-              const valueIncrement = (targetValue - currentValue) / (dayDiff / stepSize);
-              
-              for (let i = 0; i <= dayDiff; i += stepSize) {
-                const currentDate = new Date(start);
-                currentDate.setDate(currentDate.getDate() + i);
-                evolutionLabels.push(currentDate.toLocaleDateString('pt-BR'));
-                
-                // Adicionar um pouco de aleatoriedade para simular flutuações
-                const randomFactor = 1 + (Math.random() * 0.04 - 0.02); // +/- 2%
-                currentValue += valueIncrement * randomFactor;
-                
-                evolutionValues.push(currentValue);
-              }
-              
-              // Garantir que o último valor seja o valor atual
-              evolutionLabels[evolutionLabels.length - 1] = end.toLocaleDateString('pt-BR');
-              evolutionValues[evolutionValues.length - 1] = targetValue;
-            }
-            
-            createEvolutionChart(evolutionLabels, evolutionValues);
-    
             // Atualizar tabela de ativos
             const assetsTableBody = document.getElementById('assets-table-body');
             assetsTableBody.innerHTML = "";
@@ -1068,6 +995,82 @@
             const totalReturnPct = portfolioData.summary.total_return_pct;
             document.getElementById('table-total-return-pct').textContent = `${totalReturnPct >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%`;
             document.getElementById('table-total-return-pct').className = totalReturnClass;
+    
+            // Atualizar gráficos apenas se solicitado
+            if (updateCharts) {
+              // Carregar dados de distribuição
+              const distributionData = await portfolioAPI.getDistribution();
+              const distributionLabels = [];
+              const distributionValues = [];
+              // Gera as cores em escala entre amarelo, laranja e vermelho
+              const maxValDist = Math.max(...distributionData.distribution.map(d => d.percentage));
+              const distributionColors = distributionData.distribution.map(d => {
+                const ratio = maxValDist === 0 ? 0 : (d.percentage / maxValDist);
+                return getColorFromRatio(ratio);
+              });
+              const topAssets = distributionData.distribution.slice(0, 25);
+              topAssets.forEach(asset => {
+                distributionLabels.push(asset.ticker);
+                distributionValues.push(asset.percentage);
+              });
+              createDistributionChart(distributionLabels, distributionValues, distributionColors);
+    
+              // Preparar dados para o gráfico de evolução
+              const evolutionLabels = [];
+              const evolutionValues = [];
+              
+              // Verificar se há dados de evolução
+              if (portfolioData.evolution && portfolioData.evolution.length > 0) {
+                console.log(`Dados de evolução recebidos: ${portfolioData.evolution.length} pontos`);
+                
+                // Processar dados de evolução
+                portfolioData.evolution.forEach(item => {
+                  if (item && item.date && item.value !== undefined) {
+                    // Converter data ISO para objeto Date
+                    const dateParts = item.date.split('-');
+                    const date = new Date(
+                      parseInt(dateParts[0]), 
+                      parseInt(dateParts[1]) - 1, // Mês em JS é 0-indexed
+                      parseInt(dateParts[2])
+                    );
+                    // Formatar data para exibição
+                    evolutionLabels.push(date.toLocaleDateString('pt-BR'));
+                    evolutionValues.push(item.value);
+                  }
+                });
+              } else {
+                console.warn("Dados de evolução do portfólio não disponíveis ou vazios.");
+                showAlert("Não foi possível obter dados históricos para o período selecionado.", "info");
+                
+                // Gerar dados simulados
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const dayDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
+                const stepSize = Math.max(1, Math.floor(dayDiff / 20)); // No máximo 20 pontos
+                
+                let currentValue = portfolioData.summary.total_invested * 0.95;
+                const targetValue = portfolioData.summary.total_current_value;
+                const valueIncrement = (targetValue - currentValue) / (dayDiff / stepSize);
+                
+                for (let i = 0; i <= dayDiff; i += stepSize) {
+                  const currentDate = new Date(start);
+                  currentDate.setDate(currentDate.getDate() + i);
+                  evolutionLabels.push(currentDate.toLocaleDateString('pt-BR'));
+                  
+                  // Adicionar um pouco de aleatoriedade para simular flutuações
+                  const randomFactor = 1 + (Math.random() * 0.04 - 0.02); // +/- 2%
+                  currentValue += valueIncrement * randomFactor;
+                  
+                  evolutionValues.push(currentValue);
+                }
+                
+                // Garantir que o último valor seja o valor atual
+                evolutionLabels[evolutionLabels.length - 1] = end.toLocaleDateString('pt-BR');
+                evolutionValues[evolutionValues.length - 1] = targetValue;
+              }
+              
+              createEvolutionChart(evolutionLabels, evolutionValues);
+            }
     
             if (showOverlay) {
               loadingOverlay.classList.add('hidden');
@@ -1305,12 +1308,12 @@
         
         // Atualização automática a cada 15 segundos (sem overlay)
         setInterval(() => {
-          updatePage(false); // Atualiza silenciosamente, sem overlay
+          updatePage(false, false); // Atualiza silenciosamente, sem overlay e sem gráficos
         }, 15000);
         
         // Inicializar a aplicação
         await loadExchangeRate();
-        await updatePage(true); // Primeira vez mostra overlay
+        await updatePage(true, true); // Primeira vez mostra overlay e atualiza gráficos
       });
     </script>
   </body>
