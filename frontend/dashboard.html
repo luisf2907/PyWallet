@@ -41,11 +41,7 @@
         left: 0;
         width: 250px;
         height: 100vh;
-        background-color: var(--secondary-color);
-        color: var(--text-color);
-        z-index: 999;
-        transition: transform 0.3s ease;
-        overflow-y: auto;
+        background-color: #1e1e1e;
         padding: 1.5rem;
         display: flex;
         flex-direction: column;
@@ -59,9 +55,8 @@
       /* O conteúdo principal começa após o sidebar */
       .main-content {
         margin-left: 250px;
-        flex: 1;
         padding: 1.5rem;
-        overflow-y: auto;
+        flex: 1;
       }
 
       .logo-container {
@@ -591,72 +586,72 @@
   </head>
   <body>
     <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loading-overlay">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Carregando dashboard...</div>
-    </div>
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Carregando dashboard...</div>
+      </div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="logo-container">
-        <i class="fas fa-wallet logo-icon"></i>
-        <span class="logo-text">PyWallet</span>
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="logo-container">
+          <i class="fas fa-wallet logo-icon"></i>
+          <span class="logo-text">PyWallet</span>
+        </div>
+        <div class="user-greeting" id="user-greeting">
+          Olá, Usuário!
+        </div>
+        <div class="nav-title">Navegação</div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="dashboard.html" class="nav-link active">
+              <i class="fas fa-chart-line nav-icon"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="file-upload.html" class="nav-link">
+              <i class="fas fa-cog nav-icon"></i>
+              <span>Gerenciar Portfólio</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="dividends.html" class="nav-link">
+              <i class="fas fa-coins nav-icon"></i>
+              <span>Proventos</span>
+            </a>
+          </li>
+        </ul>
+      
+        <div class="filters-container">
+          <div class="nav-title">Filtros</div>
+          <div class="filter-item">
+            <label class="filter-label" for="start-date">Data Inicial</label>
+            <input type="text" id="start-date" class="filter-input" placeholder="DD/MM/AAAA">
+          </div>
+          <div class="filter-item">
+            <label class="filter-label" for="end-date">Data Final</label>
+            <input type="text" id="end-date" class="filter-input" placeholder="DD/MM/AAAA">
+          </div>
+          <div class="filter-item">
+            <div class="filter-note">
+              <i class="fas fa-info-circle"></i> Dados serão atualizados quando o mercado abrir
+            </div>
+          </div>
+          <button class="import-btn" id="import-btn">
+            <i class="fas fa-file-import import-icon"></i>
+            <span>Importar Novo Portfólio</span>
+          </button>
+          <button class="logout-btn" id="logout-btn">
+            <i class="fas fa-sign-out-alt logout-icon"></i>
+            <span>Sair</span>
+          </button>
+        </div>
+      
+        <div class="sidebar-footer">
+          PyWallet v1.0.0<br>© 2025 - Todos os direitos reservados
+        </div>
       </div>
-      <div class="user-greeting" id="user-greeting">
-        Olá, Usuário!
-      </div>
-      <div class="nav-title">Navegação</div>
-      <ul class="nav-menu">
-        <li class="nav-item">
-          <a href="#" class="nav-link active">
-            <i class="fas fa-chart-line nav-icon"></i>
-            <span>Dashboard</span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a href="file-upload.html" class="nav-link">
-            <i class="fas fa-cog nav-icon"></i>
-            <span>Gerenciar Portfólio</span>
-          </a>
-        </li>
-      </ul>
 
-      <div class="filters-container">
-        <div class="nav-title">Filtros</div>
-        <div class="filter-item">
-          <label class="filter-label" for="start-date">Data Inicial</label>
-          <input type="text" id="start-date" class="filter-input" placeholder="DD/MM/AAAA">
-        </div>
-        <div class="filter-item">
-          <label class="filter-label" for="end-date">Data Final</label>
-          <input type="text" id="end-date" class="filter-input" placeholder="DD/MM/AAAA">
-        </div>
-        <div class="filter-item">
-          <div class="filter-checkbox">
-            <input type="checkbox" id="show-percent" checked>
-            <label for="show-percent">Mostrar valores em %</label>
-          </div>
-          <div class="filter-checkbox">
-            <input type="checkbox" id="include-dividends">
-            <label for="include-dividends">Incluir dividendos</label>
-          </div>
-          <div class="filter-note">
-            <i class="fas fa-info-circle"></i> Dados serão atualizados quando o mercado abrir
-          </div>
-        </div>
-        <button class="import-btn" id="import-btn">
-          <i class="fas fa-file-import import-icon"></i>
-          <span>Importar Novo Portfólio</span>
-        </button>
-        <button class="logout-btn" id="logout-btn">
-          <i class="fas fa-sign-out-alt logout-icon"></i>
-          <span>Sair</span>
-        </button>
-      </div>
-      <div class="sidebar-footer">
-        PyWallet v1.0.0<br>© 2025 - Todos os direitos reservados
-      </div>
-    </div>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -676,9 +671,6 @@
           </button>
           <button class="action-btn" id="refresh-btn">
             <i class="fas fa-sync-alt"></i>
-          </button>
-          <button class="action-btn" id="download-btn">
-            <i class="fas fa-download"></i>
           </button>
           <div class="action-btn">
             <i class="fas fa-ellipsis-v"></i>
@@ -822,6 +814,13 @@
       import { portfolioAPI, authAPI, utilsAPI } from './js/api.js';
     
       document.addEventListener('DOMContentLoaded', async function () {
+        try {
+        const user = await authAPI.getCurrentUser();
+        document.getElementById('user-greeting').textContent = `Olá, ${user.name.split(' ')[0]}!`;
+      } catch (error) {
+        window.location.href = 'index.html';
+        return;
+      }
         // Botão de toggle para o sidebar
         const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
         const sidebar = document.querySelector('.sidebar');

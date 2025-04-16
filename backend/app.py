@@ -29,6 +29,7 @@ CORS(app, supports_credentials=True)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'pywallet_secret_key')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['TEMPLATE_FOLDER'] = 'templates'
+app.config['SESSION_COOKIE_SECURE'] = False  # Permite cookie via HTTP no localhost
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///pywallet.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -39,6 +40,13 @@ db = SQLAlchemy(app)
 # Cria pastas se não existirem
 for folder in [app.config['UPLOAD_FOLDER'], app.config['TEMPLATE_FOLDER']]:
     os.makedirs(folder, exist_ok=True)
+
+# =============================================================================
+# Locks Globais para Cache
+# =============================================================================
+portfolio_cache_lock = threading.Lock()
+evolution_cache_lock = threading.Lock()
+_evolution_cache = {}  # Cache global para evolução do portfólio
 
 # =============================================================================
 # Modelos do Banco de Dados
@@ -131,9 +139,8 @@ def is_market_open():
 def update_all_portfolios():
     last_market_status = None  # None, True (aberto) ou False (fechado)
     while True:
-        market_is_open = is_market_open()
-        if market_is_open:
-            # Se o mercado estava fechado antes, imprime uma mensagem de retomada (opcional)
+        market_is_open_flag = is_market_open()
+        if market_is_open_flag:
             if last_market_status is False:
                 print("Mercado abriu. Atualizando preços...")
             last_market_status = True
@@ -146,26 +153,23 @@ def update_all_portfolios():
                         print(f"Erro ao decodificar o portfólio ID {portfolio.id}: {e}")
                         continue
                     updated_prices = {}
-                    # Itera sobre uma cópia para evitar problemas de concorrência
                     for asset in list(portfolio_data):
                         ticker_orig = asset['ticker'].strip().upper()
                         final_ticker = format_ticker(ticker_orig)
                         price = get_price(final_ticker)
                         updated_prices[ticker_orig] = price
-                    portfolio.cached_prices = json.dumps(updated_prices)
-                    portfolio.cache_timestamp = datetime.now()
-                    db.session.commit()
-                    print(f"Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
-            # Quando o mercado está aberto, a thread roda com intervalo menor (por exemplo, 60 segundos)
+                    # Protege a escrita do cache com lock
+                    with portfolio_cache_lock:
+                        portfolio.cached_prices = json.dumps(updated_prices)
+                        portfolio.cache_timestamp = datetime.now()
+                        db.session.commit()
+                        print(f"Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
             time.sleep(60)
         else:
-            # Se o mercado já estava fechado, não repete a mensagem a cada ciclo
             if last_market_status != False:
                 print("Mercado fechado, não atualizando preços.")
                 last_market_status = False
-            # Quando o mercado está fechado, aumente o tempo de sleep para reduzir chamadas e log excessivo
             time.sleep(600)  # 10 minutos
-
 
 # =============================================================================
 # Endpoints de Autenticação
@@ -180,8 +184,12 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email já cadastrado'}), 400
 
-    user = User(id=str(uuid.uuid4()), name=data['name'], email=email,
-                password_hash=generate_password_hash(data['password']))
+    user = User(
+        id=str(uuid.uuid4()),
+        name=data['name'],
+        email=email,
+        password_hash=generate_password_hash(data['password'])
+    )
     db.session.add(user)
     db.session.commit()
     return jsonify({'message': 'Usuário cadastrado com sucesso', 'user_id': user.id}), 201
@@ -257,34 +265,33 @@ def upload_portfolio():
     file.save(filepath)
 
     try:
-        # Carrega CSV ou XLSX
+        # Carregar arquivo CSV ou XLSX
         if file.filename.endswith('.csv'):
             try:
                 df = pd.read_csv(filepath)
                 if df.shape[1] >= 3:
                     cols = df.columns.str.lower()
                     if any(col in ['código', 'ticker', 'ativo'] for col in cols):
-                        col_ticker = next((i for i, col in enumerate(cols) if col in ['código','ticker','ativo']), 0)
-                        col_price = next((i for i, col in enumerate(cols) if col in ['preço','medio','médio']), 1)
-                        col_qty = next((i for i, col in enumerate(cols) if col in ['qtd','quantidade','quant']), 2)
+                        col_ticker = next((i for i, col in enumerate(cols) if col in ['código', 'ticker', 'ativo']), 0)
+                        col_price = next((i for i, col in enumerate(cols) if col in ['preço', 'medio', 'médio']), 1)
+                        col_qty = next((i for i, col in enumerate(cols) if col in ['qtd', 'quantidade', 'quant']), 2)
                         df = df.iloc[:, [col_ticker, col_price, col_qty]]
                         df.columns = ['ticker', 'preco_medio', 'quantidade']
                     else:
                         df = df.iloc[:, :3]
-                        df.columns = ['ticker','preco_medio','quantidade']
+                        df.columns = ['ticker', 'preco_medio', 'quantidade']
                 else:
                     df = pd.read_csv(filepath, sep=';')
                     df = df.iloc[:, :3]
-                    df.columns = ['ticker','preco_medio','quantidade']
+                    df.columns = ['ticker', 'preco_medio', 'quantidade']
             except Exception:
                 df = pd.read_csv(filepath, header=None)
                 if df.shape[1] >= 3:
                     df = df.iloc[:, :3]
-                    df.columns = ['ticker','preco_medio','quantidade']
+                    df.columns = ['ticker', 'preco_medio', 'quantidade']
                 else:
                     raise ValueError("CSV não tem pelo menos 3 colunas")
         else:
-            # XLSX
             try:
                 df = pd.read_excel(filepath)
                 if df.shape[1] >= 3:
@@ -294,20 +301,19 @@ def upload_portfolio():
                         col_price = next((i for i, col in enumerate(cols) if 'preço' in col or 'medio' in col or 'médio' in col), 1)
                         col_qty = next((i for i, col in enumerate(cols) if 'qtd' in col or 'quantidade' in col or 'quant' in col), 2)
                         df = df.iloc[:, [col_ticker, col_price, col_qty]]
-                        df.columns = ['ticker','preco_medio','quantidade']
+                        df.columns = ['ticker', 'preco_medio', 'quantidade']
                     else:
                         df = df.iloc[:, :3]
-                        df.columns = ['ticker','preco_medio','quantidade']
+                        df.columns = ['ticker', 'preco_medio', 'quantidade']
             except Exception:
                 df = pd.read_excel(filepath, header=None)
                 if df.shape[1] >= 3:
                     df = df.iloc[:, :3]
-                    df.columns = ['ticker','preco_medio','quantidade']
+                    df.columns = ['ticker', 'preco_medio', 'quantidade']
                 else:
                     raise ValueError("XLSX não tem pelo menos 3 colunas")
 
-        # Se a primeira linha for cabeçalho
-        if isinstance(df['ticker'].iloc[0], str) and df['ticker'].iloc[0].lower() in ['código','ticker','ativo']:
+        if isinstance(df['ticker'].iloc[0], str) and df['ticker'].iloc[0].lower() in ['código', 'ticker', 'ativo']:
             df = df.iloc[1:].reset_index(drop=True)
 
         df['ticker'] = df['ticker'].astype(str).str.strip().str.upper()
@@ -328,11 +334,13 @@ def upload_portfolio():
         db.session.add(portfolio)
         db.session.commit()
 
-        return jsonify({'message': 'Portfólio carregado com sucesso',
-                        'portfolio_summary': {
-                            'total_assets': len(df),
-                            'total_value': df['valor_total'].sum()
-                        }}), 200
+        return jsonify({
+            'message': 'Portfólio carregado com sucesso',
+            'portfolio_summary': {
+                'total_assets': len(df),
+                'total_value': df['valor_total'].sum()
+            }
+        }), 200
 
     except Exception as e:
         print(f"Erro ao processar arquivo: {str(e)}")
@@ -351,16 +359,19 @@ def portfolio_distribution():
     if not portfolio:
         return jsonify({'error': 'Portfólio não encontrado'}), 404
 
-    portfolio_data = json.loads(portfolio.data)
-    if not portfolio_data:
+    try:
+        portfolio_data = json.loads(portfolio.data)
+    except Exception as e:
         return jsonify({'distribution': []}), 200
 
+    # Protege a leitura do cache com lock
     cached = None
-    if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
-        try:
-            cached = json.loads(portfolio.cached_prices)
-        except:
-            pass
+    with portfolio_cache_lock:
+        if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
+            try:
+                cached = json.loads(portfolio.cached_prices)
+            except:
+                pass
 
     exch_rate = get_price("USDBRL=X") or 5.8187
 
@@ -370,6 +381,8 @@ def portfolio_distribution():
         ticker = asset['ticker'].strip().upper()
         final_ticker = format_ticker(ticker)
         quantity = float(asset.get('quantidade', 0))
+        avg_price = float(asset.get('preco_medio', 0))
+
         if cached and ticker in cached and cached[ticker] is not None:
             current_price = cached[ticker]
         else:
@@ -380,20 +393,21 @@ def portfolio_distribution():
         if invest <= 0:
             continue
         total_invested += invest
-        dist_map[ticker] = dist_map.get(ticker, 0) + invest
+        if ticker not in dist_map:
+            dist_map[ticker] = 0
+        dist_map[ticker] += invest
 
     distribution_list = []
     for tck, val in dist_map.items():
         pct = (val / total_invested) * 100 if total_invested else 0
         distribution_list.append({'ticker': tck, 'percentage': pct})
     distribution_list.sort(key=lambda x: x['percentage'], reverse=True)
+
     return jsonify({'distribution': distribution_list}), 200
 
 # =============================================================================
 # Endpoint para Resumo do Portfólio (inclui evolução)
 # =============================================================================
-_evolution_cache = {}
-
 @app.route('/api/portfolio-summary', methods=['GET'])
 def portfolio_summary():
     user_id = session.get('user_id')
@@ -407,36 +421,34 @@ def portfolio_summary():
     start_date = request.args.get('start_date', (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'))
     end_date = request.args.get('end_date', datetime.now().strftime('%Y-%m-%d'))
     
-    # Converter as datas para objetos datetime
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
     except ValueError:
         return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
     
-    # Limitar o período a no máximo 3 anos para evitar sobrecarga
     max_period = timedelta(days=3 * 365)
     if end_date_obj - start_date_obj > max_period:
         start_date_obj = end_date_obj - max_period
         start_date = start_date_obj.strftime('%Y-%m-%d')
     
-    # Obter os dados do portfólio (lista de ativos)
     try:
         portfolio_data = json.loads(portfolio.data)
     except Exception as e:
         print(f"Erro ao decodificar os dados do portfólio: {e}")
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
-    
+
     if not portfolio_data:
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
 
-    # Verificar se há preços atualizados em cache (do portfólio) com menos de 60 segundos
+    # Lê o cache protegido pelo lock
     cached = None
-    if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
-        try:
-            cached = json.loads(portfolio.cached_prices)
-        except Exception:
-            pass
+    with portfolio_cache_lock:
+        if portfolio.cache_timestamp and (datetime.now() - portfolio.cache_timestamp).total_seconds() < 60:
+            try:
+                cached = json.loads(portfolio.cached_prices)
+            except Exception:
+                pass
 
     exch_rate = get_price("USDBRL=X") or 5.8187
 
@@ -453,7 +465,6 @@ def portfolio_summary():
         except:
             continue
 
-        # Determinar se é ativo BDR ou dos EUA
         is_bdr = False
         is_us = False
         if final_ticker.endswith('.SA'):
@@ -477,9 +488,7 @@ def portfolio_summary():
         total_invested += invested_value
         total_current_value += current_value
 
-        return_pct = 0
-        if invested_value > 0:
-            return_pct = ((current_value / invested_value) - 1) * 100
+        return_pct = ((current_value / invested_value) - 1) * 100 if invested_value > 0 else 0
 
         assets_performance.append({
             'ticker': ticker_orig,
@@ -495,9 +504,7 @@ def portfolio_summary():
         })
 
     total_return = total_current_value - total_invested
-    total_return_pct = 0
-    if total_invested > 0:
-        total_return_pct = ((total_current_value / total_invested) - 1) * 100
+    total_return_pct = ((total_current_value / total_invested) - 1) * 100 if total_invested > 0 else 0
 
     cdi_return = 0.1135
     if assets_performance:
@@ -527,18 +534,15 @@ def portfolio_summary():
         'updated_at': datetime.now().isoformat()
     }
 
-    # Implementar cache para o cálculo da evolução do portfólio
     cache_key = f"{user_id}:{start_date}:{end_date}"
-    global _evolution_cache
-    if cache_key in _evolution_cache:
-        cached_entry = _evolution_cache[cache_key]
-        # Se o cache for recente (menor que 120 segundos), retorne-o sem recálculo
-        if (datetime.now() - cached_entry['timestamp']).total_seconds() < 120:
-            return jsonify(cached_entry['data']), 200
+    with evolution_cache_lock:
+        if cache_key in _evolution_cache:
+            cached_entry = _evolution_cache[cache_key]
+            if (datetime.now() - cached_entry['timestamp']).total_seconds() < 120:
+                return jsonify(cached_entry['data']), 200
 
     evolution_list = []
     try:
-        # Tenta calcular a evolução com os dados reais
         evolution_list = calculate_portfolio_evolution(
             portfolio_data=portfolio_data,
             start_date=start_date,
@@ -565,13 +569,71 @@ def portfolio_summary():
         'evolution': evolution_list
     }
     
-    # Armazena a resposta no cache
-    _evolution_cache[cache_key] = {
-        'timestamp': datetime.now(),
-        'data': response_data
-    }
+    with evolution_cache_lock:
+        _evolution_cache[cache_key] = {
+            'timestamp': datetime.now(),
+            'data': response_data
+        }
 
     return jsonify(response_data), 200
+
+# =============================================================================
+# Endpoint para Proventos
+# =============================================================================
+@app.route('/api/dividends', methods=['GET'])
+def get_dividends():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+
+    portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+    if not portfolio:
+        return jsonify({'error': 'Portfólio não encontrado'}), 404
+
+    try:
+        portfolio_data = json.loads(portfolio.data)
+    except Exception as e:
+        return jsonify({'error': f'Erro ao ler dados do portfólio: {e}'}), 500
+
+    dividends = []
+    for asset in portfolio_data:
+        ticker_str = asset['ticker'].strip().upper()
+        final_ticker = format_ticker(ticker_str)
+        try:
+            qty = float(asset.get('quantidade', 0))
+            yf_ticker = yf.Ticker(final_ticker)
+            df_div = yf_ticker.dividends
+            for date, amount in df_div.items():
+                if amount > 0 and qty > 0:
+                    dividends.append({
+                        'ticker': ticker_str,
+                        'date': date.strftime('%Y-%m-%d'),
+                        'value': round(float(amount) * qty, 2),
+                        'quantity': int(qty)
+                    })
+        except Exception as e:
+            print(f"[DIVIDENDS] Falha ao buscar {final_ticker}: {e}")
+    dividends.sort(key=lambda x: x['date'])
+    return jsonify({'dividends': dividends})
+
+# =============================================================================
+# Hook para verificar atualização do código
+# =============================================================================
+@app.before_request
+def check_code_update():
+    try:
+        current_file = os.path.abspath(__file__)
+        last_modified = os.path.getmtime(current_file)
+        print(f"[INFO] Código atualizado pela última vez em: {datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S')}")
+    except Exception as e:
+        print(f"[ERROR] Não foi possível verificar a atualização do código: {e}")
+
+# Proteção adicional para evitar modificações durante iteração
+@app.before_request
+def protect_cache():
+    global _evolution_cache
+    with evolution_cache_lock:
+        _evolution_cache = dict(_evolution_cache)
 
 # =============================================================================
 # Inicialização
