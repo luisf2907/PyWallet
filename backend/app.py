@@ -55,16 +55,36 @@ _evolution_cache = {}  # Cache global para evolução do portfólio
 dollar_cache = {'rate': 5.8187, 'timestamp': datetime(2000, 1, 1)}
 dollar_cache_lock = threading.Lock()
 
+def load_dollar_from_db():
+    obj = PriceCache.query.filter_by(user_id=None, ticker="USDBRL=X").order_by(PriceCache.last_updated.desc()).first()
+    if obj:
+        dollar_cache['rate'] = obj.price
+        dollar_cache['timestamp'] = obj.last_updated
+
+def save_dollar_to_db(rate):
+    obj = PriceCache.query.filter_by(user_id=None, ticker="USDBRL=X").first()
+    now = datetime.now()
+    if obj:
+        obj.price = rate
+        obj.last_updated = now
+    else:
+        db.session.add(PriceCache(user_id=None, ticker="USDBRL=X", price=rate, last_updated=now))
+    db.session.commit()
+
 def get_cached_dollar_rate():
     with dollar_cache_lock:
         now = datetime.now()
         if (now - dollar_cache['timestamp']).total_seconds() < 600:
             return dollar_cache['rate']
+        last_rate = dollar_cache['rate']
         rate = get_price("USDBRL=X")
-        if rate and rate > 0:
+        # Proteção: só aceita se variar no máximo 100% para cima ou para baixo
+        if rate and rate > 0 and 0.5 * last_rate <= rate <= 2 * last_rate:
             dollar_cache['rate'] = rate
             dollar_cache['timestamp'] = now
+            save_dollar_to_db(rate)
             return rate
+        print(f"[get_cached_dollar_rate] Valor de dólar ignorado por variação absurda: {rate} (anterior: {last_rate})")
         return dollar_cache['rate']
 
 # =============================================================================
@@ -115,7 +135,7 @@ class DividendsCache(db.Model):
 class PriceCache(db.Model):
     __tablename__ = 'price_cache'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(36), nullable=False, index=True)
+    user_id = db.Column(db.String(36), nullable=True, index=True)  # Permite NULL para valores globais
     ticker = db.Column(db.String(32), nullable=False, index=True)
     price = db.Column(db.Float, nullable=False)
     last_updated = db.Column(db.DateTime, nullable=False, index=True)
@@ -198,37 +218,76 @@ def update_all_portfolios():
                 print("Mercado abriu. Atualizando preços...")
             last_market_status = True
             with app.app_context():
-                portfolios = Portfolio.query.all()
-                for portfolio in portfolios:
+                # Atualiza apenas para usuários ativos
+                user_ids = list(active_user_ids)
+                tickers_set = set()
+                user_portfolios = {}
+                for user_id in user_ids:
+                    portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+                    if not portfolio:
+                        continue
                     try:
                         portfolio_data = json.loads(portfolio.data)
                     except Exception as e:
-                        print(f"Erro ao decodificar o portfólio ID {portfolio.id}: {e}")
+                        print(f"Erro ao decodificar o portfólio do usuário {user_id}: {e}")
                         continue
-                    updated_prices = {}
-                    for asset in list(portfolio_data):
+                    user_portfolios[user_id] = portfolio_data
+                    for asset in portfolio_data:
                         ticker_orig = asset['ticker'].strip().upper()
                         final_ticker = format_ticker(ticker_orig)
-                        price = get_price(final_ticker)
+                        tickers_set.add(final_ticker)
+                tickers_list = list(tickers_set)
+                # Baixa preços em lote
+                if tickers_list:
+                    try:
+                        df = yf.download(tickers=tickers_list, period='5d', group_by='ticker', progress=False, threads=True)
+                    except Exception as e:
+                        print(f"Erro no download em lote do yfinance: {e}")
+                        df = None
+                else:
+                    df = None
+                # Atualiza o cache de cada usuário ativo
+                for user_id, portfolio_data in user_portfolios.items():
+                    updated_prices = {}
+                    for asset in portfolio_data:
+                        ticker_orig = asset['ticker'].strip().upper()
+                        final_ticker = format_ticker(ticker_orig)
+                        price = None
+                        if df is not None:
+                            if len(tickers_list) == 1:
+                                close_series = df['Close'] if 'Close' in df else None
+                            else:
+                                if (final_ticker, 'Close') in df:
+                                    close_series = df[(final_ticker, 'Close')]
+                                elif final_ticker in df and 'Close' in df[final_ticker]:
+                                    close_series = df[final_ticker]['Close']
+                                else:
+                                    close_series = None
+                            if close_series is not None and not close_series.empty:
+                                price = float(close_series.dropna().iloc[-1])
+                        if price is None:
+                            price = get_price(final_ticker)
                         updated_prices[ticker_orig] = price
                         # Atualiza também o PriceCache
-                        obj = PriceCache.query.filter_by(user_id=portfolio.user_id, ticker=ticker_orig).first()
+                        obj = PriceCache.query.filter_by(user_id=user_id, ticker=ticker_orig).first()
                         if obj:
                             obj.price = price
                             obj.last_updated = datetime.now()
                         else:
                             db.session.add(PriceCache(
-                                user_id=portfolio.user_id,
+                                user_id=user_id,
                                 ticker=ticker_orig,
                                 price=price,
                                 last_updated=datetime.now()
                             ))
                     # Protege a escrita do cache com lock
-                    with portfolio_cache_lock:
-                        portfolio.cached_prices = json.dumps(updated_prices)
-                        portfolio.cache_timestamp = datetime.now()
-                        db.session.commit()
-                        print(f"Portfólio (ID: {portfolio.id}) atualizado em {portfolio.cache_timestamp}")
+                    portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+                    if portfolio:
+                        with portfolio_cache_lock:
+                            portfolio.cached_prices = json.dumps(updated_prices)
+                            portfolio.cache_timestamp = datetime.now()
+                            db.session.commit()
+                            print(f"Portfólio (user: {user_id}) atualizado em {portfolio.cache_timestamp}")
             time.sleep(15)  # Atualiza a cada 15 segundos
         else:
             if last_market_status != False:
@@ -363,6 +422,31 @@ def update_price_cache_for_all_users():
 # =============================================================================
 # Endpoints de Autenticação
 # =============================================================================
+# ================= USUÁRIOS ATIVOS E ATIVOS ÚNICOS =====================
+active_user_ids = set()
+active_tickers = set()
+active_tickers_lock = threading.Lock()
+
+def update_active_tickers():
+    """Atualiza o set de tickers únicos dos usuários ativos."""
+    global active_tickers
+    tickers = set()
+    for user_id in active_user_ids:
+        portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+        if not portfolio:
+            continue
+        try:
+            portfolio_data = json.loads(portfolio.data)
+        except Exception:
+            continue
+        for asset in portfolio_data:
+            ticker = asset['ticker'].strip().upper()
+            final_ticker = format_ticker(ticker)
+            tickers.add(final_ticker)
+    with active_tickers_lock:
+        active_tickers.clear()
+        active_tickers.update(tickers)
+
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -395,6 +479,9 @@ def login():
         return jsonify({'error': 'Credenciais incorretas'}), 401
 
     session['user_id'] = user.id
+    # Adiciona usuário à lista de ativos
+    active_user_ids.add(user.id)
+    update_active_tickers()
     has_portfolio = Portfolio.query.filter_by(user_id=user.id).first() is not None
     return jsonify({
         'message': 'Login realizado com sucesso',
@@ -404,7 +491,10 @@ def login():
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    session.pop('user_id', None)
+    user_id = session.pop('user_id', None)
+    if user_id:
+        active_user_ids.discard(user_id)
+        update_active_tickers()
     return jsonify({'message': 'Logout realizado com sucesso'}), 200
 
 @app.route('/api/user', methods=['GET'])
@@ -520,6 +610,10 @@ def upload_portfolio():
         )
         db.session.add(portfolio)
         db.session.commit()
+
+        # Atualiza caches imediatamente após upload
+        update_price_cache_for_all_users()
+        update_dividends_cache_for_all_users()
 
         return jsonify({
             'message': 'Portfólio carregado com sucesso',
@@ -766,6 +860,83 @@ def get_dividends():
     return jsonify({'dividends': dividends})
 
 # =============================================================================
+# Endpoint para registrar aporte (compra/venda)
+# =============================================================================
+@app.route('/api/register-aporte', methods=['POST'])
+def register_aporte():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    data = request.get_json()
+    tipo = data.get('tipo')
+    ticker = data.get('ticker', '').strip().upper()
+    preco = float(data.get('preco', 0))
+    quantidade = int(data.get('quantidade', 0))
+    if not ticker or preco <= 0 or quantidade <= 0 or tipo not in ['compra', 'venda']:
+        return jsonify({'error': 'Dados inválidos'}), 400
+
+    # Validação do ticker (checa se existe na B3 ou EUA)
+    try:
+        from yfinance import Ticker
+        yf_ticker = format_ticker(ticker)
+        tinfo = Ticker(yf_ticker).info
+        if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
+            return jsonify({'error': 'Ticker não encontrado'}), 400
+    except Exception:
+        return jsonify({'error': 'Ticker não encontrado'}), 400
+
+    # Carregar portfólio atual
+    portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+    if portfolio:
+        try:
+            portfolio_data = json.loads(portfolio.data)
+        except Exception:
+            portfolio_data = []
+    else:
+        portfolio_data = []
+
+    # Atualizar ou criar ativo
+    found = False
+    for asset in portfolio_data:
+        if asset['ticker'].strip().upper() == ticker:
+            old_qtd = float(asset.get('quantidade', 0))
+            old_pm = float(asset.get('preco_medio', 0))
+            if tipo == 'compra':
+                nova_qtd = old_qtd + quantidade
+                if nova_qtd == 0:
+                    asset['quantidade'] = 0
+                    asset['preco_medio'] = 0
+                else:
+                    asset['preco_medio'] = (old_pm * old_qtd + preco * quantidade) / nova_qtd
+                    asset['quantidade'] = nova_qtd
+            else:  # venda
+                nova_qtd = old_qtd - quantidade
+                if nova_qtd < 0:
+                    return jsonify({'error': 'Quantidade insuficiente para venda'}), 400
+                asset['quantidade'] = nova_qtd
+                # Preço médio não muda em venda
+            found = True
+            break
+    if not found:
+        if tipo == 'compra':
+            portfolio_data.append({'ticker': ticker, 'preco_medio': preco, 'quantidade': quantidade})
+        else:
+            return jsonify({'error': 'Não é possível vender um ativo que não está na carteira'}), 400
+
+    # Remove ativos zerados
+    portfolio_data = [a for a in portfolio_data if float(a.get('quantidade', 0)) > 0]
+
+    # Salva novo portfólio
+    new_portfolio = Portfolio(
+        user_id=user_id,
+        data=json.dumps(portfolio_data),
+        filename=f"aporte_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+    )
+    db.session.add(new_portfolio)
+    db.session.commit()
+    return jsonify({'message': 'Aporte registrado com sucesso!'}), 200
+
+# =============================================================================
 # Hook para verificar atualização do código
 # =============================================================================
 @app.before_request
@@ -802,9 +973,10 @@ if __name__ == '__main__':
             db.session.add(test_user)
             db.session.commit()
             print("Usuário de teste criado: root@example.com / password123")
-        # Atualiza dividendos e preços na inicialização
+        # Carrega valor do dólar do banco
+        load_dollar_from_db()
+        # Atualiza dividendos na inicialização
         update_dividends_cache_for_all_users()
-        update_price_cache_for_all_users()
 
     updater_thread = threading.Thread(target=update_all_portfolios, daemon=True)
     updater_thread.start()

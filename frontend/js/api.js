@@ -108,7 +108,10 @@ const portfolioAPI = {
         const url = `${API_BASE_URL}/template-download?format=${format}`;
         window.open(url);
         return Promise.resolve({ message: 'Download iniciado' });
-    }
+    },
+
+    // Adiciona função para registrar aportes
+    registerAporte: (data) => fetchAPI('/register-aporte', 'POST', data)
 };
 
 // API de utilitários
