@@ -190,6 +190,43 @@
         transform: rotate(360deg);
       }
     }
+    .not-received td {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+    /* Checkbox customizado para coluna Recebido? */
+    .receipt-checkbox {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--accent-color);
+      border-radius: 6px;
+      background: #222;
+      cursor: pointer;
+      position: relative;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      vertical-align: middle;
+    }
+    .receipt-checkbox:checked {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+    .receipt-checkbox:checked::after {
+      content: '\2713';
+      color: #222;
+      font-size: 1.1em;
+      position: absolute;
+      left: 3px;
+      top: 0px;
+    }
+    .receipt-checkbox:focus {
+      box-shadow: 0 0 0 2px var(--accent-color, #ffc107);
+    }
+    /* Ajuste para alinhar o checkbox na célula */
+    .details-table td:last-child {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -243,10 +280,11 @@
             <th>Valor Unitário</th>
             <th>Quantidade</th>
             <th>Total Recebido</th>
+            <th>Recebido?</th>
           </tr>
         </thead>
         <tbody id="details-body">
-          <tr><td colspan="6">Nenhum dado disponível para o período selecionado.</td></tr>
+          <tr><td colspan="7">Nenhum dado disponível para o período selecionado.</td></tr>
         </tbody>
       </table>
     </div>
@@ -336,7 +374,7 @@
       
       // Atualiza resumo do ano
       function updateYearSummary(dividends, year) {
-        const total = dividends.reduce((acc, cur) => acc + cur.value, 0);
+        const total = dividends.filter(d => d.received !== false).reduce((acc, cur) => acc + cur.value, 0);
         summaryYearEl.textContent = year;
         summaryTotalEl.textContent = formatCurrency(total);
       }
@@ -396,7 +434,7 @@
         });
         
         if (monthDivs.length === 0) {
-          detailsBody.innerHTML = `<tr><td colspan="6">Nenhum provento encontrado para este mês.</td></tr>`;
+          detailsBody.innerHTML = `<tr><td colspan="7">Nenhum provento encontrado para este mês.</td></tr>`;
           return;
         }
         
@@ -410,8 +448,9 @@
           const unitValue = (div.quantity && div.quantity > 0) ? (div.value / div.quantity) : 0;
           // Data em DD/MM/AAAA
           const dateBR = formatDateBr(div.date);
-          
+          const received = div.received !== false;
           const row = document.createElement('tr');
+          row.className = received ? '' : 'not-received';
           row.innerHTML = `
             <td>${dateBR}</td>
             <td>${div.ticker}</td>
@@ -419,8 +458,31 @@
             <td>${formatCurrency(unitValue)}</td>
             <td>${div.quantity}</td>
             <td style="color: var(--green);">${formatCurrency(div.value)}</td>
+            <td><input type="checkbox" class="receipt-checkbox" ${received ? 'checked' : ''} data-ticker="${div.ticker}" data-date="${div.date}"></td>
           `;
           detailsBody.appendChild(row);
+        });
+
+        // Adiciona listener para os checkboxes
+        detailsBody.querySelectorAll('.receipt-checkbox').forEach(cb => {
+          cb.addEventListener('change', async function() {
+            const ticker = this.getAttribute('data-ticker');
+            const date = this.getAttribute('data-date');
+            const received = this.checked;
+            try {
+              await fetch('http://localhost:5000/api/dividend-receipt', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticker, date, received })
+              });
+              // Atualiza visual
+              this.closest('tr').className = received ? '' : 'not-received';
+            } catch (e) {
+              alert('Erro ao salvar status do provento!');
+              this.checked = !received;
+            }
+          });
         });
       }
       

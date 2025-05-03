@@ -13,7 +13,7 @@ import numpy as np
 import yfinance as yf
 import pytz
 
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -139,6 +139,18 @@ class PriceCache(db.Model):
     ticker = db.Column(db.String(32), nullable=False, index=True)
     price = db.Column(db.Float, nullable=False)
     last_updated = db.Column(db.DateTime, nullable=False, index=True)
+
+# =============================================================================
+# Modelo para status de recebimento de proventos
+# =============================================================================
+class DividendReceiptStatus(db.Model):
+    __tablename__ = 'dividend_receipt_status'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), nullable=False, index=True)
+    ticker = db.Column(db.String(32), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    received = db.Column(db.Boolean, nullable=False, default=True)
+    __table_args__ = (db.UniqueConstraint('user_id', 'ticker', 'date', name='uq_user_ticker_date'),)
 
 # =============================================================================
 # Helpers para yfinance
@@ -611,6 +623,13 @@ def upload_portfolio():
         db.session.add(portfolio)
         db.session.commit()
 
+        # Limpar cache de evolução do portfólio para este usuário
+        global _evolution_cache
+        with evolution_cache_lock:
+            keys_to_delete = [k for k in _evolution_cache if k.startswith(f"{user_id}:")]
+            for k in keys_to_delete:
+                del _evolution_cache[k]
+
         # Atualiza caches imediatamente após upload
         update_price_cache_for_all_users()
         update_dividends_cache_for_all_users()
@@ -857,7 +876,52 @@ def get_dividends():
         DividendsCache.date >= start_date
     ).order_by(DividendsCache.date.asc())
     dividends = [d.to_dict() for d in cache_query]
+    # Buscar status de recebimento
+    receipts = DividendReceiptStatus.query.filter_by(user_id=user_id).all()
+    receipt_map = {(r.ticker, r.date): r.received for r in receipts}
+    for d in dividends:
+        key = (d['ticker'], datetime.strptime(d['date'], '%Y-%m-%d').date())
+        d['received'] = receipt_map.get(key, True)
     return jsonify({'dividends': dividends})
+
+# =============================================================================
+# Endpoint para registrar status de recebimento de proventos
+# =============================================================================
+@app.route('/api/dividend-receipt', methods=['POST'])
+def set_dividend_receipt():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    data = request.get_json()
+    ticker = data.get('ticker')
+    date = data.get('date')
+    received = data.get('received')
+    if not ticker or not date or received is None:
+        return jsonify({'error': 'Dados incompletos'}), 400
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+    except Exception:
+        return jsonify({'error': 'Data inválida'}), 400
+    status = DividendReceiptStatus.query.filter_by(user_id=user_id, ticker=ticker, date=date_obj).first()
+    if status:
+        status.received = received
+    else:
+        status = DividendReceiptStatus(user_id=user_id, ticker=ticker, date=date_obj, received=received)
+        db.session.add(status)
+    db.session.commit()
+    return jsonify({'success': True})
+
+@app.route('/api/dividend-receipt', methods=['GET'])
+def get_dividend_receipts():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    receipts = DividendReceiptStatus.query.filter_by(user_id=user_id).all()
+    result = [
+        {'ticker': r.ticker, 'date': r.date.strftime('%Y-%m-%d'), 'received': r.received}
+        for r in receipts
+    ]
+    return jsonify({'receipts': result})
 
 # =============================================================================
 # Endpoint para registrar aporte (compra/venda)
@@ -937,6 +1001,14 @@ def register_aporte():
     return jsonify({'message': 'Aporte registrado com sucesso!'}), 200
 
 # =============================================================================
+# Endpoint para download do template
+# =============================================================================
+@app.route('/api/download-template', methods=['GET'])
+def download_template():
+    template_path = os.path.join(app.root_path, 'templates')
+    return send_from_directory(template_path, 'template.xlsx', as_attachment=True)
+
+# =============================================================================
 # Hook para verificar atualização do código
 # =============================================================================
 @app.before_request
@@ -954,6 +1026,67 @@ def protect_cache():
     global _evolution_cache
     with evolution_cache_lock:
         _evolution_cache = dict(_evolution_cache)
+
+# =============================================================================
+# Thread para atualização diária de dividendos
+# =============================================================================
+def schedule_dividends_update():
+    import pytz
+    import time
+    from datetime import datetime, timedelta
+    tz = pytz.timezone('America/Sao_Paulo')
+    while True:
+        now = datetime.now(tz)
+        next_run = now.replace(hour=10, minute=30, second=0, microsecond=0)
+        if now >= next_run:
+            next_run += timedelta(days=1)
+        sleep_seconds = (next_run - now).total_seconds()
+        if sleep_seconds > 0:
+            time.sleep(sleep_seconds)
+        try:
+            print('[DIVIDENDS] Atualização diária programada iniciada.')
+            with app.app_context():
+                update_dividends_cache_for_all_users()
+        except Exception as e:
+            print(f'[DIVIDENDS] Erro na atualização diária programada: {e}')
+        # Garante que só rode uma vez por dia
+        time.sleep(60)
+
+# =============================================================================
+# Thread para atualização diária de preços
+# =============================================================================
+def schedule_prices_update():
+    import pytz
+    import time
+    from datetime import datetime, timedelta
+    tz = pytz.timezone('America/Sao_Paulo')
+    while True:
+        now = datetime.now(tz)
+        # Só roda em dias úteis (segunda a sexta)
+        if now.weekday() < 5:
+            next_run = now.replace(hour=18, minute=0, second=0, microsecond=0)
+            if now >= next_run:
+                next_run += timedelta(days=1)
+            # Pular finais de semana
+            while next_run.weekday() >= 5:
+                next_run += timedelta(days=1)
+            sleep_seconds = (next_run - now).total_seconds()
+            if sleep_seconds > 0:
+                time.sleep(sleep_seconds)
+            try:
+                print('[PRICECACHE] Atualização diária programada iniciada.')
+                with app.app_context():
+                    update_price_cache_for_all_users()
+            except Exception as e:
+                print(f'[PRICECACHE] Erro na atualização diária programada: {e}')
+            # Garante que só rode uma vez por dia
+            time.sleep(60)
+        else:
+            # Se for final de semana, dorme até segunda
+            next_weekday = now + timedelta(days=(7 - now.weekday()))
+            next_run = next_weekday.replace(hour=18, minute=0, second=0, microsecond=0)
+            sleep_seconds = (next_run - now).total_seconds()
+            time.sleep(sleep_seconds)
 
 # =============================================================================
 # Inicialização
@@ -977,7 +1110,18 @@ if __name__ == '__main__':
         load_dollar_from_db()
         # Atualiza dividendos na inicialização
         update_dividends_cache_for_all_users()
+        # Atualiza preços na inicialização
+        update_price_cache_for_all_users()
 
     updater_thread = threading.Thread(target=update_all_portfolios, daemon=True)
     updater_thread.start()
+
+    # Thread para atualizar dividendos todos os dias às 10:30
+    dividends_thread = threading.Thread(target=schedule_dividends_update, daemon=True)
+    dividends_thread.start()
+
+    # Thread para atualizar preços todos os dias úteis às 18:00
+    prices_thread = threading.Thread(target=schedule_prices_update, daemon=True)
+    prices_thread.start()
+
     app.run(debug=True, host='0.0.0.0', port=5000)

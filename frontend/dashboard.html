@@ -474,6 +474,25 @@
         }
       }
 
+      @keyframes price-blink-green {
+        0% { background-color: var(--green); color: #fff; }
+        100% { background-color: inherit; color: inherit; }
+      }
+      @keyframes price-blink-red {
+        0% { background-color: var(--red); color: #fff; }
+        100% { background-color: inherit; color: inherit; }
+      }
+      .price-blink-up {
+        animation: price-blink-green 0.7s;
+      }
+      .price-blink-down {
+        animation: price-blink-red 0.7s;
+      }
+      .price-arrow {
+        margin-left: 0.3em;
+        font-size: 1em;
+      }
+
       .alert {
         padding: 0.75rem;
         margin-bottom: 1rem;
@@ -748,7 +767,7 @@
             <canvas id="asset-distribution-chart"></canvas>
           </div>
           <div class="line-chart-container">
-            <div class="card-title">Evolução do Portfólio</div>
+            <div class="card-title">Evolução da Carteira</div>
             <div class="evolution-filters evolution-filters-top">
               <div class="evolution-filter-item">
                 <label for="start-date" class="evolution-filter-label">Data Inicial</label>
@@ -987,6 +1006,7 @@
             // Total atual do portfólio para calcular o peso
             const totalCurrentValue = portfolioData.summary.total_current_value || 0;
             portfolioData.assets.sort((a, b) => b.invested_value - a.invested_value);
+            let lastPrices = {};
             portfolioData.assets.forEach(asset => {
               const row = document.createElement('tr');
               const is_us_ticker = asset.is_us_ticker;
@@ -1007,12 +1027,26 @@
               if (totalCurrentValue > 0) {
                 weightPercent = (asset.current_value / totalCurrentValue) * 100;
               }
+              const priceCellId = `price-cell-${asset.ticker}`;
+              let priceArrow = '';
+              let blinkClass = '';
+              const prevPrice = lastPrices[asset.ticker];
+              if (prevPrice !== undefined) {
+                if (asset.current_price > prevPrice) {
+                  priceArrow = '<i class="fas fa-caret-up price-arrow" style="color: var(--green)"></i>';
+                  blinkClass = 'price-blink-up';
+                } else if (asset.current_price < prevPrice) {
+                  priceArrow = '<i class="fas fa-caret-down price-arrow" style="color: var(--red)"></i>';
+                  blinkClass = 'price-blink-down';
+                }
+              }
+              lastPrices[asset.ticker] = asset.current_price;
               row.innerHTML = `
                 <td><strong>${asset.ticker}</strong></td>
                 <td class="type-cell">${tickerBadge}</td>
                 <td>${asset.quantity}</td>
-                <td>${(is_us_ticker ? 'US$' : 'R$')} ${asset.avg_price.toFixed(2)}</td>
-                <td>${(is_us_ticker ? 'US$' : 'R$')} ${asset.current_price.toFixed(2)}</td>
+                <td>${is_us_ticker ? 'US$' : 'R$'} ${asset.avg_price.toFixed(2)}</td>
+                <td id="${priceCellId}" class="${blinkClass}">${is_us_ticker ? 'US$' : 'R$'} ${asset.current_price.toFixed(2)}${priceArrow}</td>
                 <td>${formatter.format(asset.invested_value)}</td>
                 <td>${formatter.format(asset.current_value)}</td>
                 <td class="${returnClass}">${formatter.format(returnValue)}</td>
