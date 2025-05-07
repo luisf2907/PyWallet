@@ -1,9 +1,0 @@
-env/
-venv/
-.venv/
-.log
-.vscode/
-.ideia/
-.DS_Store
-Thumbs.db
-__pycache__/
