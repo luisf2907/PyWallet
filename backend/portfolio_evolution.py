@@ -149,7 +149,23 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
 def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange_rate=None, format_ticker_func=None):
     """
     Calcula a evolução histórica do valor do portfólio usando download em lote (multi-ticker) para máxima performance.
+    Agora salva e serve cache persistente (PortfolioEvolutionCache) se yfinance falhar.
+    Respeita o rate limit do Yahoo Finance.
     """
+    from app import db, PortfolioEvolutionCache, session, rate_limit_lock, rate_limit_pause  # Importa aqui para evitar import circular
+    
+    # Verificar se está em período de rate limit
+    with rate_limit_lock:
+        if rate_limit_pause['until'] and datetime.now() < rate_limit_pause['until']:
+            print(f"[RATE LIMIT] calculate_portfolio_evolution respeitando pausa até {rate_limit_pause['until']}")
+            # Se em rate limit, tenta usar o cache persistente
+            try:
+                return serve_from_persistent_cache(user_id=session.get('user_id'), start_date=start_date, end_date=end_date)
+            except Exception as e:
+                print(f"Erro ao servir do cache persistente: {e}")
+                return []
+    
+    user_id = session.get('user_id') if hasattr(session, 'get') else None
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
@@ -163,7 +179,6 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
         date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
         if end_date_obj not in date_range:
             date_range = date_range.append(pd.DatetimeIndex([end_date_obj]))
-        # Preparar lista de ativos válidos
         safe_portfolio_data = copy.deepcopy(portfolio_data)
         tickers = []
         ticker_map = {}
@@ -180,16 +195,32 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
                     final_ticker += '.SA'
             tickers.append(final_ticker)
             ticker_map[final_ticker] = asset
-        # Download em lote
         if exchange_rate is None:
             exchange_rate = 5.8187
         buffer_days = 14
         start_with_buffer = (start_date_obj - timedelta(days=buffer_days)).strftime('%Y-%m-%d')
         try:
             data = yf.download(tickers=list(set(tickers)), start=start_with_buffer, end=end_date, interval='1d', group_by='ticker', progress=False, threads=True)
+            # Se sucesso no download, reseta o rate limit
+            with rate_limit_lock:
+                rate_limit_pause['until'] = None
+                rate_limit_pause['hours'] = 1
         except Exception as e:
             print(f"Erro no download em lote do yfinance: {e}")
-            data = None
+            # Se for rate limit, atualiza o status global
+            if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
+                with rate_limit_lock:
+                    now = datetime.now()
+                    rate_limit_pause['until'] = now + timedelta(hours=rate_limit_pause['hours'])
+                    print(f"[RATE LIMIT] Pausando atualizações por {rate_limit_pause['hours']}h até {rate_limit_pause['until']}")
+                    rate_limit_pause['hours'] *= 2  # Incrementa o tempo de espera exponencialmente
+            
+            # Tenta usar o cache persistente
+            try:
+                return serve_from_persistent_cache(user_id=user_id, start_date=start_date, end_date=end_date)
+            except Exception as e2:
+                print(f"Erro ao servir do cache persistente após falha no yfinance: {e2}")
+                return []
         total_values = pd.Series(0.0, index=date_range)
         for final_ticker, asset in ticker_map.items():
             try:
@@ -197,7 +228,6 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
                 avg_price = float(asset.get('preco_medio', 0))
                 is_us = not final_ticker.endswith('.SA')
                 conv_factor = exchange_rate if is_us else 1.0
-                # Obter preços históricos
                 if data is not None:
                     if len(tickers) == 1:
                         close_prices = data['Close'].copy()
@@ -233,10 +263,68 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
             for d, v in total_values.items()
         ]
         evolution_list.sort(key=lambda x: x['date'])
+        # Salva no cache persistente se usuário logado
+        if user_id:
+            for entry in evolution_list:
+                date_obj = datetime.strptime(entry['date'], '%Y-%m-%d').date()
+                obj = PortfolioEvolutionCache.query.filter_by(user_id=user_id, date=date_obj).first()
+                if obj:
+                    obj.total_value = entry['value']
+                    obj.last_updated = datetime.now()
+                else:
+                    db.session.add(PortfolioEvolutionCache(
+                        user_id=user_id,
+                        date=date_obj,
+                        total_value=entry['value'],
+                        last_updated=datetime.now()
+                    ))
+            db.session.commit()
         return evolution_list
     except Exception as e:
         print(f"Erro ao calcular evolução do portfólio (multi-ticker): {e}")
+        # Tenta servir do cache persistente
+        return serve_from_persistent_cache(user_id=user_id, start_date=start_date, end_date=end_date)
+
+
+def serve_from_persistent_cache(user_id, start_date, end_date):
+    """
+    Função auxiliar para servir dados do cache persistente quando o yfinance falha
+    """
+    from app import PortfolioEvolutionCache
+    
+    if not user_id:
         return []
+        
+    try:
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+        days_diff = (end_date_obj - start_date_obj).days
+        if days_diff > 365:
+            freq = 'W-MON'
+        elif days_diff > 90:
+            freq = '3D'
+        else:
+            freq = 'D'
+        date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
+        if end_date_obj not in date_range:
+            date_range = date_range.append(pd.DatetimeIndex([end_date_obj]))
+        cached = PortfolioEvolutionCache.query.filter_by(user_id=user_id).order_by(PortfolioEvolutionCache.date.asc()).all()
+        if cached:
+            print("[FALLBACK] Servindo evolução do portfólio do cache persistente.")
+            cache_df = pd.DataFrame([{'date': c.date, 'value': c.total_value} for c in cached])
+            cache_df = cache_df.set_index('date').sort_index()
+            # Forward fill para cada data do date_range
+            values = []
+            last_value = None
+            for d in date_range:
+                d_date = d.date()
+                if d_date in cache_df.index:
+                    last_value = cache_df.loc[d_date, 'value']
+                values.append({'date': d.strftime('%Y-%m-%d'), 'value': float(last_value) if last_value is not None else 0.0})
+            return values
+    except Exception as e:
+        print(f"Erro ao buscar evolução do cache persistente: {e}")
+    return []
 
 def generate_simulated_evolution(start_date, end_date, start_value, end_value, num_points=30):
     """

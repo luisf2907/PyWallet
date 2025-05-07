@@ -868,6 +868,15 @@
       import { portfolioAPI, authAPI, utilsAPI } from './js/api.js';
     
       document.addEventListener('DOMContentLoaded', async function () {
+        // Configurar um timeout para esconder o spinner após 15 segundos (independente da resposta)
+        setTimeout(() => {
+          if (!loadingOverlay.classList.contains('hidden')) {
+            console.log('Tempo limite de carregamento global atingido. Removendo spinner...');
+            loadingOverlay.classList.add('hidden');
+            showAlert('O carregamento demorou mais que o esperado. Alguns dados podem estar incompletos. Tente recarregar a página.', 'info');
+          }
+        }, 15000);
+
         try {
         const user = await authAPI.getCurrentUser();
         document.getElementById('user-greeting').textContent = `Olá, ${user.name.split(' ')[0]}!`;
@@ -900,6 +909,15 @@
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
         const evolutionApplyBtn = document.getElementById('evolution-apply-btn');
+        
+        // Configurar um timeout para esconder o spinner após 8 segundos, independente da resposta
+        const loadingTimeout = setTimeout(() => {
+          if (!loadingOverlay.classList.contains('hidden')) {
+            console.log('Tempo limite de carregamento atingido. Removendo spinner...');
+            loadingOverlay.classList.add('hidden');
+            showAlert('O carregamento está demorando mais que o esperado. Alguns dados podem estar incompletos.', 'info');
+          }
+        }, 8000);
     
         // Configurar datas iniciais
         const today = new Date();
@@ -949,12 +967,35 @@
         async function updatePage(showOverlay, updateCharts = true) {
           if (showOverlay) {
             loadingOverlay.classList.remove('hidden');
+            
+            // Reinicia o timeout sempre que updatePage for chamado com overlay
+            clearTimeout(loadingTimeout);
+            setTimeout(() => {
+              if (!loadingOverlay.classList.contains('hidden')) {
+                console.log('Tempo limite de atualização atingido. Removendo spinner...');
+                loadingOverlay.classList.add('hidden');
+                showAlert('O carregamento está demorando mais que o esperado. Alguns dados podem estar incompletos.', 'info');
+              }
+            }, 8000);
           }
+          
           try {
             const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const portfolioData = await portfolioAPI.getSummary(startDate, endDate);
-    
+            const endDate = startDateInput.value;
+            
+            // Define um timeout de 10 segundos para a API
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            const portfolioData = await Promise.race([
+              portfolioAPI.getSummary(startDate, endDate),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Tempo de resposta excedido")), 10000)
+              )
+            ]);
+            
+            clearTimeout(timeoutId);
+
             const updateDate = new Date(portfolioData.summary.updated_at);
             document.getElementById('last-update').textContent = `Última atualização: ${updateDate.toLocaleString('pt-BR')}`;
     
