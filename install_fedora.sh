@@ -25,10 +25,16 @@ else
     echo "Usuário pywallet já existe"
 fi
 
-# Instalar dependências
-echo "Instalando dependências..."
+# Instalar dependências do sistema
+echo "Instalando dependências do sistema..."
 dnf update -y
-dnf install -y python3 python3-pip python3-devel gcc sqlite-devel nginx
+dnf install -y python3 python3-pip python3-devel gcc gcc-c++ make \
+    sqlite-devel nginx python3-wheel python3-setuptools \
+    dos2unix libffi-devel openssl-devel
+
+# Atualizar pip para a versão mais recente
+echo "Atualizando pip..."
+pip3 install --upgrade pip setuptools wheel
 
 # Criar diretório de instalação
 mkdir -p $INSTALL_DIR
@@ -38,15 +44,33 @@ echo "Diretório de instalação criado: $INSTALL_DIR"
 echo "Copiando arquivos..."
 cp -R . $INSTALL_DIR/
 
-# Instalar dependências Python
-echo "Instalando dependências Python..."
+# Corrigir terminadores de linha (CRLF para LF)
+echo "Corrigindo terminadores de linha..."
+dos2unix $INSTALL_DIR/*.sh
+dos2unix $INSTALL_DIR/pywallet.service
+
+# Instalar dependências Python em etapas separadas
+echo "Instalando dependências Python essenciais primeiro..."
+pip3 install numpy==1.24.4 pandas==2.0.3 Werkzeug==2.2.3
+
+echo "Instalando dependências Python restantes..."
 pip3 install -r $INSTALL_DIR/requirements.txt
-pip3 install -r $INSTALL_DIR/backend/requirements.txt
+pip3 install yfinance==0.2.36
+
+echo "Instalando dependências específicas do backend..."
+pip3 install flask==2.2.5 flask-cors==3.0.10 flask-sqlalchemy==3.0.5
 
 # Definir permissões
 echo "Configurando permissões..."
 chown -R pywallet:pywallet $INSTALL_DIR
 chmod -R 755 $INSTALL_DIR
+
+# Criar os diretórios necessários
+mkdir -p $INSTALL_DIR/instance
+mkdir -p $INSTALL_DIR/uploads
+mkdir -p $INSTALL_DIR/templates
+chown -R pywallet:pywallet $INSTALL_DIR/instance $INSTALL_DIR/uploads $INSTALL_DIR/templates
+chmod -R 755 $INSTALL_DIR/instance $INSTALL_DIR/uploads $INSTALL_DIR/templates
 
 # Configurar o serviço systemd
 echo "Configurando serviço systemd..."
@@ -78,6 +102,11 @@ server {
     }
 }
 EOF
+
+# Permitir que o Nginx se conecte à rede
+if command -v setsebool &> /dev/null; then
+    setsebool -P httpd_can_network_connect 1
+fi
 
 # Reiniciar Nginx e iniciar o serviço
 echo "Iniciando serviços..."
