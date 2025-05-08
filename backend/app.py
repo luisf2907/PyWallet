@@ -12,6 +12,8 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import pytz
+import requests
+from requests.exceptions import HTTPError, Timeout
 
 from flask import Flask, request, jsonify, session, send_from_directory
 from flask_cors import CORS
@@ -114,11 +116,32 @@ def get_price(ticker, formatar=True):
 
     try:
         yf_ticker = format_ticker_local(ticker) if formatar else ticker
-        df = yf.download(yf_ticker, period="5d", interval="1d", progress=False)
-        if not df.empty and 'Close' in df.columns:
-            return float(df['Close'].dropna().iloc[-1])
-        tinfo = yf.Ticker(yf_ticker).info
-        return float(tinfo.get('regularMarketPrice') or tinfo.get('currentPrice') or 0)
+        yf_ticker = format_ticker(yf_ticker)  # Garante .SA se necessário
+        df = None
+        try:
+            df = yf.download(yf_ticker, period="5d", interval="1d", progress=False)
+        except Exception as e:
+            if 'possibly delisted' in str(e) or 'no price data found' in str(e):
+                print(f"[get_price] YFPricesMissingError (simulado): {e}")
+            elif 'HTTP Error' in str(e):
+                print(f"[get_price] HTTPError: {e}")
+            elif 'timed out' in str(e):
+                print(f"[get_price] Timeout: {e}")
+            else:
+                print(f"[get_price] Erro inesperado no download do yfinance: {e}")
+        if df is not None and not df.empty and 'Close' in df.columns:
+            try:
+                return float(df['Close'].dropna().iloc[-1])
+            except IndexError:
+                print(f"[get_price] IndexError: série vazia para {yf_ticker}, ignorando.")
+            except Exception as e:
+                print(f"[get_price] Erro ao acessar preço para {yf_ticker}: {e}")
+        try:
+            tinfo = yf.Ticker(yf_ticker).info
+            return float(tinfo.get('regularMarketPrice') or tinfo.get('currentPrice') or 0)
+        except Exception as e:
+            print(f"[get_price] Erro ao buscar info para {yf_ticker}: {e}")
+        return None
     except Exception as e:
         print(f"[get_price] Erro ao buscar {ticker}: {e}")
         if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
@@ -269,6 +292,103 @@ def is_market_open():
 # =============================================================================
 # Thread de atualização de preços
 # =============================================================================
+def update_price_cache_for_all_tickers():
+    """
+    Atualiza o cache de preços apenas para os tickers únicos presentes no banco (PriceCache e Portfolios).
+    """
+    with rate_limit_lock:
+        if rate_limit_pause['until'] and datetime.now() < rate_limit_pause['until']:
+            print(f"[RATE LIMIT] Pausando update_price_cache_for_all_tickers até {rate_limit_pause['until']} ({rate_limit_pause['hours']}h)")
+            return
+    if not test_yfinance_request():
+        handle_yfinance_block()
+        return
+    print('[PRICECACHE] Atualizando cache de preços dos ativos únicos...')
+    # Coleta todos os tickers únicos dos portfolios, normalizando com format_ticker
+    tickers = set()
+    portfolios = Portfolio.query.all()
+    for portfolio in portfolios:
+        try:
+            portfolio_data = json.loads(portfolio.data)
+        except Exception:
+            continue
+        for asset in portfolio_data:
+            ticker_str = asset['ticker'].strip().upper()
+            final_ticker = format_ticker(ticker_str)
+            tickers.add(final_ticker)
+    # Adiciona também os já presentes no PriceCache, normalizando
+    for p in PriceCache.query.with_entities(PriceCache.ticker).distinct():
+        tickers.add(format_ticker(p.ticker))
+    tickers = list(tickers)
+    if not tickers:
+        print('[PRICECACHE] Nenhum ticker encontrado para atualizar.')
+        return
+
+    # Print tickers já presentes no PriceCache (normalizados)
+    pricecache_tickers = [format_ticker(p.ticker) for p in PriceCache.query.with_entities(PriceCache.ticker).distinct()]
+    print(f"[DEBUG] Tickers já presentes no PriceCache (normalizados): {sorted(set(pricecache_tickers))}")
+
+    print(f"[PRICECACHE] Iniciando download de preços para {len(tickers)} ativos únicos...")
+    try:
+        df = None
+        try:
+            # Troca o período de '5d' para '30d' para evitar problemas de série vazia
+            df = yf.download(tickers=tickers, period='30d', group_by='ticker', progress=False, threads=True)
+        except Exception as e:
+            if 'possibly delisted' in str(e) or 'no price data found' in str(e):
+                print(f"[PRICECACHE] YFPricesMissingError (simulado): {e}")
+            elif 'HTTP Error' in str(e):
+                print(f"[PRICECACHE] HTTPError: {e}")
+            elif 'timed out' in str(e):
+                print(f"[PRICECACHE] Timeout: {e}")
+            else:
+                print(f"[PRICECACHE] Erro inesperado no download do yfinance: {e}")
+        # Reset pausa se sucesso
+        with rate_limit_lock:
+            rate_limit_pause['until'] = None
+            rate_limit_pause['hours'] = 1
+        for ticker in tickers:
+            close_series = None
+            if df is not None:
+                if len(tickers) == 1:
+                    close_series = df['Close'] if 'Close' in df else None
+                else:
+                    if (ticker, 'Close') in df:
+                        close_series = df[(ticker, 'Close')]
+                    elif ticker in df and 'Close' in df[ticker]:
+                        close_series = df[ticker]['Close']
+            price = None
+            try:
+                if close_series is not None and not close_series.empty:
+                    price = float(close_series.dropna().iloc[-1])
+                else:
+                    print(f"[PRICECACHE] Série de preços vazia para {ticker}, ignorando.")
+            except IndexError:
+                print(f"[PRICECACHE] IndexError: série vazia para {ticker}, ignorando.")
+            except Exception as e:
+                print(f"[PRICECACHE] Erro ao acessar preço para {ticker}: {e}")
+            if price is not None:
+                # Sempre salva o ticker normalizado
+                obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
+                if obj:
+                    obj.price = price
+                    obj.last_updated = datetime.now()
+                else:
+                    db.session.add(PriceCache(
+                        user_id=None,
+                        ticker=ticker,
+                        price=price,
+                        last_updated=datetime.now()
+                    ))
+            else:
+                print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
+        db.session.commit()
+        print(f'[PRICECACHE] Preços atualizados para {len(tickers)} ativos únicos')
+    except Exception as e:
+        print(f'[PRICECACHE] Erro ao atualizar preços dos ativos únicos: {e}')
+        if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
+            handle_yfinance_block()
+
 def update_all_portfolios():
     last_market_status = None
     dollar_counter = 0
@@ -285,56 +405,8 @@ def update_all_portfolios():
                 print("Mercado abriu. Atualizando preços...")
             last_market_status = True
             with app.app_context():
-                # Atualiza apenas ativos já presentes no PriceCache
-                tickers_set = set([p.ticker for p in PriceCache.query.with_entities(PriceCache.ticker).distinct()])
-                if tickers_set:
-                    try:
-                        df = yf.download(tickers=list(tickers_set), period='5d', group_by='ticker', progress=False, threads=True)
-                        # Reset pausa se sucesso
-                        with rate_limit_lock:
-                            rate_limit_pause['until'] = None
-                            rate_limit_pause['hours'] = 1
-                    except Exception as e:
-                        print(f"Erro no download em lote do yfinance: {e}")
-                        if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
-                            with rate_limit_lock:
-                                now = datetime.now()
-                                rate_limit_pause['until'] = now + timedelta(hours=rate_limit_pause['hours'])
-                                print(f"[RATE LIMIT] Pausando atualizações por {rate_limit_pause['hours']}h até {rate_limit_pause['until']}")
-                                rate_limit_pause['hours'] += 1
-                        df = None
-                    for ticker in tickers_set:
-                        price = None
-                        if df is not None:
-                            if len(tickers_set) == 1:
-                                close_series = df['Close'] if 'Close' in df else None
-                            else:
-                                if (ticker, 'Close') in df:
-                                    close_series = df[(ticker, 'Close')]
-                                elif ticker in df and 'Close' in df[ticker]:
-                                    close_series = df[ticker]['Close']
-                                else:
-                                    close_series = None
-                            if close_series is not None and not close_series.empty:
-                                price = float(close_series.dropna().iloc[-1])
-                        if price is None:
-                            price = get_price(ticker)
-                        obj = PriceCache.query.filter_by(ticker=ticker).first()
-                        if price is not None:
-                            if obj:
-                                obj.price = price
-                                obj.last_updated = datetime.now()
-                            else:
-                                db.session.add(PriceCache(
-                                    user_id=None,
-                                    ticker=ticker,
-                                    price=price,
-                                    last_updated=datetime.now()
-                                ))
-                        else:
-                            print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
-                    db.session.commit()
-                    print(f"[ATUALIZAÇÃO] Preços atualizados para {len(tickers_set)} ativos (mercado aberto)")
+                # Atualiza apenas ativos únicos
+                update_price_cache_for_all_tickers()
                 # Atualiza o dólar a cada 10 ciclos (5 minutos)
                 dollar_counter += 1
                 if dollar_counter >= 10:
@@ -352,7 +424,7 @@ def update_all_portfolios():
                                 print(f"[RATE LIMIT] Pausando atualizações por {rate_limit_pause['hours']}h até {rate_limit_pause['until']}")
                                 rate_limit_pause['hours'] += 1
                     dollar_counter = 0
-            time.sleep(30)
+            time.sleep(60)  # Agora 1 minuto
         else:
             if last_market_status != False:
                 print("Mercado fechado, não atualizando preços.")
@@ -453,78 +525,6 @@ def update_dividends_cache_for_all_users():
                 print(f'[DIVIDENDS] {len(dividends_to_insert)} dividendos inseridos para {user.email}')
         except Exception as e:
             print(f'[DIVIDENDS] Erro ao atualizar dividendos para {user.email}: {e}')
-            if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
-                handle_yfinance_block()
-
-# =============================================================================
-# Atualização de preços na inicialização
-# =============================================================================
-def update_price_cache_for_all_users():
-    with rate_limit_lock:
-        if rate_limit_pause['until'] and datetime.now() < rate_limit_pause['until']:
-            print(f"[RATE LIMIT] Pausando update_price_cache_for_all_users até {rate_limit_pause['until']} ({rate_limit_pause['hours']}h)")
-            return
-    if not test_yfinance_request():
-        handle_yfinance_block()
-        return
-    print('[PRICECACHE] Atualizando cache de preços dos ativos para todos os usuários...')
-    users = User.query.all()
-    for user in users:
-        portfolio = Portfolio.query.filter_by(user_id=user.id).order_by(Portfolio.uploaded_at.desc()).first()
-        if not portfolio:
-            continue
-        try:
-            portfolio_data = json.loads(portfolio.data)
-        except Exception:
-            continue
-        ticker_qty_map = {}
-        tickers = []
-        for asset in portfolio_data:
-            ticker_str = asset['ticker'].strip().upper()
-            final_ticker = format_ticker(ticker_str)
-            ticker_qty_map[final_ticker] = ticker_str
-            tickers.append(final_ticker)
-        tickers = list(set(tickers))
-        try:
-            df = yf.download(tickers=tickers, period='5d', group_by='ticker', progress=False, threads=True)
-            # Reset pausa se sucesso
-            with rate_limit_lock:
-                rate_limit_pause['until'] = None
-                rate_limit_pause['hours'] = 1
-            for final_ticker in tickers:
-                ticker_str = ticker_qty_map[final_ticker]
-                # Suporte para 1 ativo (DataFrame simples) ou vários (MultiIndex)
-                if len(tickers) == 1:
-                    close_series = df['Close'] if 'Close' in df else None
-                else:
-                    if (final_ticker, 'Close') in df:
-                        close_series = df[(final_ticker, 'Close')]
-                    elif final_ticker in df and 'Close' in df[final_ticker]:
-                        close_series = df[final_ticker]['Close']
-                    else:
-                        close_series = None
-                price = None
-                if close_series is not None and not close_series.empty:
-                    price = float(close_series.dropna().iloc[-1])
-                if price is not None:
-                    # Atualiza ou insere no cache
-                    obj = PriceCache.query.filter_by(user_id=user.id, ticker=ticker_str).first()
-                    if obj:
-                        obj.price = price
-                        obj.last_updated = datetime.now()
-                    else:
-                        db.session.add(PriceCache(
-                            user_id=user.id,
-                            ticker=ticker_str,
-                            price=price,
-                            last_updated=datetime.now()
-                        ))
-                else:
-                    print(f"[PRICECACHE] Ignorando update/insert para {ticker_str} pois price=None")
-            db.session.commit()
-            print(f'[PRICECACHE] Preços atualizados para {user.email}')
-        except Exception as e:
-            print(f'[PRICECACHE] Erro ao atualizar preços para {user.email}: {e}')
             if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
                 handle_yfinance_block()
 
@@ -728,7 +728,7 @@ def upload_portfolio():
                 del _evolution_cache[k]
 
         # Atualiza caches imediatamente após upload
-        update_price_cache_for_all_users()
+        update_price_cache_for_all_tickers()
         update_dividends_cache_for_all_users()
 
         return jsonify({
@@ -1222,7 +1222,7 @@ def schedule_prices_update():
             try:
                 print('[PRICECACHE] Atualização diária programada iniciada.')
                 with app.app_context():
-                    update_price_cache_for_all_users()
+                    update_price_cache_for_all_tickers()
             except Exception as e:
                 print(f'[PRICECACHE] Erro na atualização diária programada: {e}')
             # Garante que só rode uma vez por dia
@@ -1256,8 +1256,8 @@ if __name__ == '__main__':
         load_dollar_from_db()
         # Atualiza dividendos na inicialização
         update_dividends_cache_for_all_users()
-        # Atualiza preços na inicialização
-        update_price_cache_for_all_users()
+        # Atualiza preços na inicialização (apenas uma vez)
+        update_price_cache_for_all_tickers()
 
     updater_thread = threading.Thread(target=update_all_portfolios, daemon=True)
     updater_thread.start()
