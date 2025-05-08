@@ -1,0 +1,17 @@
+[Unit]
+Description=PyWallet - Analisador de Investimentos
+After=network.target
+
+[Service]
+Type=simple
+User=pywallet
+WorkingDirectory=/opt/pywallet
+ExecStart=/usr/bin/python3 /opt/pywallet/run.py --server
+Restart=on-failure
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pywallet
+
+[Install]
+WantedBy=multi-user.target
