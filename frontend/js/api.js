@@ -120,5 +120,17 @@ const utilsAPI = {
     healthCheck: () => fetchAPI('/health')
 };
 
+// API de dividendos
+const dividendAPI = {
+    // Obter dividendos do usuário
+    getDividends: () => fetchAPI('/dividends'),
+    
+    // Atualizar status de recebimento de dividendos
+    updateReceiptStatus: (data) => fetchAPI('/dividend-receipt', 'POST', data),
+    
+    // Obter status de recebimento de dividendos
+    getReceiptStatus: () => fetchAPI('/dividend-receipt')
+};
+
 // Exportar as APIs
-export { authAPI, portfolioAPI, utilsAPI };
+export { authAPI, portfolioAPI, utilsAPI, dividendAPI };

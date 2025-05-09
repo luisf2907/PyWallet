@@ -946,7 +946,7 @@
           }
         }
     
-        async function updatePage(showOverlay, updateCharts = true) {
+        async function updatePage(showOverlay, updateCharts = true, forcePriceUpdate = false) {
           if (showOverlay) {
             loadingOverlay.classList.remove('hidden');
           }
@@ -1002,59 +1002,120 @@
     
             // Atualizar tabela de ativos
             const assetsTableBody = document.getElementById('assets-table-body');
-            assetsTableBody.innerHTML = "";
-            // Total atual do portfólio para calcular o peso
-            const totalCurrentValue = portfolioData.summary.total_current_value || 0;
-            portfolioData.assets.sort((a, b) => b.invested_value - a.invested_value);
-            let lastPrices = {};
-            portfolioData.assets.forEach(asset => {
-              const row = document.createElement('tr');
-              const is_us_ticker = asset.is_us_ticker;
-              const is_bdr = asset.is_bdr;
-              let tickerType = "BR";
-              let badgeClass = "ticker-br";
-              if (is_us_ticker) {
-                tickerType = "US";
-                badgeClass = "ticker-us";
-              } else if (is_bdr) {
-                tickerType = "BDR";
-                badgeClass = "ticker-bdr";
-              }
-              const tickerBadge = `<span class="ticker-badge ${badgeClass}">${tickerType}</span>`;
-              const returnValue = asset.current_value - asset.invested_value;
-              const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
-              let weightPercent = 0;
-              if (totalCurrentValue > 0) {
-                weightPercent = (asset.current_value / totalCurrentValue) * 100;
-              }
-              const priceCellId = `price-cell-${asset.ticker}`;
-              let priceArrow = '';
-              let blinkClass = '';
-              const prevPrice = lastPrices[asset.ticker];
-              if (prevPrice !== undefined) {
-                if (asset.current_price > prevPrice) {
-                  priceArrow = '<i class="fas fa-caret-up price-arrow" style="color: var(--green)"></i>';
-                  blinkClass = 'price-blink-up';
-                } else if (asset.current_price < prevPrice) {
-                  priceArrow = '<i class="fas fa-caret-down price-arrow" style="color: var(--red)"></i>';
-                  blinkClass = 'price-blink-down';
+            
+            // Inicializa previousPrices se não existir
+            if (!window.previousPrices) {
+              window.previousPrices = {};
+            }
+            
+            // Se a tabela estiver vazia, cria novas linhas
+            if (assetsTableBody.innerHTML === "" || assetsTableBody.querySelectorAll("tr").length !== portfolioData.assets.length) {
+              assetsTableBody.innerHTML = "";
+              // Total atual do portfólio para calcular o peso
+              const totalCurrentValue = portfolioData.summary.total_current_value || 0;
+              portfolioData.assets.sort((a, b) => b.invested_value - a.invested_value);
+              
+              portfolioData.assets.forEach(asset => {
+                const row = document.createElement('tr');
+                const is_us_ticker = asset.is_us_ticker;
+                const is_bdr = asset.is_bdr;
+                let tickerType = "BR";
+                let badgeClass = "ticker-br";
+                if (is_us_ticker) {
+                  tickerType = "US";
+                  badgeClass = "ticker-us";
+                } else if (is_bdr) {
+                  tickerType = "BDR";
+                  badgeClass = "ticker-bdr";
                 }
-              }
-              lastPrices[asset.ticker] = asset.current_price;
-              row.innerHTML = `
-                <td><strong>${asset.ticker}</strong></td>
-                <td class="type-cell">${tickerBadge}</td>
-                <td>${asset.quantity}</td>
-                <td>${is_us_ticker ? 'US$' : 'R$'} ${asset.avg_price.toFixed(2)}</td>
-                <td id="${priceCellId}" class="${blinkClass}">${is_us_ticker ? 'US$' : 'R$'} ${asset.current_price.toFixed(2)}${priceArrow}</td>
-                <td>${formatter.format(asset.invested_value)}</td>
-                <td>${formatter.format(asset.current_value)}</td>
-                <td class="${returnClass}">${formatter.format(returnValue)}</td>
-                <td class="${returnClass}">${returnValue >= 0 ? '+' : ''}${asset.return_pct.toFixed(2)}%</td>
-                <td>${weightPercent.toFixed(2)}%</td>
-              `;
-              assetsTableBody.appendChild(row);
-            });
+                const tickerBadge = `<span class="ticker-badge ${badgeClass}">${tickerType}</span>`;
+                const returnValue = asset.current_value - asset.invested_value;
+                const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
+                let weightPercent = 0;
+                if (totalCurrentValue > 0) {
+                  weightPercent = (asset.current_value / totalCurrentValue) * 100;
+                }
+                const priceCellId = `price-cell-${asset.ticker.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                
+                // Armazena o preço para futuras comparações
+                window.previousPrices[asset.ticker] = asset.current_price;
+                
+                row.innerHTML = `
+                  <td><strong>${asset.ticker}</strong></td>
+                  <td class="type-cell">${tickerBadge}</td>
+                  <td>${asset.quantity}</td>
+                  <td>${is_us_ticker ? 'US$' : 'R$'} ${asset.avg_price.toFixed(2)}</td>
+                  <td id="${priceCellId}">${is_us_ticker ? 'US$' : 'R$'} ${asset.current_price.toFixed(2)}</td>
+                  <td>${formatter.format(asset.invested_value)}</td>
+                  <td>${formatter.format(asset.current_value)}</td>
+                  <td class="${returnClass}">${formatter.format(returnValue)}</td>
+                  <td class="${returnClass}">${returnValue >= 0 ? '+' : ''}${asset.return_pct.toFixed(2)}%</td>
+                  <td>${weightPercent.toFixed(2)}%</td>
+                `;
+                assetsTableBody.appendChild(row);
+              });
+            }
+            // Se a tabela já existe, atualiza apenas os preços e valores
+            else {
+              portfolioData.assets.forEach(asset => {
+                const prevPrice = window.previousPrices[asset.ticker];
+                const priceCellId = `price-cell-${asset.ticker.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                const priceCell = document.getElementById(priceCellId);
+                
+                if (priceCell) {
+                  const is_us_ticker = asset.is_us_ticker;
+                  let priceArrow = '';
+                  let animationClass = '';
+                  
+                  // Compara com o preço anterior para animação
+                  if (prevPrice !== undefined) {
+                    if (asset.current_price > prevPrice) {
+                      priceArrow = '<i class="fas fa-caret-up price-arrow" style="color: var(--green)"></i>';
+                      animationClass = 'price-blink-up';
+                    } else if (asset.current_price < prevPrice) {
+                      priceArrow = '<i class="fas fa-caret-down price-arrow" style="color: var(--red)"></i>';
+                      animationClass = 'price-blink-down';
+                    }
+                  }
+                  
+                  // Remove classes anteriores de animação
+                  priceCell.classList.remove('price-blink-up', 'price-blink-down');
+                  
+                  // Atualiza o conteúdo do preço
+                  priceCell.innerHTML = `${is_us_ticker ? 'US$' : 'R$'} ${asset.current_price.toFixed(2)}${priceArrow}`;
+                  
+                  // Aplica a nova animação se houver mudança de preço
+                  if (animationClass) {
+                    // Força um reflow para reiniciar a animação
+                    void priceCell.offsetWidth;
+                    priceCell.classList.add(animationClass);
+                  }
+                  
+                  // Atualiza os valores derivados do preço
+                  const row = priceCell.parentElement;
+                  if (row) {
+                    const returnValue = asset.current_value - asset.invested_value;
+                    const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
+                    const totalCurrentValue = portfolioData.summary.total_current_value || 0;
+                    let weightPercent = 0;
+                    if (totalCurrentValue > 0) {
+                      weightPercent = (asset.current_value / totalCurrentValue) * 100;
+                    }
+                    
+                    // Atualiza os valores relacionados
+                    row.cells[6].textContent = formatter.format(asset.current_value);
+                    row.cells[7].textContent = formatter.format(returnValue);
+                    row.cells[7].className = returnClass;
+                    row.cells[8].textContent = `${returnValue >= 0 ? '+' : ''}${asset.return_pct.toFixed(2)}%`;
+                    row.cells[8].className = returnClass;
+                    row.cells[9].textContent = `${weightPercent.toFixed(2)}%`;
+                  }
+                  
+                  // Armazena o novo preço para a próxima comparação
+                  window.previousPrices[asset.ticker] = asset.current_price;
+                }
+              });
+            }
     
             document.getElementById('table-total-invested').textContent = formatter.format(portfolioData.summary.total_invested);
             document.getElementById('table-total-current').textContent = formatter.format(portfolioData.summary.total_current_value);
@@ -1385,10 +1446,14 @@
         // Adicionar listeners para os campos de data
         evolutionApplyBtn.addEventListener('click', () => updatePage(true));
         
-        // Atualização automática a cada 15 segundos (sem overlay)
+        // Armazenar preços anteriores globalmente para comparação durante atualizações
+        window.previousPrices = {};
+        
+        // Atualização automática a cada 30 segundos (sem overlay)
         setInterval(() => {
-          updatePage(false, false); // Atualiza silenciosamente, sem overlay e sem gráficos
-        }, 15000);
+          console.log("Executando atualização automática de preços...");
+          updatePage(false, false, true); // Atualiza silenciosamente, sem overlay, sem gráficos, mas força atualização de preços
+        }, 30000);
         
         // Inicializar a aplicação
         await loadExchangeRate();

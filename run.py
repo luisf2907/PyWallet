@@ -62,11 +62,6 @@ def start_backend():
     subprocess.Popen([python_exe, 'backend/app.py'])
     print(f"{Colors.GREEN}Servidor backend iniciado em http://localhost:5000{Colors.ENDC}")
 
-def open_browser():
-    print(f"{Colors.BLUE}Abrindo o navegador...{Colors.ENDC}")
-    time.sleep(3)
-    webbrowser.open('http://localhost:8000')
-
 def main():
     print_header()
 
@@ -80,8 +75,9 @@ def main():
     # Inicia frontend
     serve_frontend()
 
-    # Abre navegador
-    open_browser()
+    # Abre navegador automaticamente após 3 segundos
+    # Descomente a função abaixo e sua chamada se desejar este comportamento
+    # open_browser()
 
     print(f"PyWallet está rodando!\nFrontend: http://localhost:8000\nBackend: http://localhost:5000\n")
     print("Pressione Ctrl+C para sair.")
