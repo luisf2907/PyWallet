@@ -23,7 +23,7 @@ def print_header():
     clear_screen()
     print(f"{Colors.HEADER}{Colors.BOLD}")
     print("╔═══════════════════════════════════════════╗")
-    print("║                 PyWallet                   ║")
+    print("║                 PyWallet                  ║")
     print("║      Analisador de Investimentos          ║")
     print("╚═══════════════════════════════════════════╝")
     print(f"{Colors.ENDC}")

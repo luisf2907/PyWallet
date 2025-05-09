@@ -536,6 +536,22 @@ active_user_ids = set()
 active_tickers = set()
 active_tickers_lock = threading.Lock()
 
+# Limite de sessão: 30 minutos
+SESSION_TIMEOUT_MINUTES = 30
+
+@app.before_request
+def session_timeout_check():
+    user_id = session.get('user_id')
+    if user_id:
+        now = datetime.utcnow()
+        last_activity = session.get('last_activity')
+        if last_activity:
+            last_activity = datetime.strptime(last_activity, '%Y-%m-%dT%H:%M:%S')
+            if (now - last_activity) > timedelta(minutes=SESSION_TIMEOUT_MINUTES):
+                session.clear()
+                return jsonify({'error': 'Sessão expirada. Faça login novamente.'}), 401
+        session['last_activity'] = now.strftime('%Y-%m-%dT%H:%M:%S')
+
 def update_active_tickers():
     """Atualiza o set de tickers únicos dos usuários ativos."""
     global active_tickers
@@ -588,6 +604,7 @@ def login():
         return jsonify({'error': 'Credenciais incorretas'}), 401
 
     session['user_id'] = user.id
+    session['last_activity'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     # Adiciona usuário à lista de ativos
     active_user_ids.add(user.id)
     update_active_tickers()
@@ -1012,7 +1029,9 @@ def portfolio_summary():
 @app.route('/api/dividends', methods=['GET'])
 def get_dividends():
     user_id = session.get('user_id')
+    print(f"[DIVIDENDS] user_id da sessão: {user_id}")
     if not user_id:
+        print("[DIVIDENDS] Usuário não autenticado!")
         return jsonify({'error': 'Usuário não autenticado'}), 401
 
     # Buscar dividendos do cache (apenas de 2023 em diante)
@@ -1022,13 +1041,26 @@ def get_dividends():
         DividendsCache.date >= start_date
     ).order_by(DividendsCache.date.asc())
     dividends = [d.to_dict() for d in cache_query]
+    print(f"[DIVIDENDS] Dividendos encontrados no banco: {len(dividends)}")
     # Buscar status de recebimento
     receipts = DividendReceiptStatus.query.filter_by(user_id=user_id).all()
     receipt_map = {(r.ticker, r.date): r.received for r in receipts}
     for d in dividends:
         key = (d['ticker'], datetime.strptime(d['date'], '%Y-%m-%d').date())
         d['received'] = receipt_map.get(key, True)
+    print(f"[DIVIDENDS] Dividendos retornados para o frontend: {len(dividends)}")
+    if len(dividends) < 10:
+        print(f"[DIVIDENDS] Conteúdo retornado: {dividends}")
     return jsonify({'dividends': dividends})
+
+# Endpoint de debug para ver dividendos brutos do banco
+@app.route('/api/debug/dividends-raw', methods=['GET'])
+def debug_dividends_raw():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    all_divs = DividendsCache.query.filter_by(user_id=user_id).order_by(DividendsCache.date.asc()).all()
+    return jsonify({'raw_dividends': [d.to_dict() for d in all_divs]})
 
 # =============================================================================
 # Endpoint para registrar status de recebimento de proventos
