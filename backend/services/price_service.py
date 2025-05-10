@@ -3,6 +3,10 @@ from datetime import datetime
 from flask import current_app
 import json
 import types  # Para retornar objeto de resultado com atributos
+import threading
+
+# Lock global para operações de escrita no PriceCache
+pricecache_write_lock = threading.Lock()
 
 from extensions.database import db
 from models.price import PriceCache
@@ -246,8 +250,8 @@ def update_price_cache_for_all_tickers():
         # Processa os resultados
         process_yfinance_results(df, tickers, result)
         
-        # Remove tickers delisted do cache
-        remove_delisted_from_cache(result.delisted_tickers)
+        # Atualiza o banco conforme as regras de delisted/rate limit
+        update_price_cache_db(result.delisted_tickers, result.total_tickers)
         
         return result
         
@@ -267,78 +271,84 @@ def process_yfinance_results(df, tickers, result=None):
         tickers (list): Lista de tickers
         result (object): Objeto opcional para armazenar informações sobre tickers delisted
     """
-    for ticker in tickers:
-        # Pula tickers que já sabemos que estão delisted
-        if result and ticker in result.delisted_tickers:
-            continue
-            
-        # Primeiro tenta obter o preço direto da API info (preço em tempo real)
-        price = None
-        try:
-            ticker_info = yf.Ticker(ticker).info
-            # Tenta obter o preço atual ou preço de mercado regular
-            price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
-            if price:
-                print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
-        except Exception as e:
-            print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
-            # Verifica se é um erro de "possibly delisted"
-            if 'possibly delisted' in str(e).lower() and result is not None:
-                print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
-                result.delisted_tickers.append(ticker)
+    BATCH_SIZE = 10
+    batch_count = 0
+    with pricecache_write_lock:
+        for ticker in tickers:
+            # Pula tickers que já sabemos que estão delisted
+            if result and ticker in result.delisted_tickers:
                 continue
-            
-        # Se não conseguiu via info, tenta usar o DataFrame do histórico
-        if price is None and df is not None:
-            close_series = None
-            if len(tickers) == 1:
-                close_series = df['Close'] if 'Close' in df else None
-            else:
-                if (ticker, 'Close') in df:
-                    close_series = df[(ticker, 'Close')]
-                elif ticker in df and 'Close' in df[ticker]:
-                    close_series = df[ticker]['Close']
-            
+                
+            # Primeiro tenta obter o preço direto da API info (preço em tempo real)
+            price = None
             try:
-                if close_series is not None and not close_series.empty:
-                    price = float(close_series.dropna().iloc[-1])
-                    print(f"[PRICECACHE] Preço histórico usado para {ticker}: {price}")
+                ticker_info = yf.Ticker(ticker).info
+                # Tenta obter o preço atual ou preço de mercado regular
+                price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
+                if price:
+                    print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
+            except Exception as e:
+                print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
+                # Verifica se é um erro de "possibly delisted"
+                if 'possibly delisted' in str(e).lower() and result is not None:
+                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
+                    result.delisted_tickers.append(ticker)
+                    continue
+                
+            # Se não conseguiu via info, tenta usar o DataFrame do histórico
+            if price is None and df is not None:
+                close_series = None
+                if len(tickers) == 1:
+                    close_series = df['Close'] if 'Close' in df else None
                 else:
-                    print(f"[PRICECACHE] Série de preços vazia para {ticker}, ignorando.")
-                    # Ticker pode estar delisted se não tem preços históricos
+                    if (ticker, 'Close') in df:
+                        close_series = df[(ticker, 'Close')]
+                    elif ticker in df and 'Close' in df[ticker]:
+                        close_series = df[ticker]['Close']
+                
+                try:
+                    if close_series is not None and not close_series.empty:
+                        price = float(close_series.dropna().iloc[-1])
+                        print(f"[PRICECACHE] Preço histórico usado para {ticker}: {price}")
+                    else:
+                        print(f"[PRICECACHE] Série de preços vazia para {ticker}, ignorando.")
+                        # Ticker pode estar delisted se não tem preços históricos
+                        if result is not None:
+                            result.delisted_tickers.append(ticker)
+                            print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via série vazia)")
+                except IndexError:
+                    print(f"[PRICECACHE] IndexError: série vazia para {ticker}, ignorando.")
+                    # Ticker pode estar delisted se gera IndexError
                     if result is not None:
                         result.delisted_tickers.append(ticker)
-                        print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via série vazia)")
-            except IndexError:
-                print(f"[PRICECACHE] IndexError: série vazia para {ticker}, ignorando.")
-                # Ticker pode estar delisted se gera IndexError
-                if result is not None:
-                    result.delisted_tickers.append(ticker)
-                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via IndexError)")
-            except Exception as e:
-                print(f"[PRICECACHE] Erro ao acessar preço para {ticker}: {e}")
-            
-        if price is not None:
-            # Sempre salva o ticker normalizado
-            obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
-            if obj:
-                obj.price = price
-                obj.last_updated = datetime.now()
+                        print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via IndexError)")
+                except Exception as e:
+                    print(f"[PRICECACHE] Erro ao acessar preço para {ticker}: {e}")
+                
+            if price is not None:
+                # Sempre salva o ticker normalizado
+                obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
+                if obj:
+                    obj.price = price
+                    obj.last_updated = datetime.now()
+                else:
+                    db.session.add(PriceCache(
+                        user_id=None,
+                        ticker=ticker,
+                        price=price,
+                        last_updated=datetime.now()
+                     ))
+                batch_count += 1
+                if batch_count % BATCH_SIZE == 0:
+                    db.session.commit()
             else:
-                db.session.add(PriceCache(
-                    user_id=None,
-                    ticker=ticker,
-                    price=price,
-                    last_updated=datetime.now()
-                ))
-        else:
-            print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
-            # Se não conseguimos nenhum preço, pode estar delisted
-            if result is not None and ticker not in result.delisted_tickers:
-                result.delisted_tickers.append(ticker)
-                print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via price=None)")
-    
-    db.session.commit()
+                print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
+                # Se não conseguimos nenhum preço, pode estar delisted
+                if result is not None and ticker not in result.delisted_tickers:
+                    result.delisted_tickers.append(ticker)
+                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via price=None)")
+        
+        db.session.commit()
     print(f'[PRICECACHE] Preços atualizados para {len(tickers)} ativos únicos')
     if result and result.delisted_tickers:
         print(f'[PRICECACHE] {len(result.delisted_tickers)} tickers possivelmente delisted')
@@ -348,8 +358,27 @@ def remove_delisted_from_cache(delisted_tickers):
     if not delisted_tickers:
         return
     for ticker in delisted_tickers:
-        obj = PriceCache.query.filter_by(ticker=ticker).first()
-        if obj:
-            db.session.delete(obj)
-            print(f"[PRICECACHE] Removido ticker delisted do cache: {ticker}")
+        with pricecache_write_lock:
+            obj = PriceCache.query.filter_by(ticker=ticker).first()
+            if obj:
+                db.session.delete(obj)
+                print(f"[PRICECACHE] Removido ticker delisted do cache: {ticker}")
     db.session.commit()
+
+def update_price_cache_db(delisted_tickers, total_tickers):
+    """
+    Atualiza o banco de dados PriceCache conforme as regras:
+    - Se todos os tickers deram erro, não remove nenhum (rate limit).
+    - Se apenas alguns deram erro, remove apenas esses do banco.
+    """
+    if total_tickers > 0 and len(delisted_tickers) == total_tickers:
+        print("[PRICECACHE] Todos os tickers falharam, possível rate limit. Não removendo tickers do banco.")
+        return
+    if delisted_tickers:
+        for ticker in delisted_tickers:
+            obj = PriceCache.query.filter_by(ticker=ticker).first()
+            if obj:
+                db.session.delete(obj)
+                print(f"[PRICECACHE] Removido ticker delisted do cache: {ticker}")
+        db.session.commit()
+        print(f"[PRICECACHE] {len(delisted_tickers)} tickers removidos do cache.")

@@ -18,9 +18,6 @@ from utils.cache_utils import is_rate_limited, handle_rate_limit, reset_rate_lim
 from extensions.database import execute_with_retry, db
 from models.price import PriceCache
 
-# Semáforo global para controlar acesso ao banco de dados
-db_semaphore = threading.Semaphore(1)
-
 # Flag para controlar se as threads já estão rodando
 threads_started = False
 
@@ -121,19 +118,11 @@ def schedule_dividends_update():
         if now >= target_time:
             try:
                 print('[DIVIDENDS] Atualização diária programada iniciada.')
-                # Adquire o semáforo antes de acessar o banco de dados
-                if db_semaphore.acquire(timeout=5):  # Timeout de 5 segundos
-                    try:
-                        with flask_app.app_context():
-                            # Usando o sistema de retry
-                            execute_with_retry(update_dividends_cache_for_all_users)
-                            # Marca que atualizou hoje
-                            last_update_date = now.date()
-                    finally:
-                        # Sempre libera o semáforo
-                        db_semaphore.release()
-                else:
-                    print('[DIVIDENDS] Não foi possível obter acesso ao banco de dados (timeout)')
+                with flask_app.app_context():
+                    # Usando o sistema de retry
+                    execute_with_retry(update_dividends_cache_for_all_users)
+                    # Marca que atualizou hoje
+                    last_update_date = now.date()
             except Exception as e:
                 print(f'[DIVIDENDS] Erro na atualização diária programada: {e}')
             
@@ -180,17 +169,9 @@ def schedule_prices_update():
                 
             try:
                 print('[PRICECACHE] Atualização diária programada iniciada.')
-                # Adquire o semáforo antes de acessar o banco de dados
-                if db_semaphore.acquire(timeout=5):  # Timeout de 5 segundos
-                    try:
-                        with flask_app.app_context():
-                            # Usando o sistema de retry
-                            execute_with_retry(update_price_cache_for_all_tickers)
-                    finally:
-                        # Sempre libera o semáforo
-                        db_semaphore.release()
-                else:
-                    print('[PRICECACHE] Não foi possível obter acesso ao banco de dados (timeout)')
+                with flask_app.app_context():
+                    # Usando o sistema de retry
+                    execute_with_retry(update_price_cache_for_all_tickers)
             except Exception as e:
                 print(f'[PRICECACHE] Erro na atualização diária programada: {e}')
                 
@@ -239,43 +220,27 @@ def update_all_portfolios():
                     
                 last_market_status = True
                 
-                # Adquire o semáforo antes de acessar o banco de dados
-                if db_semaphore.acquire(timeout=5):  # Timeout de 5 segundos
+                with flask_app.app_context():
                     try:
-                        # Atualiza apenas ativos únicos dentro do contexto da aplicação
-                        with flask_app.app_context():
-                            try:
-                                # Usando o sistema de retry com tratamento de delisted
-                                execute_with_retry(update_prices_with_delisted_handling)
-                            except Exception as e:
-                                print(f"[ERROR] Erro ao atualizar preços: {e}")
-                    finally:
-                        # Sempre libera o semáforo
-                        db_semaphore.release()
-                else:
-                    print('[PRICECACHE] Não foi possível obter acesso ao banco de dados (timeout)')
+                        # Usando o sistema de retry com tratamento de delisted
+                        execute_with_retry(update_prices_with_delisted_handling)
+                    except Exception as e:
+                        print(f"[ERROR] Erro ao atualizar preços: {e}")
                 
                 # Atualiza o dólar a cada 10 ciclos (30 minutos)
                 dollar_counter += 1
                 if dollar_counter >= 10:
-                    # Adquire o semáforo antes de acessar o banco de dados
-                    if db_semaphore.acquire(timeout=5):  # Timeout de 5 segundos
+                    with flask_app.app_context():
                         try:
-                            with flask_app.app_context():
-                                try:
-                                    # Usando sistema de retry para atualização do dólar
-                                    def update_dollar():
-                                        get_cached_dollar_rate(force_update=True)
-                                        reset_rate_limit()
-                                        
-                                    execute_with_retry(update_dollar)
-                                except Exception as e:
-                                    print(f"Erro ao atualizar dólar: {e}")
-                                    if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
-                                        handle_rate_limit()
-                        finally:
-                            # Sempre libera o semáforo
-                            db_semaphore.release()
+                            def update_dollar():
+                                get_cached_dollar_rate(force_update=True)
+                                reset_rate_limit()
+                                
+                            execute_with_retry(update_dollar)
+                        except Exception as e:
+                            print(f"Erro ao atualizar dólar: {e}")
+                            if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
+                                handle_rate_limit()
                     dollar_counter = 0
                 
                 print(f"[SCHEDULER] Dormindo por 30 minutos antes da próxima atualização (mercado aberto)")
@@ -317,19 +282,11 @@ def start_scheduled_tasks(app):
         print(f"Inicializando tarefas agendadas (instância {instance_id})...")
         
         try:
-            # Adquire o semáforo antes das operações iniciais
-            if db_semaphore.acquire(timeout=10):  # Timeout aumentado para inicialização
-                try:
-                    # Atualiza preços na inicialização (apenas uma vez)
-                    execute_with_retry(update_prices_with_delisted_handling)
-                    
-                    # Atualiza dividendos na inicialização
-                    execute_with_retry(update_dividends_cache_for_all_users)
-                finally:
-                    # Sempre libera o semáforo
-                    db_semaphore.release()
-            else:
-                print('[SCHEDULER] Não foi possível obter acesso ao banco de dados durante inicialização (timeout)')
+            # Atualiza preços na inicialização (apenas uma vez)
+            execute_with_retry(update_prices_with_delisted_handling)
+            
+            # Atualiza dividendos na inicialização
+            execute_with_retry(update_dividends_cache_for_all_users)
         except Exception as e:
             print(f"[SCHEDULER] Erro durante inicialização das tarefas: {e}")
         
