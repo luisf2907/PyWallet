@@ -45,14 +45,16 @@ def update_prices_with_delisted_handling():
     if (now - last_price_update_time).total_seconds() < 1500:  # 25 minutos em segundos
         print(f"[PRICECACHE] Última atualização foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos. Pulando atualização.")
         return
+    
+    print(f"[PRICECACHE] Iniciando atualização de preços (última atualização: {(now - last_price_update_time).total_seconds() / 60:.1f} minutos atrás).")
+    
+    # Atualiza o tempo da última atualização ANTES de começar para evitar múltiplas atualizações simultâneas
+    last_price_update_time = now
         
     # Se todos os tickers derem erro, pode ser rate limit
     all_tickers_failed = False
     
     try:
-        # Marca o tempo da atualização
-        last_price_update_time = now
-        
         # Primeira tentativa de atualização normal
         result = update_price_cache_for_all_tickers()
         
@@ -268,7 +270,7 @@ def start_scheduled_tasks(app):
     Args:
         app (Flask): Instância da aplicação Flask
     """
-    global threads_started
+    global threads_started, last_price_update_time
     
     # Evitar iniciar as threads mais de uma vez (em caso de reload do Flask)
     if threads_started:
@@ -282,11 +284,36 @@ def start_scheduled_tasks(app):
         print(f"Inicializando tarefas agendadas (instância {instance_id})...")
         
         try:
-            # Atualiza preços na inicialização (apenas uma vez)
-            execute_with_retry(update_prices_with_delisted_handling)
+            # Verifica se a última atualização de preços foi recente (menos de 10 minutos)
+            now = datetime.now()
+            if (now - last_price_update_time).total_seconds() > 600:  # 10 minutos
+                # Executa a atualização de preços em uma thread separada para não bloquear a inicialização
+                def async_price_update():
+                    with app.app_context():
+                        try:
+                            print("[SCHEDULER] Iniciando atualização de preços em segundo plano...")
+                            execute_with_retry(update_prices_with_delisted_handling)
+                            print("[SCHEDULER] Atualização de preços em segundo plano concluída.")
+                        except Exception as e:
+                            print(f"[SCHEDULER] Erro na atualização de preços em segundo plano: {e}")
+                
+                price_thread = threading.Thread(target=async_price_update, daemon=True)
+                price_thread.start()
+            else:
+                print(f"[SCHEDULER] Última atualização de preços foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos. Pulando atualização inicial.")
             
-            # Atualiza dividendos na inicialização
-            execute_with_retry(update_dividends_cache_for_all_users)
+            # Atualiza dividendos na inicialização (também em uma thread separada)
+            def async_dividend_update():
+                with app.app_context():
+                    try:
+                        print("[SCHEDULER] Iniciando atualização de dividendos em segundo plano...")
+                        execute_with_retry(update_dividends_cache_for_all_users)
+                        print("[SCHEDULER] Atualização de dividendos em segundo plano concluída.")
+                    except Exception as e:
+                        print(f"[SCHEDULER] Erro na atualização de dividendos em segundo plano: {e}")
+            
+            dividend_thread = threading.Thread(target=async_dividend_update, daemon=True)
+            dividend_thread.start()
         except Exception as e:
             print(f"[SCHEDULER] Erro durante inicialização das tarefas: {e}")
         

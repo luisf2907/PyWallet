@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <style>
-      :root {
+    <style>      :root {
         --primary-color: #121212;       /* Fundo geral: preto */
         --secondary-color: #1e1e1e;       /* Sidebar: cinza muito escuro */
         --accent-color: #ffc107;          /* Amarelo para destaques */
@@ -19,6 +18,43 @@
         --red: #ef4444;
         --highlight-color: var(--accent-color);
         --dark-panel: #242424;
+        --blue: #3b82f6;
+      }
+      
+      .system-status {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        z-index: 1000;
+        background-color: rgba(30, 30, 30, 0.9);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transition: all 0.3s ease;
+        opacity: 0.8;
+      }
+      
+      .system-status:hover {
+        opacity: 1;
+      }
+      
+      .system-status.updating {
+        background-color: var(--blue);
+        color: white;
+      }
+      
+      .system-status .spinner {
+        animation: spin 1.5s linear infinite;
+        display: inline-block;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
 
       * {
@@ -642,12 +678,17 @@
         }
       }
     </style>
-  </head>
-  <body>
+  </head>  <body>
     <!-- Loading Overlay -->
       <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Carregando dashboard...</div>
+      </div>
+      
+      <!-- System Status Indicator -->
+      <div id="system-status" class="system-status" style="display: none;">
+        <i class="fas fa-sync-alt spinner"></i>
+        <span id="status-text">Atualizando preços...</span>
       </div>
 
       <!-- Sidebar -->
@@ -1448,12 +1489,57 @@
         
         // Armazenar preços anteriores globalmente para comparação durante atualizações
         window.previousPrices = {};
+          // Função para verificar o status do sistema
+        async function checkSystemStatus() {
+          try {
+            const status = await utilsAPI.getSystemStatus();
+            const systemStatusElem = document.getElementById('system-status');
+            const statusTextElem = document.getElementById('status-text');
+            
+            if (status.price_update && status.price_update.update_in_progress) {
+              // Atualização em andamento
+              systemStatusElem.style.display = 'flex';
+              systemStatusElem.classList.add('updating');
+              statusTextElem.textContent = 'Atualizando preços...';
+            } else {
+              // Não está atualizando
+              systemStatusElem.classList.remove('updating');
+              
+              // Se foi atualizado recentemente (menos de 10 minutos), mostra e depois esconde
+              if (status.price_update && status.price_update.last_update_minutes_ago < 10) {
+                systemStatusElem.style.display = 'flex';
+                statusTextElem.textContent = `Preços atualizados há ${status.price_update.last_update_minutes_ago.toFixed(1)} minutos`;
+                
+                // Esconde após 5 segundos
+                setTimeout(() => {
+                  systemStatusElem.style.display = 'none';
+                }, 5000);
+              } else {
+                systemStatusElem.style.display = 'none';
+              }
+            }
+            
+            return status;
+          } catch (error) {
+            console.error('Erro ao verificar status do sistema:', error);
+            return null;
+          }
+        }
+
+        // Verificar status a cada 15 segundos
+        setInterval(async () => {
+          const status = await checkSystemStatus();
+          
+          // Só atualiza os preços se não estiver em atualização no servidor
+          // e se a última atualização foi há mais de 30 segundos
+          if (status && (!status.price_update.update_in_progress) && status.price_update.last_update_minutes_ago > 0.5) {
+            console.log("Executando atualização automática de preços...");
+            updatePage(false, false, true); // Atualiza silenciosamente, sem overlay, sem gráficos
+          }
+        }, 15000);
         
-        // Atualização automática a cada 30 segundos (sem overlay)
-        setInterval(() => {
-          console.log("Executando atualização automática de preços...");
-          updatePage(false, false, true); // Atualiza silenciosamente, sem overlay, sem gráficos, mas força atualização de preços
-        }, 30000);
+        // Verificação inicial de status
+        await checkSystemStatus();
         
         // Inicializar a aplicação
         await loadExchangeRate();

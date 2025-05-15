@@ -119,7 +119,8 @@ const portfolioAPI = {
 // API de utilitários
 const utilsAPI = {
     getExchangeRate: () => fetchAPI('/exchange-rate'),
-    healthCheck: () => fetchAPI('/health')
+    healthCheck: () => fetchAPI('/health'),
+    getSystemStatus: () => fetchAPI('/system-status')
 };
 
 // API de dividendos
