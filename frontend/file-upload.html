@@ -184,8 +184,8 @@
 
         h1 {
             font-size: 2rem;
-            font-weight: 600;
-            background: linear-gradient(45deg, var(--accent-color), #ffd54f);
+            font-weight: 600;            background: linear-gradient(45deg, var(--accent-color), #ffd54f);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -249,6 +249,36 @@
             font-size: 0.9rem;
             color: var(--text-secondary);
             margin-bottom: 1rem;
+        }
+        
+        /* Estilos para os botões de toggle */
+        .toggle-buttons {
+            display: flex;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: var(--primary-color);
+            color: var(--text-color);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .toggle-btn:hover {
+            filter: brightness(1.1);
+        }
+        
+        .toggle-active {
+            background: #ffc107;
+            color: #000;
         }
 
         .btn-container {
@@ -468,8 +498,7 @@
             </div>
             <div class="upload-container" id="upload-area">
                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                <div class="upload-text">Arraste e solte seu arquivo aqui</div>
-                <div class="file-formats">Formatos aceitos: .csv, .xlsx</div>
+                <div class="upload-text">Arraste e solte seu arquivo aqui</div>                <div class="file-formats">Formatos aceitos: .csv, .xlsx</div>
                 <input type="file" id="file-input" class="file-input" accept=".csv, .xlsx" style="display: none;">
             </div>
             <div class="file-details" id="file-details">
@@ -486,12 +515,52 @@
                     <i class="fas fa-forward"></i>
                     Pular por enquanto
                 </button>
-            </div>
-            <div class="download-section">
-                <a href="#" class="btn btn-secondary" id="download-template">
+            </div>              <div class="download-section">
+                <a href="https://drive.google.com/uc?export=download&id=1W3GI8bGTNxyMdgJ05qEhPUUE_MW1AJFU" 
+                   target="_blank" class="btn btn-secondary" id="download-template">
                     <i class="fas fa-download"></i>
                     Baixar modelo de planilha
                 </a>
+            </div>
+
+            <!-- Seção para alterar posição de uma empresa específica -->
+            <div class="manual-update-section" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-color);">Alterar por Empresa</h2>
+                <p class="description">Adicione ou modifique a posição de uma empresa específica em seu portfólio.</p>
+                  <div class="empresa-form" style="background: rgba(255, 255, 255, 0.02); border-radius: 0.75rem; padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border-color);">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="empresa-codigo" style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Código da empresa:</label>
+                        <input type="text" id="empresa-codigo" class="form-control" style="width: 100%; padding: 0.75rem; background: var(--primary-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 0.5rem;" placeholder="Ex: PETR4, VALE3, etc.">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Tipo de operação:</label>
+                        <div class="toggle-buttons" style="display: flex; width: 100%; border-radius: 0.5rem; overflow: hidden;">
+                            <button id="toggle-compra" class="toggle-btn toggle-active" style="flex: 1; padding: 0.75rem; background: #ffc107; color: #000; border: none; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                                <i class="fas fa-arrow-alt-circle-up"></i> Compra
+                            </button>
+                            <button id="toggle-venda" class="toggle-btn" style="flex: 1; padding: 0.75rem; background: var(--primary-color); color: var(--text-color); border: none; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                                <i class="fas fa-arrow-alt-circle-down"></i> Venda
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="empresa-preco" style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Preço médio:</label>
+                        <input type="text" id="empresa-preco" class="form-control" style="width: 100%; padding: 0.75rem; background: var(--primary-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 0.5rem;" placeholder="Use ponto ou vírgula para decimais">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="empresa-quantidade" style="display: block; margin-bottom: 0.5rem; color: var(--text-color);">Quantidade:</label>
+                        <input type="text" id="empresa-quantidade" class="form-control" style="width: 100%; padding: 0.75rem; background: var(--primary-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 0.5rem;" placeholder="Número inteiro positivo">
+                        <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary);">Para remover uma posição, defina a quantidade como zero.</small>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="empresa-update-btn" style="width: 100%; margin-top: 1rem;">
+                        <i class="fas fa-save"></i>
+                        Salvar Alterações
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -625,13 +694,96 @@
             // Event: Skip button
             skipBtn.addEventListener('click', function() {
                 window.location.href = 'dashboard.html';
-            });
+            });            // Event: Download template            // O download do template agora é tratado diretamente pelo link para o Google Drive
+              // Event: Toggle buttons para Compra/Venda
+            const toggleCompra = document.getElementById('toggle-compra');
+            const toggleVenda = document.getElementById('toggle-venda');
             
-            // Event: Download template
-            downloadTemplate.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = 'http://localhost:5000/api/download-template';
-            });
+            let operacaoTipo = 'compra'; // Valor padrão
+            
+            if (toggleCompra && toggleVenda) {
+                toggleCompra.addEventListener('click', function() {
+                    toggleCompra.classList.add('toggle-active');
+                    toggleCompra.style.background = '#ffc107';
+                    toggleCompra.style.color = '#000';
+                    
+                    toggleVenda.classList.remove('toggle-active');
+                    toggleVenda.style.background = 'var(--primary-color)';
+                    toggleVenda.style.color = 'var(--text-color)';
+                    
+                    operacaoTipo = 'compra';
+                });
+                
+                toggleVenda.addEventListener('click', function() {
+                    toggleVenda.classList.add('toggle-active');
+                    toggleVenda.style.background = '#ffc107';
+                    toggleVenda.style.color = '#000';
+                    
+                    toggleCompra.classList.remove('toggle-active');
+                    toggleCompra.style.background = 'var(--primary-color)';
+                    toggleCompra.style.color = 'var(--text-color)';
+                    
+                    operacaoTipo = 'venda';
+                });
+            }
+            
+            // Event: Empresa update button
+            const empresaUpdateBtn = document.getElementById('empresa-update-btn');
+            if (empresaUpdateBtn) {
+                empresaUpdateBtn.addEventListener('click', async function() {
+                    // Obter valores do formulário
+                    const codigo = document.getElementById('empresa-codigo').value.trim();
+                    const preco = document.getElementById('empresa-preco').value.trim();
+                    const quantidade = document.getElementById('empresa-quantidade').value.trim();
+                    
+                    // Validação básica
+                    if (!codigo) {
+                        showAlert('Por favor, informe o código da empresa.', 'error');
+                        return;
+                    }
+                    
+                    if (!preco || isNaN(parseFloat(preco.replace(',', '.')))) {
+                        showAlert('Por favor, informe um preço válido.', 'error');
+                        return;
+                    }
+                    
+                    if (!quantidade || isNaN(parseInt(quantidade))) {
+                        showAlert('Por favor, informe uma quantidade válida.', 'error');
+                        return;
+                    }
+                    
+                    // Preparar dados para envio
+                    const data = {
+                        codigo: codigo.toUpperCase(),
+                        preco: parseFloat(preco.replace(',', '.')),
+                        quantidade: parseInt(quantidade),
+                        tipo_operacao: operacaoTipo
+                    };
+                    
+                    try {
+                        // Desabilitar botão durante o processamento
+                        empresaUpdateBtn.disabled = true;
+                        empresaUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                        
+                        // Enviar dados para a API
+                        const result = await portfolioAPI.updateEmpresa(data);
+                        
+                        // Mostrar mensagem de sucesso
+                        showAlert(result.message || 'Posição atualizada com sucesso!', 'success');
+                        
+                        // Limpar o formulário
+                        document.getElementById('empresa-codigo').value = '';
+                        document.getElementById('empresa-preco').value = '';
+                        document.getElementById('empresa-quantidade').value = '';
+                    } catch (error) {
+                        showAlert(error.message || 'Erro ao atualizar posição.', 'error');
+                    } finally {
+                        // Reabilitar botão
+                        empresaUpdateBtn.disabled = false;
+                        empresaUpdateBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
+                    }
+                });
+            }
             
             // Helper function to format file size
             function formatFileSize(bytes) {

@@ -260,6 +260,8 @@ def get_portfolio_distribution(user_id):
     
     return {'distribution': distribution_list}, 200
 
+# A função generate_template_file foi removida pois o template agora é obtido diretamente do Google Drive
+
 def register_transaction(user_id, tipo, ticker, preco, quantidade):
     """
     Registra uma transação (compra/venda) no portfólio.
@@ -345,3 +347,131 @@ def register_transaction(user_id, tipo, ticker, preco, quantidade):
     clear_evolution_cache_for_user(user_id)
     
     return {'message': 'Transação registrada com sucesso!'}, 200
+
+def update_empresa_manual(user_id, codigo, preco, quantidade, tipo_operacao='compra'):
+    """
+    Atualiza manualmente a posição de uma empresa no portfólio.
+    
+    Args:
+        user_id (str): ID do usuário
+        codigo (str): Código do ticker
+        preco (float): Novo preço médio
+        quantidade (int/float): Nova quantidade
+        tipo_operacao (str): Tipo da operação ('compra' ou 'venda')
+        
+    Returns:
+        tuple: (dict, int) - Resposta e código HTTP
+    """
+    try:
+        # Validações básicas
+        codigo = codigo.strip().upper()
+        if not codigo:
+            return {'error': 'Código da empresa não informado'}, 400
+        
+        try:
+            preco = float(preco)
+            if ',' in str(preco):
+                preco = float(str(preco).replace(',', '.'))
+        except (ValueError, TypeError):
+            return {'error': 'Preço inválido'}, 400
+            
+        try:
+            quantidade = float(quantidade)
+            if ',' in str(quantidade):
+                quantidade = float(str(quantidade).replace(',', '.'))
+        except (ValueError, TypeError):
+            return {'error': 'Quantidade inválida'}, 400
+        
+        # Validar se o ticker existe
+        try:
+            import yfinance as yf
+            yf_ticker = format_ticker(codigo)
+            tinfo = yf.Ticker(yf_ticker).info
+            if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
+                return {'error': 'Ticker não encontrado'}, 400
+        except Exception:
+            # Se falhar a validação online, ainda permite atualizar
+            print(f"Erro ao validar ticker {codigo}, mas permitindo atualização")
+          # Ajustar sinal da quantidade baseado no tipo de operação
+        quantidade_com_sinal = quantidade
+        if tipo_operacao == 'venda':
+            quantidade_com_sinal = -quantidade  # Quantidade negativa para venda
+            
+        # Carregar portfólio atual
+        portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
+        if not portfolio:
+            # Se não há portfólio, criar um novo com apenas este ativo
+            if tipo_operacao == 'compra' and quantidade > 0:  # Só adiciona na compra
+                portfolio_data = [{'ticker': codigo, 'preco_medio': preco, 'quantidade': quantidade}]
+            else:
+                return {'error': 'Não é possível vender um ativo que não existe no portfólio'}, 400
+        else:
+            try:
+                portfolio_data = json.loads(portfolio.data)
+            except Exception:
+                portfolio_data = []
+            
+            # Procurar e atualizar o ativo
+            found = False
+            for asset in portfolio_data:
+                if asset['ticker'].strip().upper() == codigo:
+                    # Em caso de compra/venda, ajustar valores
+                    if tipo_operacao == 'compra' or tipo_operacao == 'venda':
+                        # Calcular nova quantidade
+                        nova_quantidade = float(asset['quantidade']) + quantidade_com_sinal
+                        
+                        # Se for compra, recalcular o preço médio
+                        if tipo_operacao == 'compra' and nova_quantidade > 0:
+                            valor_atual = float(asset['preco_medio']) * float(asset['quantidade'])
+                            valor_novo = preco * quantidade
+                            valor_total = valor_atual + valor_novo
+                            nova_quantidade_total = float(asset['quantidade']) + quantidade
+                            novo_preco_medio = valor_total / nova_quantidade_total
+                            asset['preco_medio'] = novo_preco_medio
+                        
+                        # Atualizar quantidade
+                        if nova_quantidade >= 0:  # Garantir que não fica negativo
+                            asset['quantidade'] = nova_quantidade
+                        else:
+                            return {'error': 'A quantidade a vender é maior que a disponível no portfólio'}, 400
+                    else:
+                        # Atualização manual direta
+                        asset['preco_medio'] = preco
+                        asset['quantidade'] = quantidade
+                        
+                    found = True
+                    break            # Se não encontrou e é uma compra, adicionar novo
+            if not found and tipo_operacao == 'compra' and quantidade > 0:
+                portfolio_data.append({'ticker': codigo, 'preco_medio': preco, 'quantidade': quantidade})
+            elif not found and tipo_operacao == 'venda':
+                return {'error': f'Não é possível vender {codigo} pois não existe no portfólio'}, 404
+            elif not found:
+                return {'error': f'Empresa {codigo} não encontrada no portfólio'}, 404
+            
+            # Remover ativos com quantidade zero ou negativa
+            portfolio_data = [a for a in portfolio_data if float(a.get('quantidade', 0)) > 0]
+        
+        # Salvar novo estado do portfólio
+        new_portfolio = Portfolio(
+            user_id=user_id,
+            data=json.dumps(portfolio_data),
+            filename=f"manual_update_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+        )
+        db.session.add(new_portfolio)
+        db.session.commit()
+          # Limpar cache
+        clear_evolution_cache_for_user(user_id)
+        
+        operacao_desc = 'comprada' if tipo_operacao == 'compra' else 'vendida'
+        return {
+            'message': f'Operação de {tipo_operacao.upper()} para {codigo} registrada com sucesso!',
+            'ticker': codigo,
+            'preco_medio': preco,
+            'quantidade': quantidade,
+            'tipo_operacao': tipo_operacao
+        }, 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'error': f'Erro ao atualizar empresa: {str(e)}'}, 500

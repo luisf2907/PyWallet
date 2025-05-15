@@ -69,8 +69,25 @@ def exchange_rate():
     rate = get_cached_dollar_rate()
     return jsonify({'rate': rate}), 200
 
-@portfolio_bp.route('/download-template', methods=['GET'])
-def download_template():
-    """Endpoint para baixar o template de portfólio."""
-    template_path = os.path.join(current_app.root_path, 'templates')
-    return send_from_directory(template_path, 'template.xlsx', as_attachment=True)
+# Endpoint para download de template foi removido, agora o download é feito diretamente do Google Drive
+
+@portfolio_bp.route('/empresa-update', methods=['POST'])
+def empresa_update():
+    """Endpoint para alterar posição de uma empresa (compra/venda manual)."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    
+    data = request.get_json()
+    codigo = data.get('codigo')
+    preco = data.get('preco')
+    quantidade = data.get('quantidade')
+    tipo_operacao = data.get('tipo_operacao', 'compra')  # Valor padrão é 'compra'
+    
+    if not codigo or preco is None or quantidade is None:
+        return jsonify({'error': 'Dados incompletos.'}), 400
+    
+    from services.portfolio_service import update_empresa_manual
+    result, status = update_empresa_manual(user_id, codigo, preco, quantidade, tipo_operacao)
+    
+    return jsonify(result), status

@@ -78,5 +78,14 @@ def init_app():
 # Aplicação global
 app = init_app()
 
+# Rota direta de backup para o template
+@app.route('/api/template-download-direct', methods=['GET'])
+def template_download_direct():
+    """Endpoint direto para download do template via Google Drive."""
+    from flask import redirect
+      # Link direto para o arquivo template no Google Drive
+    google_drive_url = 'https://drive.google.com/uc?export=download&id=1W3GI8bGTNxyMdgJ05qEhPUUE_MW1AJFU'
+    return redirect(google_drive_url)
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

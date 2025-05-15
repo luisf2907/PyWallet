@@ -101,17 +101,19 @@ const portfolioAPI = {
     },
     
     // Obter distribuição do portfólio
-    getDistribution: () => fetchAPI('/portfolio-distribution'),
-    
-    // Download de template
+    getDistribution: () => fetchAPI('/portfolio-distribution'),      // Download de template
     downloadTemplate: (format = 'xlsx') => {
-        const url = `${API_BASE_URL}/template-download?format=${format}`;
-        window.open(url);
+        // Link direto para o arquivo template no Google Drive
+        const googleDriveTemplateUrl = 'https://drive.google.com/uc?export=download&id=1W3GI8bGTNxyMdgJ05qEhPUUE_MW1AJFU';
+        
+        // Usa o Google Drive diretamente para maior confiabilidade
+        window.open(googleDriveTemplateUrl);
         return Promise.resolve({ message: 'Download iniciado' });
-    },
-
-    // Adiciona função para registrar aportes
-    registerAporte: (data) => fetchAPI('/register-aporte', 'POST', data)
+    },    // Adiciona função para registrar aportes
+    registerAporte: (data) => fetchAPI('/register-aporte', 'POST', data),
+    
+    // Atualização manual por empresa
+    updateEmpresa: (data) => fetchAPI('/empresa-update', 'POST', data)
 };
 
 // API de utilitários
