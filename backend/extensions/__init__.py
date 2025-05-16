@@ -6,7 +6,7 @@ def init_extensions(app):
     # Inicializa o CORS com configurações mais específicas
     CORS(app, 
          supports_credentials=True,
-         resources={r"/api/*": {"origins": ["http://localhost:8000", "http://127.0.0.1:8000"]}},
+         resources={r"/api/*": {"origins": ["http://localhost:8000", "http://127.0.0.1:8000", "*"]}},
          allow_headers=["Content-Type", "Authorization"],
          expose_headers=["Content-Type", "Authorization"],
          max_age=600)
