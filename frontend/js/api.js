@@ -17,16 +17,27 @@ async function fetchAPI(endpoint, method = 'GET', data = null) {
     }
 
     try {
+        console.log(`Fazendo requisição ${method} para ${endpoint}`, data ? 'com dados' : 'sem dados');
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        console.log(`Resposta da API ${endpoint}: Status ${response.status}`);
+        
         const responseData = await response.json();
+        console.log(`Dados da resposta ${endpoint}:`, responseData);
 
         if (!response.ok) {
+            // Se for erro de autenticação e não estivermos na página de login
+            if (response.status === 401 && !window.location.href.includes('index.html')) {
+                console.error('Erro de autenticação. Redirecionando para login...');
+                alert('Sua sessão expirou. Por favor, faça login novamente.');
+                window.location.href = 'index.html';
+                return;
+            }
             throw new Error(responseData.error || 'Ocorreu um erro na requisição');
         }
 
         return responseData;
     } catch (error) {
-        console.error('Erro na API:', error);
+        console.error(`Erro na API ${endpoint}:`, error);
         throw error;
     }
 }

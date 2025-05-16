@@ -72,14 +72,20 @@ def login_user(email, password):
         return {'error': 'Credenciais incorretas'}, 401
     
     # Inicia a sessão
+    print(f"[AUTH] Iniciando sessão para usuário {email} (ID: {user.id})")
+    session.clear()  # Limpa qualquer sessão existente primeiro
+    session.permanent = True  # Torna a sessão permanente
     session['user_id'] = user.id
     session['last_activity'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+    session['authenticated'] = True
     
     # Adiciona usuário à lista de ativos
     active_user_ids.add(user.id)
     
     # Verifica se o usuário tem portfólio
     has_portfolio = Portfolio.query.filter_by(user_id=user.id).first() is not None
+    
+    print(f"[AUTH] Sessão iniciada. Conteúdo: {session}")
     
     return {
         'message': 'Login realizado com sucesso',

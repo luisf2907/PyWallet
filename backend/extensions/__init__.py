@@ -3,8 +3,13 @@ from .database import db, init_db
 
 def init_extensions(app):
     """Inicializa todas as extensões da aplicação Flask."""
-    # Inicializa o CORS
-    CORS(app, supports_credentials=True)
+    # Inicializa o CORS com configurações mais específicas
+    CORS(app, 
+         supports_credentials=True,
+         resources={r"/api/*": {"origins": ["http://localhost:8000", "http://127.0.0.1:8000"]}},
+         allow_headers=["Content-Type", "Authorization"],
+         expose_headers=["Content-Type", "Authorization"],
+         max_age=600)
     
     # Inicializa o banco de dados
     init_db(app)

@@ -20,10 +20,13 @@ dividend_bp = Blueprint('dividends', __name__, url_prefix='/api')
 @dividend_bp.route('/dividends', methods=['GET'])
 def get_dividends():
     """Endpoint para obter os dividendos do usuário."""
+    print(f"[DIVIDENDS] Sessão atual: {session}")
     user_id = session.get('user_id')
     if not user_id:
+        print("[DIVIDENDS] Erro: Usuário não autenticado na sessão!")
         return jsonify({'error': 'Usuário não autenticado'}), 401
 
+    print(f"[DIVIDENDS] Buscando dividendos para usuário {user_id}")
     dividends = get_user_dividends(user_id)
     return jsonify({'dividends': dividends})
 

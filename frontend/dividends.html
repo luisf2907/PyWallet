@@ -289,9 +289,8 @@
       </table>
     </div>
   </div>
-  
-  <script type="module">
-    import { authAPI } from './js/api.js';
+    <script type="module">
+    import { authAPI, dividendAPI } from './js/api.js';
     
     document.addEventListener('DOMContentLoaded', async () => {
       // Referências aos elementos
@@ -313,11 +312,14 @@
       const currentDate = new Date();
       const currentYear = currentDate.getFullYear();
       yearInput.value = currentYear;  // Ano padrão
-      
-      // Verifica se o usuário está autenticado
+          // Verifica se o usuário está autenticado
       try {
-        await authAPI.getCurrentUser();
+        console.log("Verificando autenticação do usuário...");
+        const userData = await authAPI.getCurrentUser();
+        console.log("Usuário autenticado:", userData);
       } catch (error) {
+        console.error("Erro de autenticação:", error);
+        alert("Você precisa estar logado para acessar esta página. Redirecionando para login...");
         window.location.href = 'index.html';
         return;
       }
@@ -340,13 +342,9 @@
       // Busca todos os proventos da API
       async function fetchDividends() {
         try {
-          const response = await fetch('http://localhost:5000/api/dividends', {
-            method: 'GET',
-            credentials: 'include'
-          });
-          const data = await response.json();
-          if (data.dividends) {
-            allDividends = data.dividends;
+          const result = await dividendAPI.getDividends();
+          if (result && result.dividends) {
+            allDividends = result.dividends;
           }
         } catch (error) {
           console.error('Erro ao buscar proventos:', error);
@@ -461,21 +459,14 @@
             <td><input type="checkbox" class="receipt-checkbox" ${received ? 'checked' : ''} data-ticker="${div.ticker}" data-date="${div.date}"></td>
           `;
           detailsBody.appendChild(row);
-        });
-
-        // Adiciona listener para os checkboxes
+        });        // Adiciona listener para os checkboxes
         detailsBody.querySelectorAll('.receipt-checkbox').forEach(cb => {
           cb.addEventListener('change', async function() {
             const ticker = this.getAttribute('data-ticker');
             const date = this.getAttribute('data-date');
             const received = this.checked;
             try {
-              await fetch('http://localhost:5000/api/dividend-receipt', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ticker, date, received })
-              });
+              await dividendAPI.updateReceiptStatus({ ticker, date, received });
               // Atualiza visual
               this.closest('tr').className = received ? '' : 'not-received';
             } catch (e) {

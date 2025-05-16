@@ -31,6 +31,8 @@ def get_historical_prices(ticker, start_date, end_date, retries=3, delay=1):
     Returns:
         pandas.DataFrame ou None: Dataframe com os preços históricos ou None em caso de falha
     """
+    print(f"[INFO] Obtendo preços históricos para {ticker} de {start_date} a {end_date}")
+    
     for attempt in range(retries):
         try:
             # Criar uma nova sessão para cada download para evitar problemas de concorrência
@@ -41,14 +43,25 @@ def get_historical_prices(ticker, start_date, end_date, retries=3, delay=1):
                 interval='1d'
             )
             
-            if not history.empty and 'Close' in history.columns:
-                return history
+            if not history.empty:
+                if 'Close' in history.columns:
+                    print(f"[SUCCESS] Obtidos {len(history)} registros para {ticker}")
+                    return history
+                else:
+                    print(f"[WARNING] Dados obtidos para {ticker}, mas sem coluna 'Close'. Colunas disponíveis: {history.columns.tolist()}")
+            else:
+                print(f"[WARNING] Nenhum dado histórico encontrado para {ticker}")
             
             # Se não retornou dados válidos mas não deu exceção, espera e tenta novamente
             if attempt < retries - 1:
+                print(f"[RETRY] Tentando novamente ({attempt+1}/{retries}) para {ticker}")
                 time.sleep(delay)
                 
         except Exception as e:
+            print(f"[ERROR] Falha ao obter preços para {ticker}: {str(e)}")
+            if attempt < retries - 1:
+                print(f"[RETRY] Tentando novamente ({attempt+1}/{retries})")
+                time.sleep(delay)
             if attempt < retries - 1:
                 print(f"Tentativa {attempt+1} falhou para {ticker}: {e}. Tentando novamente...")
                 time.sleep(delay)
@@ -105,27 +118,36 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
     # Adicionar buffer de dias antes da data inicial para garantir dados suficientes
     buffer_days = 14
     start_with_buffer = (datetime.strptime(start_date, '%Y-%m-%d') - timedelta(days=buffer_days)).strftime('%Y-%m-%d')
-    
-    # Obter dados históricos
+      # Obter dados históricos
     history = get_historical_prices(final_ticker, start_with_buffer, end_date)
     
     if history is not None and not history.empty:
         try:
-            # Processar preços de fechamento
-            close_prices = history['Close'].copy()
-            # Converter o índice para tz-naive para compatibilidade com o date_range
-            close_prices.index = close_prices.index.tz_localize(None)
-            # Preencher valores ausentes
-            close_prices = close_prices.fillna(method='ffill')
-            
-            # Reindexar para o range de datas desejado
-            try:
-                asset_prices = close_prices.reindex(date_range, method='ffill')
-            except Exception as e:
-                print(f"Erro ao reindexar preços para {ticker_orig}: {e}")
-                # Criar série com todos os valores iguais ao último preço disponível
-                last_price = close_prices.iloc[-1] if not close_prices.empty else avg_price
-                asset_prices = pd.Series(last_price, index=date_range)
+            # Verificar se a coluna 'Close' existe
+            if 'Close' not in history.columns:
+                print(f"[ERROR] Coluna 'Close' não encontrada para {ticker_orig}. Colunas disponíveis: {history.columns.tolist()}")
+                # Usar uma série com valor único como fallback
+                asset_prices = pd.Series(avg_price, index=date_range)
+            else:
+                # Processar preços de fechamento
+                try:
+                    close_prices = history['Close'].copy()
+                    # Converter o índice para tz-naive para compatibilidade com o date_range
+                    close_prices.index = close_prices.index.tz_localize(None)
+                    # Preencher valores ausentes
+                    close_prices = close_prices.fillna(method='ffill')
+                    
+                    # Reindexar para o range de datas desejado
+                    try:
+                        asset_prices = close_prices.reindex(date_range, method='ffill')
+                    except Exception as e:
+                        print(f"[ERROR] Erro ao reindexar preços para {ticker_orig}: {str(e)}")
+                        # Criar série com todos os valores iguais ao último preço disponível
+                        last_price = close_prices.iloc[-1] if not close_prices.empty else avg_price
+                        asset_prices = pd.Series(last_price, index=date_range)
+                except Exception as e:
+                    print(f"[ERROR] Erro ao processar close_prices para {ticker_orig}: {str(e)}")
+                    asset_prices = pd.Series(avg_price, index=date_range)
             
             # Se ainda tiver NaN após reindexar, preencher com o primeiro valor válido
             if asset_prices.isna().any():

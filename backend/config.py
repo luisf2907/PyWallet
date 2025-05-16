@@ -8,7 +8,9 @@ class Config:
     SESSION_COOKIE_SECURE = False  # Permite cookie via HTTP no localhost
     SQLALCHEMY_DATABASE_URI = 'sqlite:///pywallet.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = None  # Corrigido para permitir CORS
+    SESSION_COOKIE_HTTPONLY = False  # Permite acesso via JS
+    PERMANENT_SESSION_LIFETIME = 1800  # 30 minutos em segundos
     SESSION_TIMEOUT_MINUTES = 30
 
 class DevelopmentConfig(Config):
