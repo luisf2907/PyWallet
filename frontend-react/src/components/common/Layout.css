@@ -1,0 +1,70 @@
+/* 
+ * Layout specific styles to ensure full width utilization
+ */
+.main-content-container {
+  width: 100% !important;
+  max-width: calc(100vw - 250px) !important;
+  margin-left: 250px !important;
+  overflow-x: hidden;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fix for Grid container to use full width */
+.full-width-grid {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+/* Remove padding from dashboard container */
+.dashboard-container {
+  padding: 0 !important;
+  width: 100% !important;
+  flex: 1;
+}
+
+/* Fix scrolling in main content area */
+.main-content-box {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Fix for MUI Grid spacing issues */
+.MuiGrid-root.MuiGrid-container {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure sidebar has consistent width */
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  flex-shrink: 0;
+}
+
+/* Container adjustments */
+.MuiContainer-root {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* Responsive adjustments for sidebar */
+@media (max-width: 960px) {
+  .main-content-container {
+    margin-left: 0 !important;
+    max-width: 100% !important;
+    padding-top: 70px !important;
+  }
+}

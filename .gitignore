@@ -1,9 +1,33 @@
+# Ambientes virtuais
 env/
 venv/
 .venv/
+
+# Logs e arquivos de sistema
 .log
 .vscode/
-.ideia/
+.idea/
 .DS_Store
 Thumbs.db
+
+# Cache Python
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de build
+frontend-react/dist/
+frontend-react/build/
+
+# O banco de dados deve ser incluído conforme solicitado
+# Mantendo os arquivos do banco sem comentários para serem incluídos

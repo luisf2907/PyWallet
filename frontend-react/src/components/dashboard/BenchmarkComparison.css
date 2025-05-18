@@ -1,0 +1,54 @@
+/* BenchmarkComparison specific styles */
+.benchmark-container {
+  width: 100% !important;
+  display: flex !important;
+}
+
+.benchmark-paper {
+  background-color: #1E1E1E !important;
+  width: 100% !important;
+  padding: 16px !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
+}
+
+.benchmark-grid {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.benchmark-grid .MuiGrid-item {
+  padding: 0 8px !important;
+  margin-bottom: 0 !important;
+}
+
+.benchmark-item {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.benchmark-item .MuiBox-root {
+  background-color: #212121 !important;
+  border-radius: 4px !important;
+  height: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  .benchmark-grid .MuiGrid-item {
+    flex-basis: calc(50% - 16px) !important;
+    max-width: calc(50% - 16px) !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .benchmark-grid .MuiGrid-item {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 16px !important;
+  }
+}

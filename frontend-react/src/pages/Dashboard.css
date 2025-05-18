@@ -1,0 +1,391 @@
+/* Dashboard-specific styles */
+
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.dashboard-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+.kpi-container {
+  width: 100% !important;
+  margin-bottom: 16px !important;
+  padding: 0 !important;
+}
+
+.kpi-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  margin-bottom: 16px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+  gap: 16px !important;
+  justify-content: space-between !important;
+  align-items: stretch !important;
+}
+
+.kpi-item {
+  flex: 1 1 calc(16.666% - 16px) !important;
+  max-width: calc(16.666% - 16px) !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  min-width: 160px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Responsive adjustments for KPI items */
+@media (max-width: 1200px) {
+  .kpi-item {
+    flex: 1 1 calc(33.333% - 16px) !important;
+    max-width: calc(33.333% - 16px) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-item {
+    flex: 1 1 calc(50% - 16px) !important;
+    max-width: calc(50% - 16px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-item {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.kpi-card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  width: 100% !important;
+  justify-content: space-between !important;
+}
+
+.dashboard-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+/* Override MUI Grid spacing */
+.MuiGrid-container {
+  width: 100% !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+
+/* Fix for MUI Grid items */
+.MuiGrid-item {
+  padding: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Chart containers */
+.charts-row {
+  display: flex !important;
+  flex-direction: row !important;
+  width: 100% !important;
+  margin-top: 24px !important;
+  margin-bottom: 24px !important;
+  gap: 16px !important;
+  padding: 0 !important;
+}
+
+/* Make charts stack on top of each other on mobile */
+@media (max-width: 768px) {
+  .charts-row {
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+}
+
+.chart-container {
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+}
+
+/* KPI cards styling */
+.kpi-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Chart cards styling */
+.chart-paper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Benchmarks styling */
+.benchmark-paper {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin-top: 16px !important;
+  margin-bottom: 16px !important;
+}
+
+.benchmark-container {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.benchmark-grid {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: space-between !important;
+}
+
+.benchmark-item {
+  margin-bottom: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Table width fix */
+.assets-table-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  margin-bottom: 24px !important;
+  -webkit-overflow-scrolling: touch !important; /* Improved scrolling on iOS */
+}
+
+/* Add fade indicator for scrollable table on mobile */
+@media (max-width: 768px) {
+  .assets-table-container {
+    position: relative !important;
+  }
+  
+  .assets-table-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 20px;
+    background: linear-gradient(to right, rgba(18, 18, 18, 0), rgba(18, 18, 18, 0.3));
+    pointer-events: none;
+  }
+}
+
+/* Format table columns and alignment */
+.assets-table-container th {
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+}
+
+.assets-table-container td {
+  padding: 10px 16px !important;
+}
+
+.assets-table-container td:nth-child(1),
+.assets-table-container td:nth-child(2),
+.assets-table-container td:nth-child(4),
+.assets-table-container td:nth-child(5),
+.assets-table-container td:nth-child(6),
+.assets-table-container td:nth-child(7),
+.assets-table-container td:nth-child(8) {
+  text-align: left !important;
+}
+
+.assets-table-container td:nth-child(3),
+.assets-table-container td:nth-child(9),
+.assets-table-container td:nth-child(10) {
+  text-align: center !important;
+}
+
+/* Footer styling with yellow border */
+.assets-table-container tfoot tr td {
+  border-top: 2px solid #ffc107 !important;
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  font-weight: 700 !important;
+}
+
+/* Asset tag colors */
+.asset-tag-bdr {
+  background-color: #9c27b0 !important;
+  color: white !important;
+}
+
+/* Purple color for BDR chip */
+.MuiChip-filledPurple {
+  background-color: #9c27b0 !important;
+  color: white !important;
+}
+
+/* Section separators */
+.section-divider {
+  margin-top: 8px;
+  margin-bottom: 16px;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  opacity: 0.5;
+}
+
+/* Enhance border styles */
+.MuiPaper-root {
+  border-radius: 8px !important;
+}
+
+/* Enhance table appearance */
+.MuiTableContainer-root {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.MuiTableHead-root th {
+  font-weight: 600 !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Fix exchange rate box */
+.exchange-rate-box {
+  margin-bottom: 16px !important;
+  width: 100% !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .charts-row {
+    flex-direction: column !important;
+  }
+  
+  .MuiGrid-grid-md-5, .MuiGrid-grid-md-7 {
+    max-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .kpi-item {
+    flex: 1 1 calc(33.333% - 16px) !important;
+    max-width: calc(33.333% - 16px) !important;
+  }
+  
+  .kpi-row {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .chart-paper {
+    margin-bottom: 16px;
+  }
+  
+  .kpi-card {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-item {
+    flex: 1 1 calc(50% - 16px) !important;
+    max-width: calc(50% - 16px) !important;
+    min-width: 200px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-item {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Date picker and button styling */
+.date-picker-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.charts-row .MuiTextField-root {
+  margin-right: 8px;
+}
+
+.charts-row .MuiTextField-root .MuiOutlinedInput-root {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.charts-row .MuiTextField-root .MuiInputLabel-root {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Ajustes específicos para o calendário no input de data */
+.charts-row .MuiTextField-root input[type="date"]::-webkit-calendar-picker-indicator {
+  background-color: transparent;
+  color: white;
+  opacity: 0;
+  /* Esconde completamente o calendário nativo para evitar sobrepor o texto */
+  display: none;
+}
+
+/* Muda o cursor para pointer quando passa sobre a área de data */
+.charts-row .MuiTextField-root input[type="date"] {
+  cursor: pointer;
+  padding-right: 16px; /* Adiciona espaço para evitar sobreposição */
+}
+
+.charts-row .MuiTextField-root .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.charts-row .MuiTextField-root:hover .MuiOutlinedInput-notchedOutline {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.apply-button {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+}
+
+.apply-button:hover {
+  background-color: #ffca28 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3) !important;
+}
