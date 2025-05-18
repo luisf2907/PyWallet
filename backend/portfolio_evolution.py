@@ -170,26 +170,52 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
         print(f"Usando preço médio para {ticker_orig} devido à falta de dados históricos")
         return pd.Series(avg_price * qty * conv_factor, index=date_range)
 
-def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange_rate=None, format_ticker_func=None):
+def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange_rate=None, format_ticker_func=None, fast_mode=False, price_cache=None):
     """
-    Calcula a evolução histórica do valor do portfólio usando download em lote (multi-ticker) para máxima performance.
-    Agora salva e serve cache persistente (PortfolioEvolutionCache) se yfinance falhar.
+    Calcula a evolução histórica do valor do portfólio.
+    Se fast_mode=True, usa apenas o PriceCache para evolução instantânea (sem yfinance).
     """
     user_id = session.get('user_id') if hasattr(session, 'get') else None
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+    end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+    days_diff = (end_date_obj - start_date_obj).days
+    if days_diff > 365:
+        freq = 'W-MON'
+    elif days_diff > 90:
+        freq = '3D'
+    else:
+        freq = 'D'
+    date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
+    if end_date_obj not in date_range:
+        date_range = date_range.append(pd.DatetimeIndex([end_date_obj]))
+    safe_portfolio_data = copy.deepcopy(portfolio_data)
+
+    # FAST MODE: evolução instantânea usando apenas PriceCache
+    if fast_mode and price_cache is not None:
+        total_invested = 0.0
+        total_current = 0.0
+        for asset in safe_portfolio_data:
+            ticker_orig = asset['ticker'].strip().upper()
+            final_ticker = ticker_orig
+            if not ticker_orig.endswith('.SA') and not '.' in ticker_orig and not '=' in ticker_orig:
+                final_ticker += '.SA'
+            try:
+                qty = float(asset.get('quantidade', 0))
+                avg_price = float(asset.get('preco_medio', 0))
+            except (ValueError, TypeError):
+                continue
+            is_us = not final_ticker.endswith('.SA')
+            conv_factor = exchange_rate if (exchange_rate and is_us) else 1.0
+            invested = avg_price * qty * conv_factor
+            price = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
+            current = price * qty * conv_factor
+            total_invested += invested
+            total_current += current
+        # Gera evolução simulada entre investido e atual
+        evolution_list = generate_simulated_evolution(start_date, end_date, total_invested, total_current, num_points=len(date_range))
+        return evolution_list
+
     try:
-        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
-        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
-        days_diff = (end_date_obj - start_date_obj).days
-        if days_diff > 365:
-            freq = 'W-MON'
-        elif days_diff > 90:
-            freq = '3D'
-        else:
-            freq = 'D'
-        date_range = pd.date_range(start=start_date, end=end_date, freq=freq)
-        if end_date_obj not in date_range:
-            date_range = date_range.append(pd.DatetimeIndex([end_date_obj]))
-        safe_portfolio_data = copy.deepcopy(portfolio_data)
         tickers = []
         ticker_map = {}
         for asset in safe_portfolio_data:
@@ -392,3 +418,58 @@ def generate_simulated_evolution(start_date, end_date, start_value, end_value, n
             {'date': start_date, 'value': float(start_value)},
             {'date': end_date, 'value': float(end_value)}
         ]
+
+def update_price_cache_for_new_assets(portfolio_data, min_update_interval_minutes=30):
+    """
+    Atualiza o PriceCache apenas para ativos novos ou desatualizados há mais de X minutos.
+    """
+    from models.price import PriceCache
+    from extensions.database import db
+    from datetime import datetime, timedelta
+    import yfinance as yf
+
+    tickers_in_portfolio = set()
+    for asset in portfolio_data:
+        ticker = asset['ticker'].strip().upper()
+        if not ticker.endswith('.SA') and not '.' in ticker and not '=' in ticker:
+            ticker += '.SA'
+        tickers_in_portfolio.add(ticker)
+
+    # Buscar todos os tickers já presentes no PriceCache
+    cached_prices = PriceCache.query.filter(PriceCache.ticker.in_(list(tickers_in_portfolio))).all()
+    cache_map = {p.ticker: p for p in cached_prices}
+    now = datetime.now()
+    updated = False
+
+    for ticker in tickers_in_portfolio:
+        cache_entry = cache_map.get(ticker)
+        needs_update = False
+        if cache_entry is None:
+            needs_update = True
+        else:
+            last_updated = cache_entry.last_updated or (now - timedelta(days=1))
+            if (now - last_updated).total_seconds() > min_update_interval_minutes * 60:
+                needs_update = True
+        if needs_update:
+            try:
+                price = None
+                ticker_obj = yf.Ticker(ticker)
+                history = ticker_obj.history(period='1d')
+                if not history.empty and 'Close' in history.columns:
+                    price = float(history['Close'].iloc[-1])
+                if price is not None:
+                    if cache_entry:
+                        cache_entry.price = price
+                        cache_entry.last_updated = now
+                    else:
+                        db.session.add(PriceCache(
+                            user_id=None,
+                            ticker=ticker,
+                            price=price,
+                            last_updated=now
+                        ))
+                    updated = True
+            except Exception as e:
+                print(f"[PriceCache] Falha ao atualizar preço para {ticker}: {e}")
+    if updated:
+        db.session.commit()

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PyWallet - Proventos</title>
+  <title>Prophit - Proventos</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <!-- Chart.js -->
@@ -40,6 +40,15 @@
       font-weight: bold;
       color: var(--accent-color);
       margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+    }
+    .sidebar .logo img {
+      height: 32px;
+      width: 32px;
+      margin-right: 0.5rem;
+      border-radius: 50%;
+      background: #fff;
     }
     .sidebar a {
       color: var(--text-color);
@@ -233,7 +242,8 @@
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="logo">
-      <i class="fas fa-wallet"></i> PyWallet
+      <img src="../Prophit_logo.png" alt="Prophit Logo" style="height: 32px; width: 32px; margin-right: 0.5rem; border-radius: 50%; background: #fff;" />
+      <span class="logo-text">Prophit</span>
     </div>
     <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
     <a href="file-upload.html"><i class="fas fa-cog"></i> Gerenciar Portfólio</a>

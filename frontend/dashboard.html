@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PyWallet - Dashboard</title>
+    <title>Prophit - Dashboard</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -694,8 +694,8 @@
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="logo-container">
-          <i class="fas fa-wallet logo-icon"></i>
-          <span class="logo-text">PyWallet</span>
+          <img src="../Prophit_logo.png" alt="Prophit Logo" style="height: 32px; width: 32px; margin-right: 0.5rem; border-radius: 50%; background: #fff;" />
+          <span class="logo-text">Prophit</span>
         </div>
         <div class="user-greeting" id="user-greeting">
           Olá, Usuário!
@@ -732,7 +732,7 @@
         </button>
       
         <div class="sidebar-footer">
-          PyWallet v1.0.0<br>© 2025 - Todos os direitos reservados
+          Prophit v1.0.0<br>© 2025 - Todos os direitos reservados
         </div>
       </div>
 
@@ -987,14 +987,14 @@
           }
         }
     
-        async function updatePage(showOverlay, updateCharts = true, forcePriceUpdate = false) {
+        async function updatePage(showOverlay, updateCharts = true, forcePriceUpdate = false, fastMode = false) {
           if (showOverlay) {
             loadingOverlay.classList.remove('hidden');
           }
           try {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            const portfolioData = await portfolioAPI.getSummary(startDate, endDate);
+            const portfolioData = await portfolioAPI.getSummary(startDate, endDate, fastMode);
     
             const updateDate = new Date(portfolioData.summary.updated_at);
             document.getElementById('last-update').textContent = `Última atualização: ${updateDate.toLocaleString('pt-BR')}`;
@@ -1135,7 +1135,7 @@
                   // Atualiza os valores derivados do preço
                   const row = priceCell.parentElement;
                   if (row) {
-                    const returnValue = asset.current_value - asset.invested_value;
+                    const returnValue = asset.current_value - asset.investido_value;
                     const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
                     const totalCurrentValue = portfolioData.summary.total_current_value || 0;
                     let weightPercent = 0;
@@ -1464,8 +1464,7 @@
                   }
                 }
               }
-            }
-          });
+            });
         }
     
         // Configurar eventos de UI
@@ -1543,7 +1542,15 @@
         
         // Inicializar a aplicação
         await loadExchangeRate();
-        await updatePage(true, true); // Primeira vez mostra overlay e atualiza gráficos
+        await updatePage(true, true, false, true);
+
+      // Botão de aplicar filtros de data (carregamento normal)
+      evolutionApplyBtn.addEventListener('click', async function () {
+        await updatePage(true, true, false, false);
+      });
+      // Botão de atualizar (carregamento normal)
+      refreshBtn.addEventListener('click', async function () {
+        await updatePage(true, true, true, false);
       });
     </script>
   </body>

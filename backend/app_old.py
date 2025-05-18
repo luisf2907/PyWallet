@@ -745,7 +745,8 @@ def upload_portfolio():
                 del _evolution_cache[k]
 
         # Atualiza caches imediatamente após upload
-        update_price_cache_for_all_tickers()
+        from backend.portfolio_evolution import update_price_cache_for_new_assets
+        update_price_cache_for_new_assets(portfolio_data)
         update_dividends_cache_for_all_users()
 
         return jsonify({
@@ -826,6 +827,7 @@ def portfolio_summary():
 
     start_date = request.args.get('start_date', (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'))
     end_date = request.args.get('end_date', datetime.now().strftime('%Y-%m-%d'))
+    fast_mode = request.args.get('fast_mode', 'false').lower() == 'true'
     
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
@@ -860,7 +862,7 @@ def portfolio_summary():
 
     # Busca preços faltantes do yfinance (apenas se não estiver no cache E não houver rate limit)
     missing_tickers = []
-    if not is_rate_limited:
+    if not is_rate_limited and not fast_mode:
         for asset in portfolio_data:
             ticker_orig = asset['ticker'].strip().upper()
             if ticker_orig not in price_cache:
@@ -967,7 +969,7 @@ def portfolio_summary():
         'updated_at': datetime.now().isoformat()
     }
 
-    cache_key = f"{user_id}:{start_date}:{end_date}"
+    cache_key = f"{user_id}:{start_date}:{end_date}:fast_mode={fast_mode}"
     with evolution_cache_lock:
         if cache_key in _evolution_cache:
             cached_entry = _evolution_cache[cache_key]
@@ -977,19 +979,19 @@ def portfolio_summary():
     evolution_list = []
     try:
         # Se estiver em rate limit, nem tenta calcular evolução com yfinance
-        if is_rate_limited:
+        if is_rate_limited or fast_mode:
             # Tenta buscar do cache com app_context
             with app.app_context():
                 try:
                     cached = PortfolioEvolutionCache.query.filter_by(user_id=user_id).order_by(PortfolioEvolutionCache.date.asc()).all()
                     if cached:
-                        print("[FALLBACK] Usando cache persistente de evolução devido ao rate limit")
+                        print("[FALLBACK] Usando cache persistente de evolução devido ao rate limit ou fast_mode")
                         evolution_list = [c.to_dict() for c in cached]
                     else:
-                        print("[INFO] Sem cache de evolução disponível durante rate limit")
+                        print("[INFO] Sem cache de evolução disponível durante rate limit ou fast_mode")
                         evolution_list = None
                 except Exception as e2:
-                    print(f"Erro ao buscar evolução do cache durante rate limit: {e2}")
+                    print(f"Erro ao buscar evolução do cache durante rate limit/fast_mode: {e2}")
                     evolution_list = None
         else:
             # Tenta calcular normalmente
@@ -999,7 +1001,9 @@ def portfolio_summary():
                     start_date=start_date,
                     end_date=end_date,
                     exchange_rate=exch_rate,
-                    format_ticker_func=format_ticker
+                    format_ticker_func=format_ticker,
+                    fast_mode=fast_mode,
+                    price_cache=price_cache
                 )
         if not evolution_list or len(evolution_list) < 2:
             print("[INFO] Sem dados suficientes para evolução do portfólio. Gráfico permanecerá em branco.")

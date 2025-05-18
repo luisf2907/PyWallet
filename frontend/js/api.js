@@ -85,8 +85,8 @@ const portfolioAPI = {
     // Upload de portfólio
     uploadPortfolio: (file) => uploadFile('/upload-portfolio', file),
     
-    // Obter resumo do portfólio com parâmetros de data
-    getSummary: (startDate, endDate) => {
+    // Obter resumo do portfólio com parâmetros de data e fastMode
+    getSummary: (startDate, endDate, fastMode = false) => {
         const params = new URLSearchParams();
         
         if (startDate) {
@@ -105,6 +105,10 @@ const portfolioAPI = {
             } else {
                 console.error('Formato de data final inválido. Use YYYY-MM-DD');
             }
+        }
+        
+        if (fastMode) {
+            params.append('fast_mode', 'true');
         }
         
         const endpoint = `/portfolio-summary${params.toString() ? `?${params.toString()}` : ''}`;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Avatar, List, ListItem, ListItemIcon, ListItemText, 
+import { Box, Typography, List, ListItem, ListItemIcon, ListItemText, 
   Button, Divider, ListItemButton } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import {
@@ -26,6 +26,8 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
     }
   },
 }));
+
+const ProphitLogo = '/Prophit_logo.png';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -57,16 +59,9 @@ const Sidebar = () => {
           gap: 1 
         }}
       >
-        <Avatar
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-          }}
-        >
-          <MoneyIcon />
-        </Avatar>
-        <Typography variant="h6" component="div" fontWeight="600">
-          PyWallet
+        <img src={ProphitLogo} alt="Prophit Logo" style={{ width: 48, height: 48, borderRadius: 0, background: 'transparent', boxShadow: 'none', objectFit: 'contain' }} />
+        <Typography variant="h6" component="div" fontWeight="700" sx={{ fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', letterSpacing: 1 }}>
+          Prophit!
         </Typography>
       </Box>
 
@@ -157,7 +152,7 @@ const Sidebar = () => {
           fontSize: '0.75rem',
         }}
       >
-        PyWallet v1.0.0<br />© 2025 - Todos os direitos reservados
+        Prophit! v1.0.0<br />© 2025 - Todos os direitos reservados
       </Box>
     </Box>
   );
