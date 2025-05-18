@@ -198,18 +198,28 @@ const Dashboard = () => {
                       R$ {parseFloat(portfolioData.summary.total_invested || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Typography>
                   </Paper>
-                </Box>                  <Box className="kpi-item">
+                </Box>                <Box className="kpi-item">
                   <Paper className="kpi-card" elevation={2} sx={{ 
                     p: 2, 
                     borderRadius: 2, 
                     height: '100%',
+                    backgroundColor: (theme) => (portfolioData.summary.total_return || 0) >= 0 
+                      ? 'rgba(76, 175, 80, 0.08)' 
+                      : 'rgba(244, 67, 54, 0.08)',
                     transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
                     '&:hover': {
                       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
                       transform: 'translateY(-2px)'
                     }
                   }}>
-                    <Typography variant="subtitle2" color="#ffc107" fontWeight="600" gutterBottom>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        fontWeight: '600',
+                        color: (portfolioData.summary.total_return || 0) >= 0 ? 'success.main' : 'error.main'
+                      }}
+                      gutterBottom
+                    >
                       RETORNO (R$)
                     </Typography>
                     <Typography 

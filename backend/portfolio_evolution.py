@@ -135,8 +135,7 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
                     # Converter o índice para tz-naive para compatibilidade com o date_range
                     close_prices.index = close_prices.index.tz_localize(None)
                     # Preencher valores ausentes
-                    close_prices = close_prices.fillna(method='ffill')
-                    
+                    close_prices = close_prices.ffill()
                     # Reindexar para o range de datas desejado
                     try:
                         asset_prices = close_prices.reindex(date_range, method='ffill')
@@ -233,7 +232,7 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
                         else:
                             close_prices = pd.Series(dtype=float)
                     close_prices.index = pd.to_datetime(close_prices.index).tz_localize(None)
-                    close_prices = close_prices.fillna(method='ffill')
+                    close_prices = close_prices.ffill()
                     try:
                         asset_prices = close_prices.reindex(date_range, method='ffill')
                     except Exception as e:

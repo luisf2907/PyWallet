@@ -1,4 +1,4 @@
-﻿import threading
+import threading
 from datetime import datetime, timedelta
 
 # Cache global para evolução do portfólio
@@ -20,17 +20,45 @@ def get_from_evolution_cache(key):
     """
     Obtém um valor do cache de evolução de portfólio.
     
+    O tempo de vida do cache varia conforme o estado do mercado:
+    - Mercado aberto: 30 minutos (1800 segundos)
+    - Mercado fechado: até o próximo horário de abertura do mercado
+    
     Args:
         key (str): Chave para busca no cache
         
     Returns:
         dict: Dados do cache ou None se não encontrado ou expirado
     """
+    from utils.market_utils import is_market_open, get_next_market_open
+    
     with evolution_cache_lock:
         if key in _evolution_cache:
             cached = _evolution_cache[key]
-            if (datetime.now() - cached['timestamp']).total_seconds() < 120:
-                return cached['data']
+            now = datetime.now()
+            
+            # Definir tempo de vida do cache baseado no estado do mercado
+            if is_market_open():
+                # Mercado aberto: cache válido por 30 minutos (1800 segundos)
+                cache_ttl = 1800  # 30 minutos em segundos
+                seconds_elapsed = (now - cached['timestamp']).total_seconds()
+                is_valid = seconds_elapsed < cache_ttl
+                
+                if is_valid:
+                    print(f"[CACHE HIT] Usando dados em cache para chave: {key} (mercado aberto - atualizado há {int(seconds_elapsed/60)} minutos)")
+                    return cached['data']
+                else:
+                    print(f"[CACHE EXPIRED] Cache expirado para chave: {key} (mercado aberto - passou dos 30 minutos)")
+            else:
+                # Mercado fechado: cache válido até a próxima abertura do mercado
+                next_open = get_next_market_open()
+                is_valid = cached['timestamp'] > get_next_market_open() - timedelta(days=1)
+                
+                if is_valid:
+                    print(f"[CACHE HIT] Usando dados em cache para chave: {key} (mercado fechado)")
+                    return cached['data']
+                else:
+                    print(f"[CACHE EXPIRED] Cache expirado para chave: {key} (mercado fechado - dados anteriores à última abertura)")
     return None
 
 def set_evolution_cache(key, data):
@@ -41,11 +69,24 @@ def set_evolution_cache(key, data):
         key (str): Chave para o armazenamento
         data (dict): Dados a serem armazenados
     """
+    from utils.market_utils import is_market_open, get_next_market_open
+    
+    now = datetime.now()
+    market_state = "aberto" if is_market_open() else "fechado"
+    
     with evolution_cache_lock:
         _evolution_cache[key] = {
-            'timestamp': datetime.now(),
+            'timestamp': now,
+            'market_state': market_state,
             'data': data
         }
+        
+        # Detalhar quando o cache expira
+        if is_market_open():
+            expiry_time = now + timedelta(minutes=30)
+            print(f"[CACHE SET] Dados armazenados para chave: {key} (mercado {market_state}) - expira às {expiry_time.strftime('%H:%M:%S')}")
+        else:            next_open = get_next_market_open()
+            print(f"[CACHE SET] Dados armazenados para chave: {key} (mercado {market_state}) - válido até próxima abertura do mercado em {next_open.strftime('%d/%m/%Y %H:%M')}")
 
 def clear_evolution_cache_for_user(user_id):
     """

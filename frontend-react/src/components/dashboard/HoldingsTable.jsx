@@ -17,6 +17,16 @@ import {
  * Table component to display holdings/stocks in portfolio
  */
 const HoldingsTable = ({ holdings = [] }) => {
+  // Define custom styles for alignment consistency
+  const cellStyles = {
+    monetary: {
+      textAlign: 'left' // Consistent right alignment for monetary values
+    },
+    percentage: {
+      textAlign: 'center' // Consistent center alignment for percentage values
+    }
+  };
+  
   if (!holdings || holdings.length === 0) {
     return (
       <Box textAlign="center" py={3}>
@@ -70,8 +80,7 @@ const HoldingsTable = ({ holdings = [] }) => {
   return (
     <TableContainer component={Paper} 
       sx={{ boxShadow: 'none', backgroundColor: 'transparent' }}
-    >      <Table size="small">        <TableHead>
-          <TableRow sx={{ 
+    >      <Table size="small">        <TableHead>          <TableRow sx={{ 
             borderBottom: '2px solid #ffc107',
             '& th': { 
               fontSize: '0.85rem',
@@ -79,15 +88,15 @@ const HoldingsTable = ({ holdings = [] }) => {
             }
           }}>
             <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Ativo</TableCell>
-            <TableCell align="center" sx={{ color: '#ffc107', fontWeight: 700 }}>Tipo</TableCell>
-            <TableCell align="center" sx={{ color: '#ffc107', fontWeight: 700 }}>Quantidade</TableCell>
-            <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Preço Médio</TableCell>
-            <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Preço Atual</TableCell>
-            <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Valor Investido</TableCell>
-            <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Valor Atual</TableCell>
-            <TableCell sx={{ color: '#ffc107', fontWeight: 700 }}>Retorno</TableCell>
-            <TableCell align="center" sx={{ color: '#ffc107', fontWeight: 700 }}>Retorno (%)</TableCell>
-            <TableCell align="center" sx={{ color: '#ffc107', fontWeight: 700 }}>Peso (%)</TableCell>
+            <TableCell align="left" sx={{ color: '#ffc107', fontWeight: 700 }}>Tipo</TableCell>
+            <TableCell align="center" sx={{ color: '#ffc107', fontWeight: 700 }}>Quantidade</TableCell>            
+            <TableCell sx={{ ...cellStyles.monetary, color: '#ffc107', fontWeight: 700 }}>Preço Médio</TableCell>
+            <TableCell sx={{ ...cellStyles.monetary, color: '#ffc107', fontWeight: 700 }}>Preço Atual</TableCell>
+            <TableCell sx={{ ...cellStyles.monetary, color: '#ffc107', fontWeight: 700 }}>Valor Investido</TableCell>
+            <TableCell sx={{ ...cellStyles.monetary, color: '#ffc107', fontWeight: 700 }}>Valor Atual</TableCell>
+            <TableCell sx={{ ...cellStyles.monetary, color: '#ffc107', fontWeight: 700 }}>Retorno</TableCell>
+            <TableCell sx={{ ...cellStyles.percentage, color: '#ffc107', fontWeight: 700 }}>Retorno (%)</TableCell>
+            <TableCell sx={{ ...cellStyles.percentage, color: '#ffc107', fontWeight: 700 }}>Peso (%)</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -130,40 +139,42 @@ const HoldingsTable = ({ holdings = [] }) => {
                     }}
                   />
                 </TableCell>                <TableCell align="center">
-                  {Math.round(asset.quantity).toLocaleString('pt-BR')}
-                </TableCell>
-                <TableCell>
+                  {Math.round(asset.quantity).toLocaleString('pt-BR')}                </TableCell>                
+                <TableCell sx={cellStyles.monetary}>
                   {isUS ? formatUSD(asset.avg_price) : formatBRL(asset.avg_price)}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={cellStyles.monetary}>
                   {isUS ? formatUSD(asset.current_price) : formatBRL(asset.current_price)}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={cellStyles.monetary}>
                   {formatBRL(asset.invested_value)}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={cellStyles.monetary}>
                   {formatBRL(asset.current_value)}
                 </TableCell>
                 <TableCell
-                  sx={{ color: returnValue > 0 ? 'success.main' : returnValue < 0 ? 'error.main' : 'text.primary' }}
-                >
-                  {formatBRL(returnValue)}
-                </TableCell>                <TableCell align="center"
                   sx={{ 
+                    ...cellStyles.monetary,
+                    color: returnValue > 0 ? 'success.main' : returnValue < 0 ? 'error.main' : 'text.primary' 
+                  }}
+                >
+                  {formatBRL(returnValue)}                </TableCell>                
+                <TableCell
+                  sx={{ 
+                    ...cellStyles.percentage,
                     color: returnPct > 0 ? 'success.main' : returnPct < 0 ? 'error.main' : 'text.primary',
                     fontWeight: 500
                   }}
                 >
                   {returnPct > 0 ? '+' : ''}{formatPercentage(returnPct)}
                 </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 500 }}>
+                <TableCell sx={{ ...cellStyles.percentage, fontWeight: 500 }}>
                   {formatPercentage(weightPct)}
                 </TableCell>
               </TableRow>
             );
           })}
-        </TableBody>        <TableFooter>
-          <TableRow sx={{ 
+        </TableBody>        <TableFooter>          <TableRow sx={{ 
             '& td': { 
               fontWeight: 700, 
               borderTop: '2px solid', 
@@ -173,21 +184,39 @@ const HoldingsTable = ({ holdings = [] }) => {
             } 
           }}>
             <TableCell colSpan={5}>Total</TableCell>
-            <TableCell>{formatBRL(totals.investedValue)}</TableCell>
-            <TableCell>{formatBRL(totals.currentValue)}</TableCell>
-            <TableCell
-              sx={{ color: totals.return > 0 ? 'success.main' : totals.return < 0 ? 'error.main' : 'text.primary' }}
-            >
-              {formatBRL(totals.return)}
-            </TableCell>            <TableCell align="center"
-              sx={{ 
-                color: totalReturnPct > 0 ? 'success.main' : totalReturnPct < 0 ? 'error.main' : 'text.primary',
-                fontWeight: 700
-              }}
-            >
-              {totalReturnPct > 0 ? '+' : ''}{formatPercentage(totalReturnPct)}
+            <TableCell>
+              <div style={{ width: '100%', textAlign: 'left' }}>{formatBRL(totals.investedValue)}</div>
             </TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700 }}>100.00%</TableCell>
+            <TableCell>
+              <div style={{ width: '100%', textAlign: 'left' }}>{formatBRL(totals.currentValue)}</div>
+            </TableCell>
+            <TableCell>
+              <div 
+                style={{ 
+                  width: '100%', 
+                  textAlign: 'left',
+                  color: totals.return > 0 ? '#2e7d32' : totals.return < 0 ? '#d32f2f' : 'inherit'
+                }}
+              >                {formatBRL(totals.return)}
+              </div>
+            </TableCell>
+            <TableCell>
+              <div 
+                style={{ 
+                  width: '100%', 
+                  textAlign: 'center',
+                  color: totalReturnPct > 0 ? '#2e7d32' : totalReturnPct < 0 ? '#d32f2f' : 'inherit',
+                  fontWeight: 700
+                }}
+              >
+                {totalReturnPct > 0 ? '+' : ''}{formatPercentage(totalReturnPct)}
+              </div>
+            </TableCell>
+            <TableCell>
+              <div style={{ width: '100%', textAlign: 'center', fontWeight: 700 }}>
+                100.00%
+              </div>
+            </TableCell>
           </TableRow>
         </TableFooter>
       </Table>
