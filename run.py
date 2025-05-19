@@ -59,7 +59,8 @@ def start_backend():
     else:
         python_exe = os.path.join(venv_dir, 'bin', 'python')
 
-    subprocess.Popen([python_exe, 'backend/app.py'])
+    backend_path = os.path.join(os.path.dirname(__file__), 'backend', 'app.py')
+    subprocess.Popen([python_exe, backend_path], cwd=os.path.dirname(__file__))
     print(f"{Colors.GREEN}Servidor backend iniciado em http://localhost:5000{Colors.ENDC}")
 
 def main():

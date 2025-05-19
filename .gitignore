@@ -1,4 +1,5 @@
 # Ambientes virtuais
+uploads/
 env/
 venv/
 .venv/
@@ -24,10 +25,3 @@ yarn-error.log
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Arquivos de build
-#frontend-react/dist/
-#frontend-react/build/
-
-# O banco de dados deve ser incluído conforme solicitado
-# Mantendo os arquivos do banco sem comentários para serem incluídos

@@ -1,31 +1,33 @@
-# PyWallet React Frontend
+# Prophit React Frontend
 
-This is the React frontend for PyWallet, a portfolio management application.
+Este é o frontend React do Prophit (antigo PyWallet).
 
-## Setup
+## Pré-requisitos
+- Node.js (https://nodejs.org/) instalado no sistema (disponível em qualquer pasta)
 
-```
+## Instalação
+
+No diretório `frontend-react`:
+```powershell
 npm install
 ```
 
-## Development
+## Desenvolvimento
 
-```
+```powershell
 npm run dev
 ```
 
 ## Build
 
-```
+```powershell
 npm run build
 ```
 
-## Deployment
+## Observações de Portabilidade
+- O frontend pode ser rodado em qualquer pasta ou unidade.
+- Os scripts do projeto principal já usam caminhos relativos.
+- O diretório `node_modules/` está no `.gitignore` e não é enviado para o repositório.
 
-Build the project and deploy the `dist` folder to your web server.
-
-## Integration with Backend
-
-This React frontend is designed to work with the existing PyWallet backend API.
-
-The backend API should be running on port 5000. The frontend will proxy API requests to the backend.
+## Integração com Backend
+O backend deve estar rodando em http://localhost:5000 (ou ajuste o proxy em `vite.config.js` se necessário).
