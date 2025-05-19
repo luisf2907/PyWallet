@@ -99,7 +99,7 @@ const Login = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 2, mb: 1 }}>
             <img src={ProphitLogo} alt="Prophit Logo" style={{ width: 180, height: 180, marginTop: -48, marginBottom: 0, objectFit: 'contain', display: 'block' }} />
             <Typography variant="h4" component="h1" sx={{ mt: 1, fontWeight: 700, fontFamily: 'Montserrat, Segoe UI, Arial, sans-serif', letterSpacing: 1 }}>
-              PROPHIT!
+              Prophit!
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Gerencie seus investimentos de forma simples
