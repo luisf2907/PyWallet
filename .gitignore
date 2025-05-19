@@ -26,8 +26,8 @@ yarn-error.log
 .env.production.local
 
 # Arquivos de build
-frontend-react/dist/
-frontend-react/build/
+#frontend-react/dist/
+#frontend-react/build/
 
 # O banco de dados deve ser incluído conforme solicitado
 # Mantendo os arquivos do banco sem comentários para serem incluídos

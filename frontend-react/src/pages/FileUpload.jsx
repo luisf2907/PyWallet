@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -100,27 +100,50 @@ const FileUploadPage = () => {
             startIcon={<ArrowForwardIcon />}
             disabled={!file || uploading}
             onClick={handleUpload}
-            sx={{ flex: 1 }}
+            sx={{
+              flex: 1,
+              backgroundColor: !file ? '#e0e0e0!important' : '#ffc107!important',
+              color: '#000!important',
+              fontWeight: 600,
+              boxShadow: !file ? 'none' : undefined,
+              minWidth: 0,
+              width: '100%',
+              maxWidth: '100%',
+              '&:hover': {
+                backgroundColor: !file ? '#e0e0e0!important' : '#ffca28!important',
+                boxShadow: !file ? 'none' : undefined,
+                color: '#000!important',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: '#e0e0e0!important',
+                color: '#000!important',
+                opacity: 1,
+              },
+            }}
           >
             {uploading ? <CircularProgress size={24} color="inherit" /> : 'Continuar para o Dashboard'}
-          </Button>
-          
-          <Button
-            variant="outlined"
-            startIcon={<SkipNextIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={{ flex: 1 }}
-          >
-            Pular por enquanto
           </Button>
         </Stack>
         
         <Box mb={4}>
           <Button
-            variant="outlined"
+            variant="contained"
+            color="primary"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadTemplate}
             fullWidth
+            sx={{
+              background: 'linear-gradient(90deg, #2563eb 0%, #1e40af 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              fontSize: '1rem',
+              py: 1.5,
+              boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #1e40af 0%, #2563eb 100%)',
+                boxShadow: '0 6px 16px rgba(37,99,235,0.22)',
+              },
+            }}
           >
             Baixar modelo de planilha
           </Button>
@@ -141,26 +164,71 @@ const EmpresaUpdateSection = () => {
   const [operacaoTipo, setOperacaoTipo] = useState('compra');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
-  const { showAlert } = useAlert();
-  
+  const [codigoError, setCodigoError] = useState(false);
+  const [precoError, setPrecoError] = useState(false);
+  const [quantidadeError, setQuantidadeError] = useState(false);
+  const [validatingTicker, setValidatingTicker] = useState(false);
+  const [tickerValid, setTickerValid] = useState(null); // null = não validado, true = ok, false = inválido
+  const codigoRef = useRef();
+
+  // Função para validar ticker
+  const validateTicker = async (ticker) => {
+    if (!ticker) return;
+    setValidatingTicker(true);
+    setTickerValid(null);
+    setCodigoError(false);
+    try {
+      // Não aceita tickers de moedas nem strings de 1 caractere
+      if (ticker.length < 4 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
+        throw new Error('Ticker não permitido');
+      }
+      // Chama o endpoint de aporte com tipo 'compra', preco e quantidade dummy só para validar ticker
+      await portfolioAPI.registerAporte({ tipo: 'compra', ticker, preco: 1, quantidade: 1 });
+      setTickerValid(true);
+    } catch (err) {
+      setTickerValid(false);
+      setCodigoError(true);
+    } finally {
+      setValidatingTicker(false);
+    }
+  };
+
+  // onBlur do campo código
+  const handleCodigoBlur = async () => {
+    if (codigo) {
+      await validateTicker(codigo.trim().toUpperCase());
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
+    setCodigoError(false);
+    setPrecoError(false);
+    setQuantidadeError(false);
     
     // Validação básica
     if (!codigo) {
       setErrorMessage('Por favor, informe o código da empresa.');
+      setCodigoError(true);
+      return;
+    }
+    
+    if (tickerValid === false) {
+      setErrorMessage('O código informado não é um ativo válido.');
+      setCodigoError(true);
       return;
     }
     
     if (!preco || isNaN(parseFloat(preco.replace(',', '.')))) {
       setErrorMessage('Por favor, informe um preço válido.');
+      setPrecoError(true);
       return;
     }
     
     if (!quantidade || isNaN(parseInt(quantidade))) {
       setErrorMessage('Por favor, informe uma quantidade válida.');
+      setQuantidadeError(true);
       return;
     }
     
@@ -183,7 +251,18 @@ const EmpresaUpdateSection = () => {
       setPreco('');
       setQuantidade('');
     } catch (error) {
-      setErrorMessage(error.message || 'Erro ao atualizar posição.');
+      // Validações detalhadas para venda
+      let msg = error.message || 'Erro ao atualizar posição.';
+      if (operacaoTipo === 'venda') {
+        if (msg.includes('não existe no portfólio') || msg.includes('não está na carteira')) {
+          msg = `Você não possui o ativo ${codigo.toUpperCase()}`;
+          setCodigoError(true);
+        } else if (msg.includes('maior que a disponível') || msg.includes('insuficiente para venda')) {
+          msg = `Você não possui quantidade suficiente de ${codigo.toUpperCase()} para vender`;
+          setQuantidadeError(true);
+        }
+      }
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -236,9 +315,43 @@ const EmpresaUpdateSection = () => {
               id="empresa-codigo"
               placeholder="Ex: PETR4, VALE3, etc."
               value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
+              onChange={(e) => {
+                setCodigo(e.target.value);
+                setTickerValid(null);
+              }}
+              onBlur={handleCodigoBlur}
               disabled={isSubmitting}
               size="small"
+              error={codigoError || (tickerValid === false && !validatingTicker)}
+              inputRef={codigoRef}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  ...(tickerValid === true && !validatingTicker ? {
+                    '& fieldset': {
+                      borderColor: '#10b981', // verde
+                      boxShadow: '0 0 0 1.5px #10b981',
+                    },
+                  } : {}),
+                  ...(tickerValid === false && !validatingTicker ? {
+                    '& fieldset': {
+                      borderColor: '#ef4444', // vermelho
+                      boxShadow: '0 0 0 1.5px #ef4444',
+                    },
+                  } : {}),
+                },
+              }}
+              helperText={
+                validatingTicker ? 'Validando ativo...' :
+                tickerValid === false ? 'O código informado não é um ativo válido.' :
+                tickerValid === true ? 'Ativo válido!' :
+                ''
+              }
+              FormHelperTextProps={{
+                sx: {
+                  color: tickerValid === true && !validatingTicker ? '#10b981' : tickerValid === false && !validatingTicker ? '#ef4444' : undefined,
+                  fontWeight: tickerValid === true && !validatingTicker ? 600 : undefined,
+                }
+              }}
             />
           </Box>
           
@@ -276,6 +389,7 @@ const EmpresaUpdateSection = () => {
               onChange={(e) => setPreco(e.target.value)}
               disabled={isSubmitting}
               size="small"
+              error={precoError}
             />
           </Box>
           
@@ -292,6 +406,7 @@ const EmpresaUpdateSection = () => {
               disabled={isSubmitting}
               size="small"
               helperText="Para remover uma posição, defina a quantidade como zero."
+              error={quantidadeError}
             />
           </Box>
           
