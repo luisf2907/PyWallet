@@ -9,12 +9,12 @@ echo  Prophit - Ambiente Dev Completo
 echo ===============================
 
 REM Verificar se o ambiente virtual existe; se não, criar e ativar
-IF EXIST "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat
+IF EXIST "venv\\Scripts\\activate.bat" (
+    call venv\\Scripts\\activate.bat
 ) ELSE (
     echo Ambiente virtual nao encontrado. Criando...
     python -m venv venv
-    call venv\Scripts\activate.bat
+    call venv\\Scripts\\activate.bat
 )
 
 REM Instalar dependências do backend
@@ -31,13 +31,13 @@ if exist node_modules (
 cd ..
 
 REM Iniciar o backend
-start cmd /k "cd /d %~dp0 && python run.py"
+start "PyWallet Backend" cmd /k "cd /d %~dp0 && .\\venv\\Scripts\\python.exe run.py"
 
 REM Espera o backend subir
 timeout /t 5
 
 REM Iniciar o frontend React
-start cmd /k "cd /d %~dp0frontend-react && npm run dev"
+start "PyWallet Frontend" cmd /k "cd /d %~dp0frontend-react && npm run dev"
 
 echo.
 echo Servidores de desenvolvimento rodando!

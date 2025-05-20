@@ -118,7 +118,7 @@ def get_cached_dollar_rate(force_update=False):
             
     with dollar_cache_lock:
         now = datetime.now()
-        if not force_update and (now - dollar_cache['timestamp']).total_seconds() < 300:
+        if not force_update and (now - dollar_cache['timestamp']).total_seconds() < 1800: # Alterado de 300 para 1800 (30 minutos)
             return dollar_cache['rate']
             
         last_rate = dollar_cache['rate']
