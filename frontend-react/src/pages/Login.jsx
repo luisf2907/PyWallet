@@ -8,7 +8,11 @@ import {
   Paper,
   CircularProgress,
   Tabs,
-  Tab
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
 import { useAlert } from '../hooks/useAlert';
@@ -25,6 +29,15 @@ const Login = () => {
   const [registerData, setRegisterData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState('');
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState('');
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetToken, setResetToken] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetPassword2, setResetPassword2] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   const { login, register } = useAuth();
   const { showAlert } = useAlert();
@@ -73,6 +86,70 @@ const Login = () => {
       setRegisterError(err.message || 'Erro ao cadastrar.');
     } finally {
       setRegisterLoading(false);
+    }
+  };
+
+  const handleForgot = async () => {
+    setForgotMsg('');
+    if (!forgotEmail) {
+      setForgotMsg('Informe seu e-mail.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const res = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForgotOpen(false);
+        setForgotEmail('');
+        showAlert('E-mail de recuperação enviado!', 'success');
+        setTimeout(() => setResetOpen(true), 400); // abre modal de token
+      } else {
+        showAlert(data.message || 'E-mail não cadastrado.', 'error');
+        setForgotMsg('erro');
+      }
+    } catch (err) {
+      showAlert('Erro ao conectar ao servidor.', 'error');
+      setForgotMsg('erro');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetToken || !resetPassword || !resetPassword2) {
+      showAlert('Preencha todos os campos.', 'error');
+      return;
+    }
+    if (resetPassword !== resetPassword2) {
+      showAlert('As senhas não coincidem.', 'error');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const res = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, password: resetPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetOpen(false);
+        setResetToken('');
+        setResetPassword('');
+        setResetPassword2('');
+        showAlert('Senha redefinida com sucesso!', 'success');
+      } else {
+        showAlert(data.message || 'Token inválido ou expirado.', 'error');
+      }
+    } catch (err) {
+      showAlert('Erro ao conectar ao servidor.', 'error');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -153,6 +230,15 @@ const Login = () => {
                   'Entrar'
                 )}
               </Button>
+              <Button
+                variant="text"
+                size="small"
+                sx={{ mt: 1, mb: 1, textTransform: 'none' }}
+                onClick={() => setForgotOpen(true)}
+                fullWidth
+              >
+                Esqueci minha senha
+              </Button>
               <Typography variant="body2" color="text.secondary" align="center">
                 © 2025 Prophit! - Todos os direitos reservados
               </Typography>
@@ -226,6 +312,68 @@ const Login = () => {
           </>
         )}
       </Paper>
+      <Dialog open={forgotOpen} onClose={() => { setForgotOpen(false); setForgotMsg(''); setForgotEmail(''); }} maxWidth="xs" fullWidth PaperProps={{ sx: { minHeight: 220 } }}>
+        <DialogTitle>Recuperar senha</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="E-mail"
+            type="email"
+            fullWidth
+            value={forgotEmail}
+            onChange={e => { setForgotEmail(e.target.value); setForgotMsg(''); }}
+            disabled={forgotLoading}
+            error={forgotMsg === 'erro'}
+            sx={forgotMsg === 'erro' ? { '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'error.main', borderWidth: 2 } } } : {}}
+          />
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            Insira seu email de cadastro.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setForgotOpen(false); setForgotMsg(''); setForgotEmail(''); }} disabled={forgotLoading}>Cancelar</Button>
+          <Button onClick={handleForgot} disabled={forgotLoading} variant="contained">Enviar</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={resetOpen} onClose={() => { setResetOpen(false); setResetToken(''); setResetPassword(''); setResetPassword2(''); }} maxWidth="xs" fullWidth PaperProps={{ sx: { minHeight: 260 } }}>
+        <DialogTitle>Redefinir senha</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Token recebido por e-mail"
+            type="text"
+            fullWidth
+            value={resetToken}
+            onChange={e => setResetToken(e.target.value)}
+            disabled={resetLoading}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Nova senha"
+            type="password"
+            fullWidth
+            value={resetPassword}
+            onChange={e => setResetPassword(e.target.value)}
+            disabled={resetLoading}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Confirmar nova senha"
+            type="password"
+            fullWidth
+            value={resetPassword2}
+            onChange={e => setResetPassword2(e.target.value)}
+            disabled={resetLoading}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setResetOpen(false); setResetToken(''); setResetPassword(''); setResetPassword2(''); }} disabled={resetLoading}>Cancelar</Button>
+          <Button onClick={handleResetPassword} disabled={resetLoading} variant="contained">Redefinir</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

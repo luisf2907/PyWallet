@@ -8,6 +8,8 @@ class User(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_token = db.Column(db.String(128), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
     
     def to_dict(self):
         """Converte o objeto para um dicionário."""

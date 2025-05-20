@@ -1,4 +1,4 @@
-# Prophit (antigo PyWallet)
+# Prophit
 
 ## Pré-requisitos
 - Python 3.10+

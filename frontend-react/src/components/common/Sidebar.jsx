@@ -118,19 +118,10 @@ const Sidebar = () => {
         </StyledNavLink>
       </List>
 
-      {/* Action buttons */}
-      <Box sx={{ px: 2, mt: 1 }}>
-        <Button
-          component={NavLink}
-          to="/file-upload"
-          fullWidth
-          variant="contained"
-          startIcon={<FileUploadIcon />}
-          sx={{ mb: 1 }}
-        >
-          Importar Novo Portfólio
-        </Button>
-        
+      {/* Action buttons - removido botão Importar Novo Portfólio */}
+
+      {/* Botão Sair movido para o final da sidebar */}
+      <Box sx={{ mt: 'auto', px: 2, mb: 1 }}>
         <Button
           fullWidth
           variant="outlined"
@@ -145,7 +136,6 @@ const Sidebar = () => {
       {/* Footer */}
       <Box
         sx={{
-          mt: 'auto',
           p: 2,
           textAlign: 'center',
           color: 'text.secondary',

@@ -37,6 +37,8 @@ const Dividends = () => {
   const [monthlyTotals, setMonthlyTotals] = useState(Array(12).fill(0));
   const [yearTotal, setYearTotal] = useState(0);
   const [monthDetails, setMonthDetails] = useState([]);
+  const [currentYear] = useState(new Date().getFullYear());
+  const [currentMonth] = useState(new Date().getMonth() + 1);
   
   const { showAlert } = useAlert();
   
@@ -62,45 +64,57 @@ const Dividends = () => {
   
   // Process dividends for a specific year
   const processDividendsForYear = (allDividends, year) => {
+    // Normalize all dividend fields for compatibility with backend
+    const normalized = allDividends.map((div, idx) => {
+      return {
+        ...div,
+        ex_date: div.date,
+        payment_date: div.payment_date || div.date,
+        type: div.event_type || div.type || 'Dividendo',
+        id: div.id || `${div.ticker}-${div.date}`
+      };
+    });
     // Filter dividends for the selected year
-    const yearDividends = allDividends.filter(div => {
+    const yearDividends = normalized.filter(div => {
       const divDate = new Date(div.payment_date || div.ex_date);
       return divDate.getFullYear() === parseInt(year);
     });
-    
-    // Calculate monthly totals
+    // Calculate monthly totals and year total considering only RECEIVED dividends
     const monthTotals = Array(12).fill(0);
     yearDividends.forEach(div => {
-      const divDate = new Date(div.payment_date || div.ex_date);
-      const month = divDate.getMonth();
-      monthTotals[month] += div.value || 0;
+      if (div.received) {
+        const divDate = new Date(div.payment_date || div.ex_date);
+        const month = divDate.getMonth();
+        monthTotals[month] += div.value || 0;
+      }
     });
-    
-    // Calculate year total
     const total = monthTotals.reduce((sum, val) => sum + val, 0);
-    
     setMonthlyTotals(monthTotals);
     setYearTotal(total);
-    
     // Update month details
-    updateMonthDetails(allDividends, year, selectedMonth);
+    updateMonthDetails(normalized, year, selectedMonth);
   };
   
-  // Update details for a specific month
+  // Update details for a specific month (order: most recent first)
   const updateMonthDetails = (allDividends, year, month) => {
-    const monthDivs = allDividends.filter(div => {
+    const normalized = allDividends.map((div, idx) => ({
+      ...div,
+      ex_date: div.date,
+      payment_date: div.payment_date || div.date,
+      type: div.event_type || div.type || 'Dividendo',
+      id: div.id || `${div.ticker}-${div.date}`
+    }));
+    const monthDivs = normalized.filter(div => {
       const divDate = new Date(div.payment_date || div.ex_date);
       return divDate.getFullYear() === parseInt(year) && 
              divDate.getMonth() === month - 1;
     });
-    
-    // Sort by date
+    // Sort by date (most recent first)
     monthDivs.sort((a, b) => {
       const dateA = new Date(a.payment_date || a.ex_date);
       const dateB = new Date(b.payment_date || b.ex_date);
-      return dateA - dateB;
+      return dateB - dateA;
     });
-    
     setMonthDetails(monthDivs);
   };
   
@@ -121,23 +135,50 @@ const Dividends = () => {
   const updateReceiptStatus = async (dividendId, received) => {
     try {
       setUpdating(true);
-      
+      let dividend = monthDetails.find(d => d.id === dividendId);
+      if (!dividend) {
+        dividend = dividends.find(d => d.id === dividendId);
+      }
+      if (!dividend) throw new Error('Dividendo não encontrado');
       await dividendAPI.updateReceiptStatus({
-        dividend_id: dividendId,
+        ticker: dividend.ticker,
+        date: dividend.ex_date || dividend.date,
         received
       });
-      
-      // Update local state
-      setDividends(prevDividends => 
-        prevDividends.map(dividend => 
-          dividend.id === dividendId 
-            ? { ...dividend, received } 
-            : dividend
-        )
+      // Atualizar localmente (imutável)
+      const newDividends = dividends.map(d =>
+        d.id === dividendId ? { ...d, received } : d
       );
-      
+      setDividends(newDividends);
+      // Atualizar os detalhes do mês manualmente para refletir o novo status
+      const newMonthDetails = monthDetails.map(d =>
+        d.id === dividendId ? { ...d, received } : d
+      );
+      setMonthDetails(newMonthDetails);
+      // Atualizar totais do ano (sem recarregar tudo)
+      const normalized = newDividends.map((div) => ({
+        ...div,
+        ex_date: div.date,
+        payment_date: div.payment_date || div.date,
+        type: div.event_type || div.type || 'Dividendo',
+        id: div.id || `${div.ticker}-${div.date}`
+      }));
+      const yearDividends = normalized.filter(div => {
+        const divDate = new Date(div.payment_date || div.ex_date);
+        return divDate.getFullYear() === parseInt(selectedYear);
+      });
+      const monthTotals = Array(12).fill(0);
+      yearDividends.forEach(div => {
+        if (div.received) {
+          const divDate = new Date(div.payment_date || div.ex_date);
+          const month = divDate.getMonth();
+          monthTotals[month] += div.value || 0;
+        }
+      });
+      setMonthlyTotals(monthTotals);
+      setYearTotal(monthTotals.reduce((sum, val) => sum + val, 0));
       showAlert(
-        `Provento ${received ? 'marcado como recebido' : 'marcado como não recebido'}`, 
+        `Provento ${received ? 'marcado como recebido' : 'marcado como não recebido'}`,
         'success'
       );
     } catch (err) {
@@ -178,7 +219,18 @@ const Dividends = () => {
   
   return (
     <Layout>
-      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+      <Box
+        mb={3}
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{
+          width: '100%',
+          maxWidth: 'none',
+          px: 0,
+          mx: 0,
+        }}
+      >
         <Typography variant="h4" component="h1" fontWeight="600" sx={{
           background: 'linear-gradient(45deg, #ffc107, #ffd54f)',
           backgroundClip: 'text',
@@ -187,7 +239,6 @@ const Dividends = () => {
         }}>
           Proventos
         </Typography>
-        
         <Box display="flex" alignItems="center" gap={2}>
           <TextField
             label="Ano"
@@ -204,26 +255,22 @@ const Dividends = () => {
             }}
             sx={{ width: 130 }}
           />
-          
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={loadDividends}
-            disabled={loading}
-          >
-            Atualizar
-          </Button>
         </Box>
       </Box>
-      
+      {/* Chart title with year and total */}
+      <Box mb={2} sx={{ width: '100%', maxWidth: 'none', px: 0, mx: 0 }}>
+        <Typography variant="subtitle1" fontWeight={700} fontSize={22} color="text.primary">
+          {`Proventos acumulados para o ano ${selectedYear}: `}
+          <span style={{ color: '#22c55e', fontWeight: 800, fontSize: 26 }}>{formatCurrency(yearTotal)}</span>
+        </Typography>
+      </Box>
       {error && <Alert type="error" message={error} />}
-      
       {loading ? (
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
           <CircularProgress />
         </Box>
       ) : dividends.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+        <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2, width: '100%', maxWidth: 'none', mx: 0 }}>
           <Typography variant="h6" gutterBottom>
             Nenhum provento encontrado
           </Typography>
@@ -232,123 +279,142 @@ const Dividends = () => {
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={3}>
-          {/* Annual summary */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2, mb: 3 }}>
-              <Typography variant="h6" mb={1}>
-                Resumo Anual
-              </Typography>
-              <Typography>
-                Proventos acumulados em {selectedYear}:&nbsp;
-                <Typography component="span" fontWeight="600" color="primary">
-                  {formatCurrency(yearTotal)}
+        <Grid container spacing={3} sx={{ width: '100%', maxWidth: 'none', mx: 0 }}>
+          {/* Monthly chart + details stacked, both full width */}
+          <Grid item xs={12} sx={{ width: '100%', maxWidth: 'none', mx: 0 }}>
+            <Box display="flex" flexDirection="column" gap={3} sx={{ width: '100%', maxWidth: 'none', flex: 1, px: 0, mx: 0 }}>
+              <Paper sx={{ p: 3, borderRadius: 2, mb: 0, width: '100%', maxWidth: 'none', mx: 0, overflowX: 'auto' }}>
+                <Typography variant="h6" mb={2}>
+                  Distribuição Mensal de Proventos
                 </Typography>
-              </Typography>
-            </Paper>
-          </Grid>
-          
-          {/* Monthly chart */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2, mb: 3 }}>
-              <Typography variant="h6" mb={2}>
-                Distribuição Mensal de Proventos
-              </Typography>
-              
-              <Box height="400px">
-                <DividendsChart 
-                  data={monthlyTotals} 
-                  year={selectedYear} 
-                  onMonthSelect={handleMonthSelect} 
-                />
-              </Box>
-            </Paper>
-          </Grid>
-          
-          {/* Monthly details */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
-              <Typography variant="h6" mb={2}>
-                Detalhamento dos Proventos em {getMonthName(selectedMonth)}/{selectedYear}
-              </Typography>
-                {monthDetails.length === 0 ? (
-                <Box textAlign="center" py={3}>
-                  <Typography variant="body1">Nenhum provento encontrado neste mês</Typography>
+                <Box height="400px" width="100%" maxWidth="none" minWidth={700}>
+                  <DividendsChart 
+                    data={monthlyTotals} 
+                    year={selectedYear} 
+                    currentYear={currentYear}
+                    currentMonth={currentMonth}
+                    onMonthSelect={handleMonthSelect} 
+                  />
                 </Box>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Empresa</TableCell>
-                        <TableCell>Tipo</TableCell>
-                        <TableCell align="right">Valor</TableCell>
-                        <TableCell align="right">Data Com</TableCell>
-                        <TableCell align="right">Data Pagamento</TableCell>
-                        <TableCell align="center">Status</TableCell>
-                        <TableCell align="center">Ações</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {monthDetails.map((dividend) => (
-                        <TableRow key={dividend.id}>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="500">
-                              {dividend.ticker}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={dividend.type}
-                              size="small"
-                              color={dividend.type === 'Dividendo' ? 'primary' : 'secondary'}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            R$ {dividend.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          <TableCell align="right">
-                            {new Date(dividend.ex_date).toLocaleDateString('pt-BR')}
-                          </TableCell>
-                          <TableCell align="right">
-                            {dividend.payment_date ? 
-                              new Date(dividend.payment_date).toLocaleDateString('pt-BR') : 
-                              'Não definida'
-                            }
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={dividend.received ? 'Recebido' : 'Pendente'}
-                              color={dividend.received ? 'success' : 'default'}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <IconButton
-                              color="success"
-                              size="small"
-                              disabled={updating || dividend.received}
-                              onClick={() => updateReceiptStatus(dividend.id, true)}
-                            >
-                              <CheckIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              color="error"
-                              size="small"
-                              disabled={updating || !dividend.received}
-                              onClick={() => updateReceiptStatus(dividend.id, false)}
-                            >
-                              <CloseIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
+              </Paper>
+              <Paper sx={{ p: 3, borderRadius: 2, width: '100%', maxWidth: 'none', mx: 0, overflowX: 'auto' }}>
+                <Typography variant="h6" mb={2}>
+                  Detalhamento dos Proventos em {getMonthName(selectedMonth)}/{selectedYear}
+                </Typography>
+                {monthDetails.length === 0 ? (
+                  <Box textAlign="center" py={3}>
+                    <Typography variant="body1">Nenhum provento encontrado neste mês</Typography>
+                  </Box>
+                ) : (
+                  <TableContainer sx={{ width: '100%', maxWidth: 'none', mx: 0, minWidth: 900 }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell align="center">Empresa</TableCell>
+                          <TableCell align="center">Tipo</TableCell>
+                          <TableCell align="center">Valor</TableCell>
+                          <TableCell align="center">Quantidade</TableCell>
+                          <TableCell align="center">Total</TableCell>
+                          <TableCell align="center">Data Pagamento</TableCell>
+                          <TableCell align="center">Status</TableCell>
+                          <TableCell align="center">Recebimento</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Paper>
+                      </TableHead>
+                      <TableBody>
+                        {monthDetails.map((dividend) => {
+                          let statusLabel, statusColor;
+                          if (dividend.received === true) {
+                            statusLabel = 'Recebido';
+                            statusColor = 'success';
+                          } else {
+                            statusLabel = 'Não Recebido';
+                            statusColor = 'error';
+                          }
+                          return (
+                            <TableRow key={dividend.id}>
+                              <TableCell align="center">
+                                <Typography variant="body2" fontWeight="500">
+                                  {dividend.ticker}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={dividend.type}
+                                  size="small"
+                                  color={dividend.type === 'Dividendo' ? 'primary' : 'secondary'}
+                                  variant="outlined"
+                                  sx={{ minWidth: 90, justifyContent: 'center' }}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {dividend.value_per_share ? `R$ ${dividend.value_per_share.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : (dividend.value && dividend.quantity ? `R$ ${(dividend.value / dividend.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-')}
+                              </TableCell>
+                              <TableCell align="center">
+                                {dividend.quantity ? dividend.quantity : '-'}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={
+                                    dividend.value ? `R$ ${dividend.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'
+                                  }
+                                  size="small"
+                                  sx={{ backgroundColor: '#22c55e', color: '#111', fontWeight: 700, minWidth: 90, justifyContent: 'center' }}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                {dividend.payment_date ? 
+                                  new Date(dividend.payment_date).toLocaleDateString('pt-BR') : 
+                                  'Não definida'
+                                }
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  label={statusLabel}
+                                  color={statusColor}
+                                  size="small"
+                                  sx={statusColor === 'error' ? { backgroundColor: '#ef4444', color: '#fff', minWidth: 90, justifyContent: 'center' } : { minWidth: 90, justifyContent: 'center' }}
+                                />
+                              </TableCell>
+                              <TableCell align="center">
+                                <Box display="flex" justifyContent="center" alignItems="center">
+                                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: updating ? 'not-allowed' : 'pointer' }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={dividend.received === true}
+                                      onChange={e => updateReceiptStatus(dividend.id, e.target.checked)}
+                                      disabled={updating}
+                                      style={{ display: 'none' }}
+                                      aria-label="Recebimento"
+                                    />
+                                    <span style={{
+                                      display: 'inline-block',
+                                      width: 22,
+                                      height: 22,
+                                      borderRadius: 6,
+                                      border: `2px solid ${dividend.received ? '#22c55e' : '#888'}`,
+                                      background: dividend.received ? '#22c55e' : 'transparent',
+                                      transition: 'all 0.2s',
+                                      position: 'relative',
+                                      boxShadow: dividend.received ? '0 0 0 2px #22c55e33' : 'none',
+                                    }}>
+                                      {dividend.received && (
+                                        <svg width="16" height="16" viewBox="0 0 16 16" style={{ position: 'absolute', top: 2, left: 2 }}>
+                                          <polyline points="2,9 7,14 14,4" style={{ fill: 'none', stroke: '#fff', strokeWidth: 2 }} />
+                                        </svg>
+                                      )}
+                                    </span>
+                                  </label>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Paper>
+            </Box>
           </Grid>
         </Grid>
       )}

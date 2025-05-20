@@ -137,21 +137,16 @@ const Dashboard = () => {
               Visão Geral
             </Typography>
           </Box>
-          
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => loadPortfolioData(false)}
-            disabled={loading || refreshing}
-          >
-            {refreshing ? <CircularProgress size={20} /> : 'Atualizar'}
-          </Button>
+          {/* Botão de atualizar removido */}
         </Box>
         
         {/* Exchange Rate Display */}
         {exchangeRate && <ExchangeRate rate={exchangeRate} />}
-        
-        {error && <Alert type="error" message={error} />}          {loading ? (
+        {/* O Alert de erro só deve aparecer se houver dados carregados (não no estado inicial) */}
+        {error && portfolioData && portfolioData.summary && portfolioData.summary.assets && portfolioData.summary.assets.length > 0 && (
+          <Alert type="error" message={error} />
+        )}
+        {loading ? (
           <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh" gap={2}>
             <CircularProgress size={60} sx={{ color: '#ffc107' }} />
             <Typography variant="h6" color="#ffc107" sx={{ mt: 2 }}>
@@ -498,22 +493,58 @@ const EmptyPortfolioState = () => (
       p: 4,
       textAlign: 'center',
       borderRadius: 2,
+      background: 'linear-gradient(135deg, #232323 0%, #1e1e1e 100%)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+      position: 'relative',
+      minHeight: 320,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
     }}
   >
-    <Typography variant="h6" gutterBottom>
-      Nenhum portfólio encontrado
+    <Typography variant="h5" gutterBottom fontWeight={700} color="#ffc107">
+      Bem-vindo ao Prophit!
     </Typography>
-    <Typography variant="body2" color="text.secondary" paragraph>
-      Parece que você ainda não importou seu portfólio. Vá para a página de gerenciar portfólio para importar seus dados.
+    <Typography variant="body1" color="text.secondary" paragraph sx={{ maxWidth: 420, mx: 'auto' }}>
+      Para começar, clique em <b>Gerenciar Portfólio</b> na barra lateral à esquerda para importar sua carteira de investimentos.
     </Typography>
-    <Button
-      variant="contained"
-      component={RouterLink}
-      to="/file-upload"
-      sx={{ mt: 2 }}
-    >
-      Importar Portfólio
-    </Button>
+    <Box sx={{ mt: 2, position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+      {/* Seta animada alinhada com o botão Gerenciar Portfólio */}
+      <Box
+        sx={{
+          position: 'fixed',
+          left: 200,
+          top: 170, // valor ajustado para alinhar com o botão Gerenciar Portfólio
+          zIndex: 1300,
+          display: { xs: 'none', md: 'block' },
+          animation: 'arrow-bounce 1.2s infinite',
+          pointerEvents: 'none',
+        }}
+      >
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <path d="M44 8L16 36M16 36V12M16 36H40" stroke="#a83246" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </Box>
+      <Box
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          mt: 2,
+          color: '#2196f3',
+          fontWeight: 600,
+        }}
+      >
+        <Typography variant="body2">
+          Use o menu lateral para acessar <b>Gerenciar Portfólio</b>.
+        </Typography>
+      </Box>
+    </Box>
+    <style>{`
+      @keyframes arrow-bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+    `}</style>
   </Paper>
 );
 

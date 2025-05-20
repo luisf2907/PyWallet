@@ -24,7 +24,7 @@ ChartJS.register(
 /**
  * Monthly dividends chart component (bar chart)
  */
-const DividendsChart = ({ data = [], year, onMonthSelect }) => {
+const DividendsChart = ({ data = [], year, currentYear, currentMonth, onMonthSelect }) => {
   const theme = useTheme();
   
   if (!data || data.length === 0) {
@@ -45,7 +45,25 @@ const DividendsChart = ({ data = [], year, onMonthSelect }) => {
 
   // Month labels
   const monthLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  
+
+  // Determine which months should be visually disabled (future months for current year)
+  const barColors = data.map((val, idx) => {
+    if (parseInt(year) === currentYear && idx + 1 > currentMonth) {
+      return theme.palette.mode === 'dark'
+        ? 'rgba(120,120,120,0.18)'
+        : 'rgba(200,200,200,0.18)'; // faded/disabled
+    }
+    return 'rgba(255, 193, 7, 0.6)';
+  });
+  const hoverColors = data.map((val, idx) => {
+    if (parseInt(year) === currentYear && idx + 1 > currentMonth) {
+      return theme.palette.mode === 'dark'
+        ? 'rgba(120,120,120,0.25)'
+        : 'rgba(200,200,200,0.25)';
+    }
+    return 'rgba(255, 193, 7, 0.8)';
+  });
+
   // Format currency values
   const formatter = new Intl.NumberFormat('pt-BR', {
     style: 'currency', 
@@ -59,11 +77,11 @@ const DividendsChart = ({ data = [], year, onMonthSelect }) => {
       {
         label: 'Proventos (R$)',
         data: data,
-        backgroundColor: 'rgba(255, 193, 7, 0.6)',
+        backgroundColor: barColors,
         borderColor: '#ffc107',
         borderWidth: 1,
         borderRadius: 4,
-        hoverBackgroundColor: 'rgba(255, 193, 7, 0.8)',
+        hoverBackgroundColor: hoverColors,
       }
     ]
   };
