@@ -3,21 +3,22 @@ import { AppBar, Toolbar, IconButton, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useTheme } from '@mui/material/styles';
 
-const Header = ({ isMobile, onToggleSidebar }) => {
+const Header = ({ isMobile, onToggleSidebar, sidebarOpen }) => { // Added sidebarOpen
   const theme = useTheme();
 
   if (!isMobile) {
-    return null; // No header on desktop for now, sidebar is fixed
+    return null;
   }
 
   return (
     <AppBar 
-      position="fixed" // Fixed at the top
+      position="fixed"
+      elevation={0} // Make AppBar transparent
       sx={{ 
-        zIndex: theme.zIndex.drawer + 1, // Ensure header is above the drawer
-        backgroundColor: theme.palette.background.paper, // Match sidebar/layout style
-        boxShadow: theme.shadows[2],
-        transition: theme.transitions.create(['margin', 'width'], {
+        zIndex: theme.zIndex.drawer + 1,
+        backgroundColor: 'transparent', // Ensure background is transparent
+        boxShadow: 'none', // Remove shadow for full transparency
+        transition: theme.transitions.create(['opacity', 'visibility'], { // Transition for icon
           easing: theme.transitions.easing.sharp,
           duration: theme.transitions.duration.leavingScreen,
         }),
@@ -31,8 +32,13 @@ const Header = ({ isMobile, onToggleSidebar }) => {
           onClick={onToggleSidebar}
           sx={{ 
             mr: 2,
-            color: theme.palette.text.primary, // Ensure icon color contrasts with background
-            // Basic fade effect can be controlled by parent's logic for sidebar state
+            color: theme.palette.text.primary,
+            opacity: sidebarOpen ? 0 : 1, // Fade out when sidebar is open
+            visibility: sidebarOpen ? 'hidden' : 'visible', // Hide when sidebar is open
+            transition: theme.transitions.create(['opacity', 'visibility'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
           }}
         >
           <MenuIcon />

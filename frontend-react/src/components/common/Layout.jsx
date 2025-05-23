@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
-      {isMobile && <Header isMobile={isMobile} onToggleSidebar={handleDrawerToggle} />} 
+      {isMobile && <Header isMobile={isMobile} onToggleSidebar={handleDrawerToggle} sidebarOpen={sidebarOpen} />} 
       <Sidebar 
         isMobile={isMobile} 
         isOpen={sidebarOpen} 
