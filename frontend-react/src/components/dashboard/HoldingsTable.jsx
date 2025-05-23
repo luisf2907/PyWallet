@@ -79,8 +79,13 @@ const HoldingsTable = ({ holdings = [] }) => {
 
   return (
     <TableContainer component={Paper} 
-      sx={{ boxShadow: 'none', backgroundColor: 'transparent' }}
-    >      <Table size="small">        <TableHead>          <TableRow sx={{ 
+      sx={{
+        boxShadow: 'none',
+        backgroundColor: 'transparent',
+        minWidth: 900, // Ensures the table content has a minimum width to trigger scroll
+      }}
+    >
+      <Table size="small">        <TableHead>          <TableRow sx={{ 
             borderBottom: '2px solid #ffc107',
             '& th': { 
               fontSize: '0.85rem',

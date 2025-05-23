@@ -27,9 +27,12 @@ import {
 } from '../components/dashboard';
 import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
+import useDeviceType from '../hooks/useDeviceType'; // Corrected: Import default export
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const deviceType = useDeviceType();
+  const isMobile = deviceType === 'mobile'; // Define isMobile based on deviceType
   const [portfolioData, setPortfolioData] = useState(null);
   const [exchangeRate, setExchangeRate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -119,6 +122,8 @@ const Dashboard = () => {
   useEffect(() => {
     loadPortfolioData();
   }, []);
+  
+  const isTablet = deviceType === 'tablet'; // ADICIONADO
   
   return (
     <Layout>
@@ -350,14 +355,14 @@ const Dashboard = () => {
               }} />            </Box>
             
             {/* Row 2: Charts in one row with 40/60 split (swapped positions) */}
-            <Box className="charts-row" mt={4} mb={3}>
+            <Box className="charts-row" mt={4} mb={3} sx={{ display: 'flex', width: '100%', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
               {/* Distribution Chart (40%) - Now on the left */}
-              <Box sx={{ width: { xs: '100%', md: '40%' }, mb: { xs: 2, md: 0 } }}>
-                <Paper className="chart-paper" sx={{ 
+              <Box sx={{ width: { xs: '100%', md: '40%' } }}>
+                <Paper className="chart-paper" sx={{
                   p: 3, 
                   borderRadius: 2, 
-                  height: '100%',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  // height: '100%' // Ensure Paper can grow if needed, or set fixed height if charts require
                 }}>
                   <Box display="flex" alignItems="center" mb={2}>
                     <DonutLargeIcon sx={{ mr: 1, color: '#ffc107' }} />
@@ -369,18 +374,21 @@ const Dashboard = () => {
                   <Box className="chart-container" height="320px">
                     <DistributionChart 
                       distribution={portfolioData?.distribution?.distribution || []} 
+                      showLegend={!(isMobile || isTablet)} 
                     />
                   </Box>
                 </Paper>
               </Box>
               
-              {/* Portfolio Evolution (60%) - Now on the right */}              <Box sx={{ width: { xs: '100%', md: '60%' } }}>
-                <Paper className="chart-paper" sx={{ 
+              {/* Portfolio Evolution (60%) - Now on the right */}
+              <Box sx={{ width: { xs: '100%', md: '60%' } }}>
+                <Paper className="chart-paper" sx={{
                   p: 3, 
                   borderRadius: 2, 
-                  height: '100%',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }}>                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
+                  // height: '100%' // Ensure Paper can grow if needed, or set fixed height if charts require
+                }}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap">
                     <Box display="flex" alignItems="center">
                       <TrendingUpIcon sx={{ mr: 1, color: '#ffc107' }} />
                       <Typography variant="h6" sx={{ fontWeight: '600', color: '#ffc107' }}>
@@ -470,11 +478,14 @@ const Dashboard = () => {
               }}>
                 <ShowChartIcon sx={{ mr: 1, color: '#ffc107' }} />
                 Seus Ativos
-              </Typography>              <Paper sx={{ 
-                p: 3, 
+              </Typography>
+              <Paper sx={{ 
+                p: { xs: 1, md: 3 }, // Reduced padding for mobile
                 borderRadius: 2, 
                 width: '100%',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                overflowX: 'auto', // Ensures horizontal scrolling on the Paper component
+                maxWidth: '100%' // Ensures Paper does not exceed viewport width
               }} className="assets-table-container">
                 <HoldingsTable holdings={portfolioData?.summary?.assets || []} />
               </Paper>
