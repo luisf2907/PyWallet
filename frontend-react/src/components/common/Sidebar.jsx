@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, List, ListItem, ListItemIcon, ListItemText, 
-  Button, Divider, ListItemButton } from '@mui/material';
+  Button, Divider, ListItemButton, Drawer, useTheme } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import {
   Dashboard as DashboardIcon,
@@ -28,26 +28,27 @@ const StyledNavLink = styled(NavLink)(({ theme }) => ({
 }));
 
 const ProphitLogo = '/Prophit_logo.png';
+const drawerWidth = 250;
 
-const Sidebar = () => {
+const Sidebar = ({ isMobile, isOpen, onClose }) => {
   const { user, logout } = useAuth();
+  const theme = useTheme();
 
   const handleLogout = async () => {
     await logout();
-  };  return (
+    if (isMobile && onClose) {
+      onClose(); // Close drawer on logout if mobile
+    }
+  };
+
+  const drawerContent = (
     <Box
-      className="sidebar"
       sx={{
-        width: '250px',
-        minWidth: '250px',
-        height: '100vh',
+        width: drawerWidth,
+        height: '100%', // Ensure drawer content takes full height
         backgroundColor: 'background.paper',
-        boxShadow: 2,
         display: 'flex',
         flexDirection: 'column',
-        position: 'fixed',
-        flexShrink: 0,
-        zIndex: 1200,
       }}
     >
       {/* Logo and app title */}
@@ -144,6 +145,55 @@ const Sidebar = () => {
       >
         Prophit! v1.0.0<br />© 2025 - Todos os direitos reservados
       </Box>
+    </Box>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        variant="temporary"
+        open={isOpen}
+        onClose={onClose}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            borderRight: `1px solid ${theme.palette.divider}` // Optional: add a border
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    );
+  }
+
+  // Desktop sidebar (fixed or collapsible based on isOpen)
+  return (
+    <Box
+      className="sidebar"
+      sx={{
+        width: isOpen ? drawerWidth : 0, // Collapsible width
+        minWidth: isOpen ? drawerWidth : 0,
+        height: '100vh',
+        backgroundColor: 'background.paper',
+        boxShadow: 2,
+        display: { xs: 'none', md: 'flex' }, // Hide on xs, show on md and up
+        flexDirection: 'column',
+        position: 'fixed',
+        flexShrink: 0,
+        zIndex: theme.zIndex.drawer, // Standard drawer zIndex
+        overflowX: 'hidden', // Prevent horizontal scroll when collapsed
+        transition: theme.transitions.create('width', {
+          easing: theme.transitions.easing.sharp,
+          duration: isOpen ? theme.transitions.duration.enteringScreen : theme.transitions.duration.leavingScreen,
+        }),
+      }}
+    >
+      {isOpen && drawerContent} {/* Render content only if open */}
     </Box>
   );
 };

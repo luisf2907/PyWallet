@@ -28,7 +28,7 @@ ChartJS.register(
 /**
  * Portfolio evolution chart component (line chart)
  */
-const EvolutionChart = ({ evolution = [] }) => {
+const EvolutionChart = ({ evolution = [], isMobile }) => { // Added isMobile prop
   const theme = useTheme();
   
   if (!evolution || evolution.length === 0) {
@@ -76,10 +76,10 @@ const EvolutionChart = ({ evolution = [] }) => {
         borderWidth: 2,
         tension: 0.2,
         fill: true,
-        pointRadius: 3,
+        pointRadius: isMobile ? 0 : 3, // Conditionally set pointRadius
         pointBackgroundColor: theme.palette.primary.main,
         pointBorderColor: theme.palette.background.paper,
-        pointHoverRadius: 5,
+        pointHoverRadius: isMobile ? 0 : 5, // Conditionally set pointHoverRadius
         pointHoverBackgroundColor: '#fff',
         pointHoverBorderColor: theme.palette.primary.main,
         pointHoverBorderWidth: 2
@@ -93,6 +93,7 @@ const EvolutionChart = ({ evolution = [] }) => {
     scales: {
       y: {
         beginAtZero: false,
+        display: !isMobile, // Conditionally display Y-axis
         grid: {
           color: theme.palette.mode === 'dark' 
             ? 'rgba(255, 255, 255, 0.1)' 
@@ -114,7 +115,7 @@ const EvolutionChart = ({ evolution = [] }) => {
           maxRotation: 45,
           minRotation: 45,
           autoSkip: true,
-          maxTicksLimit: 12
+          maxTicksLimit: isMobile ? 4 : 12 // Conditionally set maxTicksLimit
         }
       }
     },

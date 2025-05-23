@@ -15,7 +15,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale);
 /**
  * Asset distribution chart component (doughnut/pie chart)
  */
-const DistributionChart = ({ distribution = [] }) => {
+const DistributionChart = ({ distribution = [], isMobile }) => { // Added isMobile prop
   const theme = useTheme();
   
   if (!distribution || distribution.length === 0) {
@@ -127,7 +127,7 @@ const DistributionChart = ({ distribution = [] }) => {
             return [];
           }
         },
-        display: true,
+        display: !isMobile, // Conditionally display legend
         align: 'center'
       },
       tooltip: {

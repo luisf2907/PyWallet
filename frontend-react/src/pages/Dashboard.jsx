@@ -374,7 +374,7 @@ const Dashboard = () => {
                   <Box className="chart-container" height="320px">
                     <DistributionChart 
                       distribution={portfolioData?.distribution?.distribution || []} 
-                      showLegend={!(isMobile || isTablet)} 
+                      isMobile={isMobile} // Pass isMobile prop
                     />
                   </Box>
                 </Paper>
@@ -457,7 +457,12 @@ const Dashboard = () => {
                     </Box>
                   </Box>
                   <Box className="chart-container" height="320px">
-                    <EvolutionChart evolution={portfolioData?.summary?.evolution || []} />                  </Box>                </Paper>
+                    <EvolutionChart 
+                      evolution={portfolioData?.summary?.evolution || []} 
+                      isMobile={isMobile} // Pass isMobile prop
+                    />
+                  </Box>
+                </Paper>
               </Box>
             </Box>
               
