@@ -1,0 +1,277 @@
+.portfolio-import-table-dark {
+  background: #181a20;
+  color: #e0e0e0;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px #000a;
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+/* Estilos de tabela Excel */
+.excel-table-container {
+  overflow-x: auto;
+  margin-bottom: 20px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 14px;
+  background-color: #1e293b;
+  table-layout: fixed;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.excel-table thead {
+  background-color: #2d3748;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.excel-table th {
+  padding: 12px;
+  font-weight: bold;
+  text-align: center;
+  color: #fff;
+  border: 1px solid #4a5568;
+  white-space: nowrap;
+  background: linear-gradient(to bottom, #3a4556, #2d3748);
+}
+
+.excel-table td {
+  padding: 0;
+  border: 1px solid #374151;
+  position: relative;
+  height: 40px;
+}
+
+.excel-cell {
+  background-color: #1e293b;
+  transition: all 0.2s ease;
+}
+
+/* Linhas zebradas para melhor legibilidade */
+.excel-table tbody tr:nth-child(odd) td {
+  background-color: #1a2532;
+}
+
+/* Efeito de seleção de linha no hover */
+.excel-table tbody tr:hover td {
+  background-color: #2a3a4a !important;
+}
+
+.excel-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: transparent;
+  color: #e0e0e0;
+  font-family: monospace, inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  outline: none;
+  text-align: center;
+}
+
+.excel-input:focus {
+  background-color: #1a365d;
+  box-shadow: inset 0 0 0 2px #3182ce;
+  color: #ffffff;
+}
+
+/* Estilos específicos por coluna */
+.excel-table td:first-child .excel-input {
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.excel-table td:nth-child(2) .excel-input {
+  text-align: right;
+}
+
+.excel-table td:nth-child(3) .excel-input {
+  text-align: right;
+}
+
+/* Destaque para células */
+.excel-table tr:hover td {
+  background-color: #2d3748;
+}
+
+/* Estilo para célula inválida */
+.cell-invalid {
+  background: #3a1a1a !important;
+  color: #ff5c5c !important;
+  border: 1px solid #ff5c5c !important;
+  position: relative;
+}
+
+.cell-invalid input {
+  color: #ff5c5c !important;
+}
+
+.cell-valid {
+  background: #1a3a1a !important;
+  border: 1px solid #4ade80 !important;
+}
+
+.cell-validating {
+  background: #1a2742 !important;
+  border: 1px solid #60a5fa !important;
+  position: relative;
+}
+
+.validating-indicator {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.error-tooltip {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff5c5c;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 100;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.cell-invalid:hover .error-tooltip {
+  opacity: 1;
+}
+
+.warning {
+  color: #ffb300;
+  margin-bottom: 1rem;
+  padding: 10px;
+  background-color: rgba(255, 179, 0, 0.1);
+  border-radius: 5px;
+}
+
+.error-msg {
+  color: #ff5c5c;
+  margin: 1rem 0;
+  padding: 8px 12px;
+  background-color: rgba(255, 92, 92, 0.1);
+  border-radius: 4px;
+}
+
+.save-btn {
+  background: #1e88e5;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 2rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: bold;
+}
+
+.save-btn:hover {
+  background: #1976d2;
+}
+
+.save-btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #23272f;
+  color: #e0e0e0;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 16px #000a;
+  max-width: 450px;
+  width: 90%;
+}
+
+.modal-content h3 {
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal-content p {
+  margin-bottom: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-content button {
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal-content .confirm-btn {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.modal-content .confirm-btn:hover {
+  background: #b71c1c;
+}
+
+.modal-content .cancel-btn {
+  background: #424242;
+  color: #fff;
+}
+
+.modal-content .cancel-btn:hover {
+  background: #303030;
+}
+
+.modal-content button:disabled {
+  background: #444;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

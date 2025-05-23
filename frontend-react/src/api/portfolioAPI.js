@@ -37,7 +37,23 @@ export const portfolioAPI = {
   
   // Register investment contribution
   registerAporte: (data) => fetchAPI('/register-aporte', 'POST', data),
+    // Manual update for a company
+  updateEmpresa: (data) => fetchAPI('/empresa-update', 'POST', data),
   
-  // Manual update for a company
-  updateEmpresa: (data) => fetchAPI('/empresa-update', 'POST', data)
+  // Sobrescrever portfólio manualmente (importação via tabela)
+  overwritePortfolio: (data) => fetchAPI('/upload-portfolio', 'POST', data),
+  
+  // Validar um ticker
+  validateTicker: async (ticker) => {
+    // Valida o ticker fazendo uma requisição de aporte com valores dummy
+    try {
+      if (!ticker || ticker.length < 4 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
+        return { isValid: false };
+      }
+      await fetchAPI('/register-aporte', 'POST', { tipo: 'compra', ticker, preco: 1, quantidade: 1 });
+      return { isValid: true };
+    } catch (error) {
+      return { isValid: false, error };
+    }
+  }
 };

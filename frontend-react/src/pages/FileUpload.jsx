@@ -20,6 +20,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { Layout, Alert, FileUpload } from '../components/common';
 import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
+import PortfolioImportTable from '../components/PortfolioImportTable';
 
 const FileUploadPage = () => {
   const [file, setFile] = useState(null);
@@ -124,8 +125,7 @@ const FileUploadPage = () => {
             {uploading ? <CircularProgress size={24} color="inherit" /> : 'Continuar para o Dashboard'}
           </Button>
         </Stack>
-        
-        <Box mb={4}>
+          <Box mb={4}>
           <Button
             variant="contained"
             color="primary"
@@ -146,8 +146,26 @@ const FileUploadPage = () => {
             }}
           >
             Baixar modelo de planilha
-          </Button>
-        </Box>
+          </Button>        </Box>
+        
+        <Paper 
+          variant="outlined"
+          sx={{
+            p: 0,
+            borderRadius: 2,
+            overflow: 'hidden',
+            mb: 4,
+            backgroundColor: '#181a20',
+            width: '100%'
+          }}
+        >
+          <PortfolioImportTable 
+            onSave={() => {
+              showAlert('Portfólio atualizado com sucesso!', 'success');
+              setTimeout(() => navigate('/dashboard'), 1500);
+            }} 
+          />
+        </Paper>
         
         {/* Seção para alterar posição de empresa específica */}
         <EmpresaUpdateSection />

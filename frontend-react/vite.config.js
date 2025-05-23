@@ -20,4 +20,5 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  root: './', // Garante que só use o index.html do frontend-react
 });
