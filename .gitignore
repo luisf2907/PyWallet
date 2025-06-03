@@ -1,4 +1,7 @@
 # Ambientes virtuais
+.next*
+.sync*
+Desktop.ini
 uploads/
 env/
 venv/
