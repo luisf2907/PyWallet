@@ -42,15 +42,14 @@ export const portfolioAPI = {
   
   // Sobrescrever portfólio manualmente (importação via tabela)
   overwritePortfolio: (data) => fetchAPI('/upload-portfolio', 'POST', data),
-  
-  // Validar um ticker
+    // Validar um ticker
   validateTicker: async (ticker) => {
-    // Valida o ticker fazendo uma requisição de aporte com valores dummy
+    // Valida o ticker sem modificar o portfólio
     try {
       if (!ticker || ticker.length < 4 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
         return { isValid: false };
       }
-      await fetchAPI('/register-aporte', 'POST', { tipo: 'compra', ticker, preco: 1, quantidade: 1 });
+      await fetchAPI('/validate-ticker', 'POST', { ticker });
       return { isValid: true };
     } catch (error) {
       return { isValid: false, error };

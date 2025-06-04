@@ -475,3 +475,80 @@ def update_empresa_manual(user_id, codigo, preco, quantidade, tipo_operacao='com
         import traceback
         traceback.print_exc()
         return {'error': f'Erro ao atualizar empresa: {str(e)}'}, 500
+        
+def overwrite_portfolio_manual(user_id, ativos):
+    """
+    Sobrescreve o portfólio com dados inseridos manualmente através da tabela de importação.
+    
+    Args:
+        user_id (str): ID do usuário
+        ativos (list): Lista de ativos com ticker, preço médio e quantidade
+        
+    Returns:
+        tuple: (dict, int) - Resposta e código HTTP
+    """
+    try:
+        if not ativos:
+            return {'error': 'Nenhum ativo informado'}, 400
+        
+        # Validar cada ativo
+        portfolio_data = []
+        for ativo in ativos:
+            ticker = ativo.get('ticker', '').strip().upper()
+            preco = float(ativo.get('preco', 0))
+            quantidade = int(ativo.get('quantidade', 0))
+            
+            if not ticker or preco <= 0 or quantidade <= 0:
+                continue
+                
+            # Verificar se o ticker existe usando yfinance
+            try:
+                import yfinance as yf
+                from utils.ticker_utils import format_ticker
+                yf_ticker = format_ticker(ticker)
+                ticker_info = yf.Ticker(yf_ticker).info
+                if not ticker_info.get('regularMarketPrice') and not ticker_info.get('currentPrice'):
+                    continue  # Pular ticker inválido
+            except Exception as e:
+                print(f"Erro ao validar ticker {ticker}: {str(e)}")
+                continue
+                
+            portfolio_data.append({
+                'ticker': ticker,
+                'preco_medio': preco,
+                'quantidade': quantidade
+            })
+        
+        if not portfolio_data:
+            return {'error': 'Nenhum ativo válido informado'}, 400
+            
+        # Salvar novo portfólio
+        new_portfolio = Portfolio(
+            user_id=user_id,
+            data=json.dumps(portfolio_data),
+            filename=f"manual_import_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+        )
+        db.session.add(new_portfolio)
+        db.session.commit()
+        
+        # Limpar cache
+        clear_evolution_cache_for_user(user_id)
+        
+        # Total de ativos importados
+        total_assets = len(portfolio_data)
+        
+        # Total em valor
+        total_value = sum(asset['preco_medio'] * asset['quantidade'] for asset in portfolio_data)
+        
+        return {
+            'message': f'Portfólio sobrescrito com sucesso. {total_assets} ativos importados.',
+            'portfolio_summary': {
+                'total_assets': total_assets,
+                'total_value': total_value
+            }
+        }, 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {'error': f'Erro ao sobrescrever portfólio: {str(e)}'}, 500

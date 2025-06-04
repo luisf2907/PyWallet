@@ -147,16 +147,16 @@ const FileUploadPage = () => {
           >
             Baixar modelo de planilha
           </Button>        </Box>
-        
-        <Paper 
+        <Paper
           variant="outlined"
           sx={{
             p: 0,
             borderRadius: 2,
             overflow: 'hidden',
             mb: 4,
-            backgroundColor: '#181a20',
-            width: '100%'
+            bgcolor: 'transparent',  // Fundo transparente para não interferir
+            width: '100%',
+            boxShadow: 'none'  // Sem sombra adicional
           }}
         >
           <PortfolioImportTable 

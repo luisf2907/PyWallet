@@ -8,7 +8,7 @@ from flask import Blueprint, request, jsonify, session, send_from_directory, cur
 
 from services.portfolio_service import (
     upload_portfolio, get_portfolio_distribution,
-    register_transaction
+    register_transaction, overwrite_portfolio_manual
 )
 from services.price_service import get_cached_dollar_rate
 
@@ -17,16 +17,24 @@ portfolio_bp = Blueprint('portfolio', __name__, url_prefix='/api')
 
 @portfolio_bp.route('/upload-portfolio', methods=['POST'])
 def upload_portfolio_route():
-    """Endpoint para fazer upload de arquivo de portfólio."""
+    """Endpoint para fazer upload de arquivo de portfólio ou sobrescrever com dados manuais."""
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
+      # Verifica se é uma requisição de upload de arquivo ou dados JSON
+    if request.is_json:
+        # Importação manual via tabela
+        data = request.get_json()
+        ativos = data.get('ativos', [])
         
-    if 'file' not in request.files:
-        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
-        
-    file = request.files['file']
-    response, status_code = upload_portfolio(user_id, file)
+        response, status_code = overwrite_portfolio_manual(user_id, ativos)
+    else:
+        # Upload de arquivo
+        if 'file' not in request.files:
+            return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+            
+        file = request.files['file']
+        response, status_code = upload_portfolio(user_id, file)
     
     return jsonify(response), status_code
 
@@ -70,6 +78,36 @@ def exchange_rate():
     return jsonify({'rate': rate}), 200
 
 # Endpoint para download de template foi removido, agora o download é feito diretamente do Google Drive
+
+@portfolio_bp.route('/validate-ticker', methods=['POST'])
+def validate_ticker():
+    """Endpoint para validar se um ticker existe sem modificar o portfólio."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+        
+    data = request.get_json()
+    ticker = data.get('ticker', '').strip().upper()
+    
+    if not ticker:
+        return jsonify({'error': 'Ticker não informado'}), 400
+    
+    # Importa yfinance para verificar se o ticker existe
+    try:
+        import yfinance as yf
+        from utils.ticker_utils import format_ticker
+        
+        yf_ticker = format_ticker(ticker)
+        ticker_info = yf.Ticker(yf_ticker).info
+        
+        # Verifica se o ticker é válido (tem preço de mercado)
+        if ticker_info.get('regularMarketPrice') or ticker_info.get('currentPrice'):
+            return jsonify({'isValid': True}), 200
+        else:
+            return jsonify({'error': 'Ticker não encontrado'}), 404
+    except Exception as e:
+        current_app.logger.error(f"Erro ao validar ticker {ticker}: {str(e)}")
+        return jsonify({'error': 'Ticker não encontrado'}), 404
 
 @portfolio_bp.route('/empresa-update', methods=['POST'])
 def empresa_update():
