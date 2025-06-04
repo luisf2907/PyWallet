@@ -2,6 +2,9 @@
 import { fetchAPI, uploadFile } from './apiClient';
 
 export const portfolioAPI = {
+  // Test API connection
+  testConnection: () => fetchAPI('/status', 'GET'),
+  
   // Upload portfolio file
   uploadPortfolio: (file) => uploadFile('/upload-portfolio', file),
   
@@ -39,9 +42,19 @@ export const portfolioAPI = {
   registerAporte: (data) => fetchAPI('/register-aporte', 'POST', data),
     // Manual update for a company
   updateEmpresa: (data) => fetchAPI('/empresa-update', 'POST', data),
+    // Sobrescrever portfólio manualmente (importação via tabela)
+  overwritePortfolio: (data) => fetchAPI('/upload-portfolio', 'POST', data),  // Registrar aportes em lote (importação via tabela em modo não sobrescrever)
+  batchUpdatePortfolio: async (data) => {
+    try {
+      // Tentar primeiro com a URL correta
+      return await fetchAPI('/register-aporte-batch', 'POST', data);
+    } catch (error) {
+      console.log('Erro na primeira tentativa, tentando URL alternativa...');
+      // Em caso de falha, tentar com a URL alternativa
+      return await fetchAPI('/batch-update', 'POST', data);
+    }
+  },
   
-  // Sobrescrever portfólio manualmente (importação via tabela)
-  overwritePortfolio: (data) => fetchAPI('/upload-portfolio', 'POST', data),
   // Validar um ticker
   validateTicker: async (ticker) => {
     // Valida o ticker sem modificar o portfólio

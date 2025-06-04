@@ -32,3 +32,11 @@ def system_status():
         },
         'system_ready': True
     }), 200
+
+@status_bp.route('/status', methods=['GET'])
+def status():
+    """Endpoint simples para verificar se a API está online."""
+    return jsonify({
+        'status': 'online',
+        'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }), 200

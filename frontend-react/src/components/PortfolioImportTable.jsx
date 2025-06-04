@@ -10,11 +10,14 @@ const initialRows = (n) => Array.from({ length: n }, (_, idx) => ({
   quantidade: '' 
 }));
 
-export default function PortfolioImportTable({ onSave }) {  const [rows, setRows] = useState(initialRows(10));
+export default function PortfolioImportTable({ onSave }) {  
+  const [rows, setRows] = useState(initialRows(10));
   const [tickersValid, setTickersValid] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [error, setError] = useState('');
+  const [overwriteMode, setOverwriteMode] = useState(false);
+  
   
   // Validação do ticker em tempo real utilizando a API
   const validateTicker = async (ticker) => {
@@ -77,19 +80,30 @@ export default function PortfolioImportTable({ onSave }) {  const [rows, setRows
         ...initialRows(5).map((row, i) => ({ ...row, id: prevRows.length + i }))
       ]);
     }
-  }, [rows]);
-
-  // Validação de preço e quantidade
+  }, [rows]);  // Validação de preço e quantidade
   const validateRow = (row) => {
+    // Validar ticker - deve existir e ser válido
     if (!row.ticker || tickersValid[row.id] === false) return false;
     
+    // Validar preço - deve ser um número positivo
     let preco = String(row.preco || '').replace(',', '.');
     if (!preco || isNaN(Number(preco)) || Number(preco) <= 0) return false;
     
+    // Validar quantidade
     let quantidade = row.quantidade;
-    if (!quantidade || isNaN(Number(quantidade)) || !Number.isInteger(Number(quantidade)) || Number(quantidade) <= 0) return false;
+    if (!quantidade || isNaN(Number(quantidade)) || !Number.isInteger(Number(quantidade))) return false;
     
-    return true;  };
+    // Regras específicas de cada modo:
+    if (overwriteMode) {
+      // No modo Sobrescrever: quantidade deve ser positiva
+      if (Number(quantidade) <= 0) return false;
+    } else {
+      // No modo Aporte/Retirada: quantidade não pode ser zero, mas pode ser negativa (venda)
+      if (Number(quantidade) === 0) return false;
+    }
+    
+    return true;
+  };
   
   // Atualizar valor de célula
   const handleCellChange = (id, field, value) => {
@@ -236,41 +250,130 @@ export default function PortfolioImportTable({ onSave }) {  const [rows, setRows
       
       return newRows;
     });
-  };
-
-  // Salvar
+  };  // Salvar
   const handleSave = async () => {
     setError('');
     if (!rows.some(validateRow)) {
       setError('Preencha pelo menos um ativo válido.');
       return;
     }
+    
+    // Verificar a conexão com o backend antes de continuar
+    try {
+      await portfolioAPI.testConnection();
+      console.log('Conexão com o backend está funcionando');
+    } catch (e) {
+      console.error('Erro ao verificar conexão com backend:', e);
+      setError('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
+      return;
+    }
+    
     setShowWarning(true);
   };
-
-  // Confirma sobrescrita
+  
+  // Confirma a operação (sobrescrita ou aporte/retirada)
   const confirmSave = async () => {
     setIsSaving(true);
+    setError('');
     try {
-      const ativos = rows.filter(validateRow).map(row => ({
-        ticker: row.ticker.trim().toUpperCase(),
-        preco: Number(String(row.preco || '').replace(',', '.')),
-        quantidade: Number(row.quantidade)
-      }));
-      await portfolioAPI.overwritePortfolio({ ativos });
-      setIsSaving(false);
-      setShowWarning(false);
-      if (onSave) onSave();
+      // Filtrar apenas as linhas válidas e limpar possíveis dados problemáticos
+      const ativos = rows.filter(validateRow).map(row => {
+        // Garantir que ticker não tenha espaços ou caracteres especiais
+        const ticker = row.ticker.trim().toUpperCase();
+        
+        // Converter preço para número garantindo formato correto
+        const precoStr = String(row.preco || '').replace(',', '.').trim();
+        const preco = Number(precoStr);
+        
+        // Converter quantidade para número inteiro
+        const quantidade = parseInt(row.quantidade, 10);
+        
+        return { ticker, preco, quantidade };
+      });
+      
+      // Log para depuração
+      console.log(`Enviando ${ativos.length} ativos no modo ${overwriteMode ? 'Sobrescrever' : 'Aporte/Retirada'}`);
+      console.log('Dados enviados:', ativos);
+      console.log('API utilizada:', overwriteMode ? 'overwritePortfolio' : 'batchUpdatePortfolio');
+      
+      // Chama a API diferente dependendo do modo
+      let response;
+      try {
+        if (overwriteMode) {
+          response = await portfolioAPI.overwritePortfolio({ ativos });
+        } else {
+          // No modo Aporte/Retirada, processar um por um para maior segurança
+          const promises = ativos.map(async (ativo) => {
+            const tipo = ativo.quantidade > 0 ? 'compra' : 'venda';
+            const quantidade_abs = Math.abs(ativo.quantidade);
+            
+            return portfolioAPI.updateEmpresa({
+              codigo: ativo.ticker,
+              preco: ativo.preco,
+              quantidade: quantidade_abs,
+              tipo_operacao: tipo
+            });
+          });
+            await Promise.all(promises);
+          response = { message: `${ativos.length} operações processadas com sucesso` };
+        }
+        
+        console.log('Resposta da API:', response);
+        setIsSaving(false);
+        setShowWarning(false);
+        if (onSave) onSave();
+      } catch (e) {
+        throw e;
+      }
     } catch (e) {
-      setError('Erro ao salvar.');
+      console.error('Erro ao salvar:', e);
+      
+      // Fornecer mensagem de erro mais amigável para o usuário
+      if (e.toString().includes('404')) {
+        setError(`Erro de comunicação com o servidor (404). O endpoint necessário não foi encontrado.`);
+      } else if (e.toString().includes('401')) {
+        setError(`Erro de autenticação (401). Por favor, faça login novamente.`);
+      } else if (e.toString().includes('TypeError')) {
+        // Mensagem específica para o erro de tipo
+        setError(`Erro de comunicação com a API. Por favor, tente novamente ou atualize a página.`);
+        console.error('Detalhes do erro de tipo:', e);
+      } else {
+        setError(`Erro ao salvar: ${e.toString()}`);
+      }
+      
       setIsSaving(false);
     }
   };
-
   return (
     <div className="portfolio-import-table-dark">
-      <h2>Importar Ativos (Sobrescreve Carteira)</h2>
-      <p className="warning">Esta ação irá sobrescrever completamente sua carteira atual. Todos os dados anteriores, incluindo históricos de compras/vendas, serão perdidos.</p>
+      <div className="header-with-toggle">
+        <h2>{overwriteMode ? 'Importar Ativos (Sobrescreve Carteira)' : 'Alterar Posições (Compra/Venda)'}</h2>
+        <div className="toggle-container">
+          <span className={!overwriteMode ? 'active-mode' : ''}>Aporte/Retirada</span>
+          <label className="toggle-switch">
+            <input 
+              type="checkbox" 
+              checked={overwriteMode} 
+              onChange={() => setOverwriteMode(!overwriteMode)}
+            />
+            <span className="toggle-slider"></span>
+          </label>
+          <span className={overwriteMode ? 'active-mode' : ''}>Sobrescrever</span>
+        </div>
+      </div>
+        {overwriteMode ? (
+        <p className="warning">
+          <strong>Modo Sobrescrever:</strong> Esta ação irá substituir completamente sua carteira atual. 
+          Todos os dados anteriores, incluindo históricos de compras/vendas, serão perdidos.
+          Neste modo, todas as quantidades devem ser positivas.
+        </p>
+      ) : (
+        <p className="info">
+          <strong>Modo Aporte/Retirada:</strong> Neste modo você pode adicionar ou remover posições individuais.
+          Valores positivos serão registrados como compras e valores negativos como vendas.
+          Seus dados históricos serão mantidos, apenas as posições serão atualizadas.
+        </p>
+      )}
         <div className="excel-table-container">
         <table className="excel-table">
           <thead>
@@ -341,20 +444,38 @@ export default function PortfolioImportTable({ onSave }) {  const [rows, setRows
           </tbody>
         </table>
       </div>
-      
-      {error && <div className="error-msg">{error}</div>}
+        {error && <div className="error-msg">{error}</div>}
       <button className="save-btn" onClick={handleSave} disabled={isSaving}>
-        {isSaving ? 'Salvando...' : 'Salvar'}
+        {isSaving ? 'Salvando...' : overwriteMode ? 'Sobrescrever Carteira' : 'Aplicar Alterações'}
       </button>
-      
-      {showWarning && (
+        {showWarning && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Atenção!</h3>
-            <p>Tem certeza que deseja sobrescrever sua carteira? Esta ação não pode ser desfeita.</p>
+            <h3>{overwriteMode ? '⚠️ ATENÇÃO: SOBRESCREVER CARTEIRA' : 'Confirmar Alterações'}</h3>
+            {overwriteMode ? (
+              <div>
+                <p className="warning modal-warning">
+                  <strong>Você está prestes a sobrescrever toda a sua carteira!</strong>
+                </p>
+                <p>Esta ação não pode ser desfeita e substituirá completamente seus dados atuais.</p>
+                <p>Todos os históricos de transações anteriores serão perdidos.</p>
+              </div>
+            ) : (
+              <div>
+                <p>Confirma a aplicação das alterações abaixo na sua carteira?</p>
+                <p className="info modal-info">
+                  Quantidades positivas serão registradas como compras.<br />
+                  Quantidades negativas serão registradas como vendas.
+                </p>
+              </div>
+            )}
             <div className="modal-buttons">
-              <button className="confirm-btn" onClick={confirmSave} disabled={isSaving}>
-                {isSaving ? 'Processando...' : 'Confirmar'}
+              <button 
+                className={overwriteMode ? "confirm-btn warning-btn" : "confirm-btn"} 
+                onClick={confirmSave} 
+                disabled={isSaving}
+              >
+                {isSaving ? 'Processando...' : overwriteMode ? 'Sim, Sobrescrever Carteira' : 'Confirmar Alterações'}
               </button>
               <button className="cancel-btn" onClick={() => setShowWarning(false)} disabled={isSaving}>
                 Cancelar

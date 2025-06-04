@@ -2,7 +2,7 @@ import os
 import sys
 
 # Adiciona o diretório pai ao path para importações absolutas
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from flask import Blueprint, request, jsonify, session, send_from_directory, current_app
 
@@ -11,7 +11,6 @@ from services.portfolio_service import (
     register_transaction, overwrite_portfolio_manual
 )
 from services.price_service import get_cached_dollar_rate
-
 # Criação do Blueprint para portfólio
 portfolio_bp = Blueprint('portfolio', __name__, url_prefix='/api')
 
@@ -21,7 +20,8 @@ def upload_portfolio_route():
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
-      # Verifica se é uma requisição de upload de arquivo ou dados JSON
+    
+    # Verifica se é uma requisição de upload de arquivo ou dados JSON
     if request.is_json:
         # Importação manual via tabela
         data = request.get_json()
@@ -71,11 +71,62 @@ def register_aporte():
     
     return jsonify(response), status_code
 
+@portfolio_bp.route('/register-aporte-batch', methods=['POST'])
+def register_aporte_batch():
+    """Endpoint para registrar múltiplos aportes/retiradas de uma vez."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+    
+    data = request.get_json()
+    ativos = data.get('ativos', [])
+    
+    if not ativos:
+        return jsonify({'error': 'Nenhum ativo informado'}), 400
+    
+    try:
+        # Usar o serviço de batch para maior consistência
+        from services.batch_portfolio_service import batch_update_portfolio
+        print(f"Redirecionando para serviço batch_update_portfolio com {len(ativos)} ativos")
+        response, status_code = batch_update_portfolio(user_id, ativos)
+        return jsonify(response), status_code
+    except Exception as e:
+        import traceback
+        print(f"Erro ao processar register-aporte-batch: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': f'Erro ao processar: {str(e)}'}), 500
+
 @portfolio_bp.route('/exchange-rate', methods=['GET'])
 def exchange_rate():
     """Endpoint para obter a taxa de câmbio USD/BRL."""
     rate = get_cached_dollar_rate()
     return jsonify({'rate': rate}), 200
+
+@portfolio_bp.route('/batch-update', methods=['POST'])
+def batch_update():
+    """Endpoint para registrar múltiplos aportes/retiradas de uma vez sem sobrescrever o portfólio."""
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Usuário não autenticado'}), 401
+        
+    data = request.get_json()
+    ativos = data.get('ativos', [])
+    
+    # Log para depurar
+    print(f"Requisição de batch-update recebida: {len(ativos)} ativos")
+    for i, ativo in enumerate(ativos):
+        print(f"Ativo {i+1}: {ativo}")
+    
+    try:
+        # Importar aqui para evitar problemas de importação circular
+        from services.batch_portfolio_service import batch_update_portfolio
+        response, status_code = batch_update_portfolio(user_id, ativos)
+        return jsonify(response), status_code
+    except Exception as e:
+        import traceback
+        print(f"Erro ao processar batch-update: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': f'Erro ao processar: {str(e)}'}), 500
 
 # Endpoint para download de template foi removido, agora o download é feito diretamente do Google Drive
 

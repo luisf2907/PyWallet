@@ -36,15 +36,31 @@ export const fetchAPI = async (endpoint, method = 'GET', data = null) => {
 
     if (data) {
       config.data = data;
-    }
-
-    console.log(`Fazendo requisição ${method} para ${endpoint}`, data ? 'com dados' : 'sem dados');
+    }    console.log(`Fazendo requisição ${method} para ${endpoint}`, data ? 'com dados' : 'sem dados');
     const response = await apiClient(endpoint, config);
     console.log(`Dados da resposta ${endpoint}:`, response.data);
     
     return response.data;
   } catch (error) {
     console.error(`Erro na API ${endpoint}:`, error);
+    
+    // Adicionar informações mais detalhadas para fins de depuração
+    if (error.response) {
+      // O servidor respondeu com um status de erro
+      console.error('Detalhes do erro da resposta:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      // A requisição foi feita mas não houve resposta
+      console.error('Sem resposta do servidor. Detalhes da requisição:', error.request);
+    } else {
+      // Ocorreu um erro ao configurar a requisição
+      console.error('Erro ao configurar a requisição:', error.message);
+    }
+    
     throw error.response?.data?.error || error.message || 'Erro na comunicação com o servidor';
   }
 };

@@ -8,6 +8,92 @@
   margin-bottom: 0; /* Remove margem inferior pois o Paper já tem mb: 4 */
 }
 
+/* Estilo para o cabeçalho com o toggle */
+.header-with-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Estilo para o container do toggle */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estilos para o toggle switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #343a40;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #ffc107;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+/* Estilos para indicar o modo ativo */
+.active-mode {
+  font-weight: bold;
+  color: #ffc107;
+}
+
+/* Estilos para avisos e mensagens de informação */
+.warning {
+  background-color: rgba(255, 87, 34, 0.2);
+  border-left: 4px solid #ff5722;
+  padding: 12px;
+  margin: 15px 0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.info {
+  background-color: rgba(33, 150, 243, 0.2);
+  border-left: 4px solid #2196f3;
+  padding: 12px;
+  margin: 15px 0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
 /* Estilos de tabela Excel */
 .excel-table-container {
   overflow-x: auto;
@@ -225,8 +311,21 @@
   padding: 2rem;
   border-radius: 10px;
   box-shadow: 0 2px 16px #000a;
-  max-width: 450px;
+  max-width: 500px;
   width: 90%;
+}
+
+.modal-warning {
+  color: #ff5722;
+  font-size: 16px;
+  background-color: rgba(255, 87, 34, 0.15);
+  padding: 15px;
+}
+
+.modal-info {
+  color: #2196f3;
+  background-color: rgba(33, 150, 243, 0.15);
+  padding: 15px;
 }
 
 .modal-content h3 {
@@ -255,11 +354,20 @@
 }
 
 .modal-content .confirm-btn {
-  background: #ef4444; /* --red */
+  background: #2196f3; /* Azul para ações normais */
   color: #fff;
 }
 
 .modal-content .confirm-btn:hover {
+  background: #1976d2; /* Versão mais escura do azul */
+}
+
+.modal-content .warning-btn {
+  background: #ef4444; /* Vermelho para ações perigosas */
+  color: #fff;
+}
+
+.modal-content .warning-btn:hover {
   background: #dc2626; /* Versão mais escura do vermelho */
 }
 
