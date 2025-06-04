@@ -195,9 +195,8 @@ const EmpresaUpdateSection = () => {
     setValidatingTicker(true);
     setTickerValid(null);
     setCodigoError(false);
-    try {
-      // Não aceita tickers de moedas nem strings de 1 caractere
-      if (ticker.length < 4 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
+    try {      // Não aceita tickers de moedas nem strings de 1 caractere
+      if (ticker.length < 3 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
         throw new Error('Ticker não permitido');
       }
       // Chama o endpoint de aporte com tipo 'compra', preco e quantidade dummy só para validar ticker

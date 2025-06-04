@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './PortfolioImportTable.css';
 import { portfolioAPI } from '../api/portfolioAPI';
 
@@ -10,21 +10,24 @@ const initialRows = (n) => Array.from({ length: n }, (_, idx) => ({
   quantidade: '' 
 }));
 
-export default function PortfolioImportTable({ onSave }) {
-  const [rows, setRows] = useState(initialRows(10));
+export default function PortfolioImportTable({ onSave }) {  const [rows, setRows] = useState(initialRows(10));
   const [tickersValid, setTickersValid] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const [error, setError] = useState('');  // Validação do ticker em tempo real utilizando a API
+  const [error, setError] = useState('');
+  
+  // Validação do ticker em tempo real utilizando a API
   const validateTicker = async (ticker) => {
-    if (!ticker || ticker.trim().length < 4) return false;
+    if (!ticker || ticker.trim().length < 3) return false;
     try {
       const result = await portfolioAPI.validateTicker(ticker.trim().toUpperCase());
       return result.isValid;
     } catch {
       return false;
     }
-  };  // Validação de todos os tickers preenchidos
+  };
+  
+  // Validação de todos os tickers preenchidos
   useEffect(() => {
     // Não queremos fazer validações à toa - apenas para tickers modificados
     const validateAll = async () => {
@@ -86,8 +89,8 @@ export default function PortfolioImportTable({ onSave }) {
     let quantidade = row.quantidade;
     if (!quantidade || isNaN(Number(quantidade)) || !Number.isInteger(Number(quantidade)) || Number(quantidade) <= 0) return false;
     
-    return true;
-  };
+    return true;  };
+  
   // Atualizar valor de célula
   const handleCellChange = (id, field, value) => {
     setRows(prevRows => 
@@ -96,10 +99,19 @@ export default function PortfolioImportTable({ onSave }) {
       )
     );
   };
-    // Navegar células com Tab e Enter
+  
+  // Handler para seleção de texto quando um input recebe foco
+  const handleFocus = (e) => {
+    // Seleciona todo o texto quando o input recebe foco
+    if (e.target.value) {
+      e.target.select();
+    }
+  };
+  // Navegar células com Tab, Enter e setas do teclado (como no Excel)
   const handleKeyDown = (e, rowId, field, rowIndex, colIndex) => {
     const columns = ['ticker', 'preco', 'quantidade'];
     
+    // Tab e Enter para navegação
     if (e.key === 'Tab' || e.key === 'Enter') {
       e.preventDefault();
       
@@ -118,6 +130,70 @@ export default function PortfolioImportTable({ onSave }) {
       const nextRowElement = document.querySelector(`#row-${nextRow}-col-${nextCol}`);
       if (nextRowElement) {
         nextRowElement.focus();
+      }
+    }
+      // Navegação com teclas de seta
+    else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      // Comportamento especial para setas esquerda/direita 
+      // quando o cursor está no início ou fim do texto
+      const input = e.target;
+      const cursorPos = input.selectionStart;
+      const textLength = input.value.length;
+      
+      // Permitir navegação natural dentro do texto
+      if (e.key === 'ArrowLeft' && cursorPos > 0) return;
+      if (e.key === 'ArrowRight' && cursorPos < textLength) return;
+      
+      e.preventDefault();
+      
+      let nextCol = colIndex;
+      let nextRow = rowIndex;
+      
+      // Calcular a próxima célula baseado na tecla pressionada
+      switch(e.key) {
+        case 'ArrowUp':
+          nextRow = Math.max(0, rowIndex - 1);
+          break;
+        case 'ArrowDown':
+          nextRow = Math.min(rows.length - 1, rowIndex + 1);
+          break;
+        case 'ArrowLeft':
+          if (colIndex > 0) {
+            nextCol = colIndex - 1;
+          } else if (rowIndex > 0) {
+            // Ir para a última coluna da linha anterior
+            nextRow = rowIndex - 1;
+            nextCol = columns.length - 1;
+          }
+          break;
+        case 'ArrowRight':
+          if (colIndex < columns.length - 1) {
+            nextCol = colIndex + 1;
+          } else if (rowIndex < rows.length - 1) {
+            // Ir para a primeira coluna da próxima linha
+            nextRow = rowIndex + 1;
+            nextCol = 0;
+          }
+          break;
+      }
+      
+      // Encontrar o próximo elemento para focar
+      const nextRowElement = document.querySelector(`#row-${nextRow}-col-${nextCol}`);
+      if (nextRowElement) {
+        nextRowElement.focus();
+        
+        // Posiciona o cursor adequadamente baseado na direção
+        if (e.key === 'ArrowLeft') {
+          // Cursor no final quando vem da esquerda
+          const length = nextRowElement.value.length;
+          nextRowElement.setSelectionRange(length, length);
+        } else if (e.key === 'ArrowRight') {
+          // Cursor no início quando vem da direita
+          nextRowElement.setSelectionRange(0, 0);
+        } else {
+          // Para navegação vertical, seleciona todo o texto
+          nextRowElement.select();
+        }
       }
     }
   };
@@ -211,13 +287,13 @@ export default function PortfolioImportTable({ onSave }) {
                       tickersValid[row.id] === false ? 'cell-invalid' :
                       tickersValid[row.id] === 'validating' ? 'cell-validating' : ''
                     ) : ''
-                  }`}>
-                  <input 
+                  }`}>                  <input 
                     id={`row-${rowIndex}-col-0`}
                     type="text"
                     value={row.ticker || ''}
                     onChange={(e) => handleCellChange(row.id, 'ticker', e.target.value.toUpperCase())}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'ticker', rowIndex, 0)}
+                    onFocus={handleFocus}
                     onPaste={(e) => handlePaste(e, rowIndex, 0)}
                     placeholder="PETR4"
                     className="excel-input"
@@ -232,13 +308,13 @@ export default function PortfolioImportTable({ onSave }) {
                     <div className="error-tooltip">Ticker inválido</div>
                   )}
                 </td>
-                <td className="excel-cell">
-                  <input
+                <td className="excel-cell">                  <input
                     id={`row-${rowIndex}-col-1`}
                     type="text"
                     value={row.preco || ''}
                     onChange={(e) => handleCellChange(row.id, 'preco', e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'preco', rowIndex, 1)}
+                    onFocus={handleFocus}
                     placeholder="29,90"
                     className="excel-input"
                     spellCheck="false"
@@ -246,13 +322,13 @@ export default function PortfolioImportTable({ onSave }) {
                     inputMode="decimal"
                   />
                 </td>
-                <td className="excel-cell">
-                  <input
+                <td className="excel-cell">                  <input
                     id={`row-${rowIndex}-col-2`}
                     type="text"
                     value={row.quantidade || ''}
                     onChange={(e) => handleCellChange(row.id, 'quantidade', e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'quantidade', rowIndex, 2)}
+                    onFocus={handleFocus}
                     placeholder="100"
                     className="excel-input"
                     spellCheck="false"
