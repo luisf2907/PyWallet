@@ -277,13 +277,22 @@ def register_transaction(user_id, tipo, ticker, preco, quantidade):
         tuple: (dict, int) - Resposta e código HTTP
     """
     # Validação dos dados
-    ticker = ticker.strip().upper()
-    if not ticker or preco <= 0 or quantidade <= 0 or tipo not in ['compra', 'venda']:
+    ticker_original = ticker.strip().upper()
+    if not ticker_original or preco <= 0 or quantidade <= 0 or tipo not in ['compra', 'venda']:
         return {'error': 'Dados inválidos'}, 400
+    
+    # Normalizar ticker fracionado
+    from utils.ticker_utils import normalize_fractional_ticker
+    ticker = normalize_fractional_ticker(ticker_original)
+    
+    # Log para debug se houve normalização
+    if ticker != ticker_original:
+        print(f"Ticker normalizado de {ticker_original} para {ticker} no registro de transação")
         
     # Validação do ticker (checa se existe na B3 ou EUA)
     try:
         import yfinance as yf
+        from utils.ticker_utils import format_ticker
         yf_ticker = format_ticker(ticker)
         tinfo = yf.Ticker(yf_ticker).info
         if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
@@ -494,17 +503,24 @@ def overwrite_portfolio_manual(user_id, ativos):
         # Validar cada ativo
         portfolio_data = []
         for ativo in ativos:
-            ticker = ativo.get('ticker', '').strip().upper()
+            ticker_original = ativo.get('ticker', '').strip().upper()
             preco = float(ativo.get('preco', 0))
             quantidade = int(ativo.get('quantidade', 0))
             
-            if not ticker or preco <= 0 or quantidade <= 0:
+            if not ticker_original or preco <= 0 or quantidade <= 0:
                 continue
+            
+            # Normalizar ticker fracionado
+            from utils.ticker_utils import normalize_fractional_ticker, format_ticker
+            ticker = normalize_fractional_ticker(ticker_original)
+            
+            # Log para debug se houve normalização
+            if ticker != ticker_original:
+                print(f"Ticker normalizado de {ticker_original} para {ticker} na sobrescrita de portfólio")
                 
             # Verificar se o ticker existe usando yfinance
             try:
                 import yfinance as yf
-                from utils.ticker_utils import format_ticker
                 yf_ticker = format_ticker(ticker)
                 ticker_info = yf.Ticker(yf_ticker).info
                 if not ticker_info.get('regularMarketPrice') and not ticker_info.get('currentPrice'):

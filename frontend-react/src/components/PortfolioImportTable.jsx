@@ -2,6 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import './PortfolioImportTable.css';
 import { portfolioAPI } from '../api/portfolioAPI';
 
+// Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
+const normalizeTicker = (ticker) => {
+  if (!ticker) return '';
+  
+  // Remove espaços e converte para maiúsculas
+  ticker = ticker.trim().toUpperCase();
+  
+  // Detecta se é um ticker fracionado (termina com F)
+  if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {
+    // Remove o F final para converter para a versão normal do ticker
+    return ticker.slice(0, -1);
+  }
+  
+  return ticker;
+};
+
 // Gerar linhas iniciais
 const initialRows = (n) => Array.from({ length: n }, (_, idx) => ({ 
   id: idx, 
@@ -23,7 +39,9 @@ export default function PortfolioImportTable({ onSave }) {
   const validateTicker = async (ticker) => {
     if (!ticker || ticker.trim().length < 3) return false;
     try {
-      const result = await portfolioAPI.validateTicker(ticker.trim().toUpperCase());
+      // Normaliza o ticker antes de validar
+      const normalizedTicker = normalizeTicker(ticker);
+      const result = await portfolioAPI.validateTicker(normalizedTicker);
       return result.isValid;
     } catch {
       return false;
@@ -240,6 +258,12 @@ export default function PortfolioImportTable({ onSave }) {
           const colIdx = startColIdx + colOffset;
           if (colIdx < columns.length && rowIdx < newRows.length) {
             const field = columns[colIdx];
+            
+            // Se for o campo ticker, normaliza os tickers fracionados
+            if (field === 'ticker' && cellValue) {
+              cellValue = normalizeTicker(cellValue);
+            }
+            
             newRows[rowIdx] = {
               ...newRows[rowIdx],
               [field]: cellValue
@@ -279,7 +303,8 @@ export default function PortfolioImportTable({ onSave }) {
       // Filtrar apenas as linhas válidas e limpar possíveis dados problemáticos
       const ativos = rows.filter(validateRow).map(row => {
         // Garantir que ticker não tenha espaços ou caracteres especiais
-        const ticker = row.ticker.trim().toUpperCase();
+        // Converter versões fracionadas (ex: VALE3F) para versão normal (VALE3)
+        const ticker = normalizeTicker(row.ticker);
         
         // Converter preço para número garantindo formato correto
         const precoStr = String(row.preco || '').replace(',', '.').trim();
@@ -308,7 +333,7 @@ export default function PortfolioImportTable({ onSave }) {
             const quantidade_abs = Math.abs(ativo.quantidade);
             
             return portfolioAPI.updateEmpresa({
-              codigo: ativo.ticker,
+              codigo: ativo.ticker, // ticker já está normalizado no mapeamento acima
               preco: ativo.preco,
               quantidade: quantidade_abs,
               tipo_operacao: tipo
@@ -374,7 +399,12 @@ export default function PortfolioImportTable({ onSave }) {
           Seus dados históricos serão mantidos, apenas as posições serão atualizadas.
         </p>
       )}
-        <div className="excel-table-container">
+
+      <p className="info ticker-info">
+        <strong>Nota:</strong> Ações fracionadas (ex: VALE3F) serão automaticamente convertidas para sua versão normal (VALE3).
+      </p>
+      
+      <div className="excel-table-container">
         <table className="excel-table">
           <thead>
             <tr>
@@ -394,7 +424,26 @@ export default function PortfolioImportTable({ onSave }) {
                     id={`row-${rowIndex}-col-0`}
                     type="text"
                     value={row.ticker || ''}
-                    onChange={(e) => handleCellChange(row.id, 'ticker', e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      // Converter para maiúsculo e normalizar ticker fracionado
+                      const inputValue = e.target.value.toUpperCase();
+                      const normalizedTicker = normalizeTicker(inputValue);
+                      
+                      // Se for detectado um ticker fracionado, substitui automaticamente
+                      // pela versão normal e mostra um indicador visual
+                      if (inputValue !== normalizedTicker && inputValue.endsWith('F')) {
+                        // Fornece feedback visual temporário que o ticker foi normalizado
+                        const element = document.getElementById(`row-${rowIndex}-col-0`);
+                        if (element) {
+                          element.classList.add('ticker-normalized');
+                          setTimeout(() => {
+                            element.classList.remove('ticker-normalized');
+                          }, 1000);
+                        }
+                      }
+                      
+                      handleCellChange(row.id, 'ticker', normalizedTicker);
+                    }}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'ticker', rowIndex, 0)}
                     onFocus={handleFocus}
                     onPaste={(e) => handlePaste(e, rowIndex, 0)}

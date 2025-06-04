@@ -146,7 +146,10 @@ def validate_ticker():
     # Importa yfinance para verificar se o ticker existe
     try:
         import yfinance as yf
-        from utils.ticker_utils import format_ticker
+        from utils.ticker_utils import format_ticker, normalize_fractional_ticker
+        
+        # Normaliza o ticker se for fracionado
+        ticker = normalize_fractional_ticker(ticker)
         
         yf_ticker = format_ticker(ticker)
         ticker_info = yf.Ticker(yf_ticker).info
@@ -168,13 +171,21 @@ def empresa_update():
         return jsonify({'error': 'Usuário não autenticado'}), 401
     
     data = request.get_json()
-    codigo = data.get('codigo')
+    codigo_original = data.get('codigo')
     preco = data.get('preco')
     quantidade = data.get('quantidade')
     tipo_operacao = data.get('tipo_operacao', 'compra')  # Valor padrão é 'compra'
     
-    if not codigo or preco is None or quantidade is None:
+    if not codigo_original or preco is None or quantidade is None:
         return jsonify({'error': 'Dados incompletos.'}), 400
+    
+    # Normaliza o ticker se for fracionado
+    from utils.ticker_utils import normalize_fractional_ticker
+    codigo = normalize_fractional_ticker(codigo_original)
+    
+    # Log para debug se houve normalização
+    if codigo != codigo_original:
+        print(f"Ticker normalizado de {codigo_original} para {codigo} no endpoint empresa-update")
     
     from services.portfolio_service import update_empresa_manual
     result, status = update_empresa_manual(user_id, codigo, preco, quantidade, tipo_operacao)

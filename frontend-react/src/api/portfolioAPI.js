@@ -62,7 +62,15 @@ export const portfolioAPI = {
       if (!ticker || ticker.length < 3 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
         return { isValid: false };
       }
-      await fetchAPI('/validate-ticker', 'POST', { ticker });
+      
+      // Se for um ticker fracionado (termina com F), normaliza antes de validar
+      let normalizedTicker = ticker;
+      if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {
+        normalizedTicker = ticker.slice(0, -1);
+        console.log(`Ticker fracionado detectado: ${ticker} -> normalizado para: ${normalizedTicker}`);
+      }
+      
+      await fetchAPI('/validate-ticker', 'POST', { ticker: normalizedTicker });
       return { isValid: true };
     } catch (error) {
       return { isValid: false, error };

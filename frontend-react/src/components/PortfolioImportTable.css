@@ -94,6 +94,15 @@ input:checked + .toggle-slider:before {
   font-size: 14px;
 }
 
+.ticker-info {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-left: 4px solid #4caf50;
+  padding: 8px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 /* Estilos de tabela Excel */
 .excel-table-container {
   overflow-x: auto;
@@ -387,3 +396,22 @@ input:checked + .toggle-slider:before {
 }
 
 /* Removido o pseudo-elemento que estava criando o fundo adicional */
+
+.ticker-normalized {
+  animation: normalized-flash 1s ease;
+}
+
+@keyframes normalized-flash {
+  0% {
+    background-color: rgba(33, 150, 243, 0.1);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.5);
+  }
+  50% {
+    background-color: rgba(33, 150, 243, 0.3);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.8);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
