@@ -397,12 +397,7 @@ export default function PortfolioImportTable({ onSave }) {
           <strong>Modo Aporte/Retirada:</strong> Neste modo você pode adicionar ou remover posições individuais.
           Valores positivos serão registrados como compras e valores negativos como vendas.
           Seus dados históricos serão mantidos, apenas as posições serão atualizadas.
-        </p>
-      )}
-
-      <p className="info ticker-info">
-        <strong>Nota:</strong> Ações fracionadas (ex: VALE3F) serão automaticamente convertidas para sua versão normal (VALE3).
-      </p>
+        </p>      )}
       
       <div className="excel-table-container">
         <table className="excel-table">
@@ -491,9 +486,13 @@ export default function PortfolioImportTable({ onSave }) {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </table>      </div>
         {error && <div className="error-msg">{error}</div>}
+      
+      <p className="info ticker-info">
+        <strong>Nota:</strong> Ações fracionadas (ex: VALE3F) serão automaticamente convertidas para sua versão normal (VALE3).
+      </p>
+      
       <button className="save-btn" onClick={handleSave} disabled={isSaving}>
         {isSaving ? 'Salvando...' : overwriteMode ? 'Sobrescrever Carteira' : 'Aplicar Alterações'}
       </button>
