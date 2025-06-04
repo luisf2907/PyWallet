@@ -84,69 +84,7 @@ const FileUploadPage = () => {
           />
         )}
         
-        <Alert 
-          type="info" 
-          message="Por favor, faça upload de um arquivo CSV ou XLSX com os dados da sua carteira."
-        />
-        
-        <FileUpload 
-          acceptedFormats={['.csv', '.xlsx']}
-          onFileSelect={handleFileSelect}
-          uploading={uploading}
-        />
-        
-        <Stack direction="row" spacing={2} mb={4}>
-          <Button
-            variant="contained"
-            startIcon={<ArrowForwardIcon />}
-            disabled={!file || uploading}
-            onClick={handleUpload}
-            sx={{
-              flex: 1,
-              backgroundColor: !file ? '#e0e0e0!important' : '#ffc107!important',
-              color: '#000!important',
-              fontWeight: 600,
-              boxShadow: !file ? 'none' : undefined,
-              minWidth: 0,
-              width: '100%',
-              maxWidth: '100%',
-              '&:hover': {
-                backgroundColor: !file ? '#e0e0e0!important' : '#ffca28!important',
-                boxShadow: !file ? 'none' : undefined,
-                color: '#000!important',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: '#e0e0e0!important',
-                color: '#000!important',
-                opacity: 1,
-              },
-            }}
-          >
-            {uploading ? <CircularProgress size={24} color="inherit" /> : 'Continuar para o Dashboard'}
-          </Button>
-        </Stack>
-          <Box mb={4}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<DownloadIcon />}
-            onClick={handleDownloadTemplate}
-            fullWidth
-            sx={{
-              background: 'linear-gradient(90deg, #2563eb 0%, #1e40af 100%)',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '1rem',
-              py: 1.5,
-              boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #1e40af 0%, #2563eb 100%)',
-                boxShadow: '0 6px 16px rgba(37,99,235,0.22)',
-              },
-            }}
-          >
-            Baixar modelo de planilha
-          </Button>        </Box>
+        {/* 1. PLANILHA ONLINE - Primeira opção */}
         <Paper
           variant="outlined"
           sx={{
@@ -166,9 +104,97 @@ const FileUploadPage = () => {
             }} 
           />
         </Paper>
-        
-        {/* Seção para alterar posição de empresa específica */}
+
+        {/* 2. ALTERAR POR EMPRESA - Segunda opção */}
         <EmpresaUpdateSection />
+        
+        {/* 3. UPLOAD DE ARQUIVO - Última opção */}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            mt: 4
+          }}
+        >
+          <Typography variant="h5" gutterBottom>
+            Importar Arquivo
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" paragraph>
+            Você também pode fazer upload de um arquivo CSV ou XLSX com os dados da sua carteira.
+          </Typography>
+          
+          <Alert 
+            type="info" 
+            message="Formatos aceitos: CSV e XLSX"
+          />
+          
+          <Box mt={2}>
+            <FileUpload 
+              acceptedFormats={['.csv', '.xlsx']}
+              onFileSelect={handleFileSelect}
+              uploading={uploading}
+            />
+          </Box>
+          
+          <Stack direction="row" spacing={2} mt={3}>
+            <Button
+              variant="contained"
+              startIcon={<ArrowForwardIcon />}
+              disabled={!file || uploading}
+              onClick={handleUpload}
+              sx={{
+                flex: 1,
+                backgroundColor: !file ? '#e0e0e0!important' : '#ffc107!important',
+                color: '#000!important',
+                fontWeight: 600,
+                boxShadow: !file ? 'none' : undefined,
+                minWidth: 0,
+                width: '100%',
+                maxWidth: '100%',
+                '&:hover': {
+                  backgroundColor: !file ? '#e0e0e0!important' : '#ffca28!important',
+                  boxShadow: !file ? 'none' : undefined,
+                  color: '#000!important',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: '#e0e0e0!important',
+                  color: '#000!important',
+                  opacity: 1,
+                },
+              }}
+            >
+              {uploading ? <CircularProgress size={24} color="inherit" /> : 'Importar Arquivo'}
+            </Button>
+          </Stack>
+          
+          <Box mt={3}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<DownloadIcon />}
+              onClick={handleDownloadTemplate}
+              fullWidth
+              sx={{
+                background: 'linear-gradient(90deg, #2563eb 0%, #1e40af 100%)',
+                color: '#fff',
+                fontWeight: 600,
+                fontSize: '1rem',
+                py: 1.5,
+                boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
+                '&:hover': {
+                  background: 'linear-gradient(90deg, #1e40af 0%, #2563eb 100%)',
+                  boxShadow: '0 6px 16px rgba(37,99,235,0.22)',
+                },
+              }}
+            >
+              Baixar modelo de planilha
+            </Button>
+          </Box>
+        </Paper>
       </Box>
     </Layout>
   );
