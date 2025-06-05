@@ -144,3 +144,29 @@ def reset_password():
     user.reset_token_expiry = None
     db.session.commit()
     return jsonify({'message': 'Senha redefinida com sucesso!'}), 200
+
+@auth_bp.route('/reset-account', methods=['POST'])
+def reset_account():
+    """
+    Endpoint para resetar completamente a conta do usuário (apaga todos os dados, exceto o cadastro).
+    """
+    from flask import session
+    from models.portfolio import Portfolio
+    from models.dividends import DividendsCache
+    from models.price import PriceCache
+    from models.price_history_cache import PriceHistoryCache
+    from models.portfolio_history import PortfolioEvolutionCache
+    from extensions.database import db
+    user_id = session.get('user_id')
+    if not user_id:
+        return {"error": "Usuário não autenticado."}, 401
+    # Apaga todos os dados do usuário
+    Portfolio.query.filter_by(user_id=user_id).delete()
+    DividendsCache.query.filter_by(user_id=user_id).delete()
+    PortfolioEvolutionCache.query.filter_by(user_id=user_id).delete()
+    # Remove todos os preços individuais do usuário (se houver)
+    PriceCache.query.filter_by(user_id=user_id).delete()
+    # Remove históricos de preço individuais do usuário (se houver)
+    PriceHistoryCache.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    return {"message": "Conta resetada com sucesso. Todos os dados foram apagados."}, 200

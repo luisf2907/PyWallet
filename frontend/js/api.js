@@ -77,7 +77,8 @@ const authAPI = {
     register: (userData) => fetchAPI('/register', 'POST', userData),
     login: (credentials) => fetchAPI('/login', 'POST', credentials),
     logout: () => fetchAPI('/logout', 'POST'),
-    getCurrentUser: () => fetchAPI('/user')
+    getCurrentUser: () => fetchAPI('/user'),
+    resetAccount: () => fetchAPI('/reset-account', 'POST')
 };
 
 // API de portfólio

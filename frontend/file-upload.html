@@ -325,6 +325,23 @@
             transform: translateY(-2px);
         }
 
+        .btn-danger {
+            background: var(--red);
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 1.2rem;
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 2px 8px rgba(239,68,68,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+        }
+
         .alert {
             padding: 0.75rem;
             margin-bottom: 1rem;
@@ -442,6 +459,55 @@
                 max-width: 100%;
             }
         }
+
+        /* Estilos para o popup de confirmação */
+        .reset-confirm-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .reset-confirm-popup .confirm-box {
+            background: #1e1e1e;
+            border-radius: 1rem;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .reset-confirm-popup h2 {
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .reset-confirm-popup p {
+            color: #fff;
+            margin-bottom: 2rem;
+        }
+
+        .reset-confirm-popup button {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-confirm-popup button:hover {
+            background: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -525,6 +591,15 @@
                 </a>
             </div>
 
+            <!-- Box de resetar conta -->
+            <div style="margin-top: 2rem; margin-bottom: 2rem;">
+                <button class="btn btn-danger" id="reset-account-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Resetar minha conta
+                </button>
+            </div>
+            <!-- Fim box de resetar conta -->
+
             <!-- Seção para alterar posição de uma empresa específica -->
             <div class="manual-update-section" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
                 <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-color);">Alterar por Empresa</h2>
@@ -564,6 +639,15 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Box de resetar conta -->
+            <div style="margin-top: 2rem; margin-bottom: 2rem;">
+                <button class="btn btn-danger" id="reset-account-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Resetar minha conta
+                </button>
+            </div>
+            <!-- Fim box de resetar conta -->
         </div>
     </div>
     <script type="module">
@@ -784,6 +868,49 @@
                         empresaUpdateBtn.disabled = false;
                         empresaUpdateBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Alterações';
                     }
+                });
+            }
+            
+            // Event: Reset account button
+            const resetAccountBtn = document.getElementById('reset-account-btn');
+            if (resetAccountBtn) {
+                resetAccountBtn.addEventListener('click', function() {
+                    // Cria o popup de confirmação
+                    const confirmBox = document.createElement('div');
+                    confirmBox.className = 'reset-confirm-popup';
+                    confirmBox.style.position = 'fixed';
+                    confirmBox.style.top = '0';
+                    confirmBox.style.left = '0';
+                    confirmBox.style.width = '100vw';
+                    confirmBox.style.height = '100vh';
+                    confirmBox.style.background = 'rgba(0,0,0,0.65)';
+                    confirmBox.style.display = 'flex';
+                    confirmBox.style.alignItems = 'center';
+                    confirmBox.style.justifyContent = 'center';
+                    confirmBox.style.zIndex = '9999';
+                    confirmBox.innerHTML = `
+                        <div style="background: #1e1e1e; border-radius: 1rem; padding: 2.5rem 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.25); max-width: 400px; text-align: center;">
+                            <i class='fas fa-exclamation-triangle' style='color: #ef4444; font-size: 2.5rem; margin-bottom: 1rem;'></i>
+                            <h2 style='color: #fff; margin-bottom: 1rem;'>Resetar minha conta</h2>
+                            <p style='color: #fff; margin-bottom: 2rem;'>Todos os dados da sua conta (ativos, proventos, histórico, planilhas) serão apagados e não poderão ser recuperados. Tem certeza que deseja continuar?</p>
+                            <div style='display: flex; gap: 1rem; justify-content: center;'>
+                                <button id='confirm-reset-btn' style='background: #ef4444; color: #fff; border: none; border-radius: 0.5rem; padding: 0.75rem 1.5rem; font-weight: bold; font-size: 1rem; cursor: pointer;'>Prosseguir</button>
+                                <button id='cancel-reset-btn' style='background: #333; color: #fff; border: none; border-radius: 0.5rem; padding: 0.75rem 1.5rem; font-weight: bold; font-size: 1rem; cursor: pointer;'>Cancelar</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(confirmBox);
+                    document.getElementById('cancel-reset-btn').onclick = function() {
+                        document.body.removeChild(confirmBox);
+                    };
+                    document.getElementById('confirm-reset-btn').onclick = async function() {
+                        try {
+                            await authAPI.resetAccount();
+                            window.location.href = 'file-upload.html';
+                        } catch (error) {
+                            alert('Erro ao resetar conta: ' + (error.message || error));
+                        }
+                    };
                 });
             }
             

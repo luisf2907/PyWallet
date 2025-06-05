@@ -766,21 +766,25 @@ def upload_portfolio():
 # =============================================================================
 @app.route('/api/portfolio-distribution', methods=['GET'])
 def portfolio_distribution():
+    t0 = time.perf_counter()
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
-
+    t1 = time.perf_counter()
     portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
     if not portfolio:
         return jsonify({'error': 'Portfólio não encontrado'}), 404
-
+    t2 = time.perf_counter()
     try:
         portfolio_data = json.loads(portfolio.data)
     except Exception as e:
         return jsonify({'distribution': []}), 200
-
+    if not portfolio_data:
+        return jsonify({'distribution': []}), 200
+    t3 = time.perf_counter()
     price_cache = {p.ticker: p.price for p in PriceCache.query.filter_by(user_id=user_id).all()}
     exch_rate = get_cached_dollar_rate()
+    t4 = time.perf_counter()
     total_current_value = 0.0
     dist_map = {}
     label_map = {}
@@ -798,18 +802,20 @@ def portfolio_distribution():
         if current_value <= 0:
             continue
         total_current_value += current_value
-        # Use o mesmo label da tabela: ticker_orig + sufixo se for BDR ou US
         label = ticker_orig
         if is_us:
             label += ' (US)'
         elif final_ticker.endswith('34.SA') or final_ticker.endswith('35.SA') or final_ticker.endswith('32.SA'):
             label += ' (BDR)'
         dist_map[label] = dist_map.get(label, 0) + current_value
+    t5 = time.perf_counter()
     distribution_list = []
     for tck, val in dist_map.items():
         pct = (val / total_current_value) * 100 if total_current_value else 0
         distribution_list.append({'ticker': tck, 'percentage': pct})
     distribution_list.sort(key=lambda x: x['percentage'], reverse=True)
+    t6 = time.perf_counter()
+    print(f"[PERF] portfolio_distribution: total={t6-t0:.3f}s | leitura={t3-t1:.3f}s | precos={t4-t3:.3f}s | dist={t5-t4:.3f}s | resposta={t6-t5:.3f}s")
     return jsonify({'distribution': distribution_list}), 200
 
 # =============================================================================
@@ -817,49 +823,47 @@ def portfolio_distribution():
 # =============================================================================
 @app.route('/api/portfolio-summary', methods=['GET'])
 def portfolio_summary():
+    t0 = time.perf_counter()
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
 
+    t1 = time.perf_counter()
     portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
     if not portfolio:
         return jsonify({'error': 'Portfólio não encontrado'}), 404
 
+    t2 = time.perf_counter()
     start_date = request.args.get('start_date', (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'))
     end_date = request.args.get('end_date', datetime.now().strftime('%Y-%m-%d'))
     fast_mode = request.args.get('fast_mode', 'false').lower() == 'true'
-    
     try:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
     except ValueError:
         return jsonify({'error': 'Formato de data inválido. Use YYYY-MM-DD'}), 400
-    
     max_period = timedelta(days=3 * 365)
     if end_date_obj - start_date_obj > max_period:
         start_date_obj = end_date_obj - max_period
         start_date = start_date_obj.strftime('%Y-%m-%d')
-    
     try:
         portfolio_data = json.loads(portfolio.data)
     except Exception as e:
         print(f"Erro ao decodificar os dados do portfólio: {e}")
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
-
     if not portfolio_data:
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
-
+    t3 = time.perf_counter()
     # Verificar se está em pausa por rate limit
     is_rate_limited = False
     with rate_limit_lock:
         if rate_limit_pause['until'] and datetime.now() < rate_limit_pause['until']:
             is_rate_limited = True
             print(f"[RATE LIMIT] Usando cache para portfolio-summary até {rate_limit_pause['until']}")
-
     # Busca preços do cache PriceCache
     price_cache = {p.ticker: p.price for p in PriceCache.query.all()}
     exch_rate = get_cached_dollar_rate()
-
+    t4 = time.perf_counter()
     # Busca preços faltantes do yfinance (apenas se não estiver no cache E não houver rate limit)
     missing_tickers = []
     if not is_rate_limited and not fast_mode:
@@ -888,11 +892,10 @@ def portfolio_summary():
                         db.session.commit()
                 else:
                     print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
-
+    t5 = time.perf_counter()
     total_invested = 0.0
     total_current_value = 0.0
     assets_performance = []
-    
     for asset in portfolio_data:
         ticker_orig = asset['ticker'].strip().upper()
         final_ticker = format_ticker(ticker_orig)
@@ -901,7 +904,6 @@ def portfolio_summary():
             quantity = float(asset.get('quantidade', 0))
         except:
             continue
-
         is_bdr = False
         is_us = False
         if final_ticker.endswith('.SA'):
@@ -909,22 +911,17 @@ def portfolio_summary():
                 is_bdr = True
         else:
             is_us = True
-
         # Busca preço do cache, fallback para preço médio
         current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
-
         if is_us:
             invested_value = avg_price * quantity * exch_rate
             current_value = current_price_original * quantity * exch_rate
         else:
             invested_value = avg_price * quantity
             current_value = current_price_original * quantity
-
         total_invested += invested_value
         total_current_value += current_value
-
         return_pct = ((current_value / invested_value) - 1) * 100 if invested_value > 0 else 0
-
         assets_performance.append({
             'ticker': ticker_orig,
             'final_ticker': final_ticker,
@@ -937,10 +934,8 @@ def portfolio_summary():
             'is_us_ticker': is_us,
             'is_bdr': is_bdr
         })
-
     total_return = total_current_value - total_invested
     total_return_pct = ((total_current_value / total_invested) - 1) * 100 if total_invested > 0 else 0
-
     cdi_return = 0.1135
     if assets_performance:
         best = max(assets_performance, key=lambda x: x['return_pct'])
@@ -954,7 +949,6 @@ def portfolio_summary():
         worst_ticker = None
         best_return_pct = None
         worst_return_pct = None
-
     summary = {
         'total_invested': total_invested,
         'total_current_value': total_current_value,
@@ -968,19 +962,18 @@ def portfolio_summary():
         'worst_asset_return_pct': worst_return_pct,
         'updated_at': datetime.now().isoformat()
     }
-
     cache_key = f"{user_id}:{start_date}:{end_date}:fast_mode={fast_mode}"
     with evolution_cache_lock:
         if cache_key in _evolution_cache:
             cached_entry = _evolution_cache[cache_key]
             if (datetime.now() - cached_entry['timestamp']).total_seconds() < 120:
+                print(f"[PERF] Tempo total (cache): {time.perf_counter() - t0:.3f}s")
                 return jsonify(cached_entry['data']), 200
-
+    t6 = time.perf_counter()
     evolution_list = []
     try:
         # Se estiver em rate limit, nem tenta calcular evolução com yfinance
         if is_rate_limited or fast_mode:
-            # Tenta buscar do cache com app_context
             with app.app_context():
                 try:
                     cached = PortfolioEvolutionCache.query.filter_by(user_id=user_id).order_by(PortfolioEvolutionCache.date.asc()).all()
@@ -994,8 +987,8 @@ def portfolio_summary():
                     print(f"Erro ao buscar evolução do cache durante rate limit/fast_mode: {e2}")
                     evolution_list = None
         else:
-            # Tenta calcular normalmente
             with app.app_context():
+                t_evo0 = time.perf_counter()
                 evolution_list = calculate_portfolio_evolution(
                     portfolio_data=portfolio_data,
                     start_date=start_date,
@@ -1005,6 +998,8 @@ def portfolio_summary():
                     fast_mode=fast_mode,
                     price_cache=price_cache
                 )
+                t_evo1 = time.perf_counter()
+                print(f"[PERF] Tempo cálculo evolução: {t_evo1 - t_evo0:.3f}s")
         if not evolution_list or len(evolution_list) < 2:
             print("[INFO] Sem dados suficientes para evolução do portfólio. Gráfico permanecerá em branco.")
             evolution_list = None
@@ -1012,19 +1007,19 @@ def portfolio_summary():
         print(f"[ERRO] Erro ao calcular evolução do portfólio: {e}")
         print("[INFO] Sem dados suficientes para evolução do portfólio. Gráfico permanecerá em branco.")
         evolution_list = None
-
+    t7 = time.perf_counter()
     response_data = {
         'summary': summary,
         'assets': assets_performance,
         'evolution': evolution_list
     }
-    
     with evolution_cache_lock:
         _evolution_cache[cache_key] = {
             'timestamp': datetime.now(),
             'data': response_data
         }
-
+    t8 = time.perf_counter()
+    print(f"[PERF] portfolio_summary: total={t8-t0:.3f}s | leitura={t3-t1:.3f}s | precos={t5-t4:.3f}s | ativos={t6-t5:.3f}s | evolucao={t7-t6:.3f}s | resposta={t8-t7:.3f}s")
     return jsonify(response_data), 200
 
 # =============================================================================
@@ -1120,12 +1115,6 @@ def register_aporte():
     quantidade = int(data.get('quantidade', 0))
     if not ticker or preco <= 0 or quantidade <= 0 or tipo not in ['compra', 'venda']:
         return jsonify({'error': 'Dados inválidos'}), 400
-
-    # Validação do ticker (checa se existe na B3 ou EUA)
-    try:
-        from yfinance import Ticker
-        yf_ticker = format_ticker(ticker)
-        tinfo = Ticker(yf_ticker).info
         if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
             return jsonify({'error': 'Ticker não encontrado'}), 400
     except Exception:

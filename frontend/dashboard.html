@@ -987,26 +987,38 @@
           }
         }
     
+        // --- OTIMIZAÇÕES DE PERFORMANCE ---
+
+        // Função otimizada para atualizar a página (renderização progressiva)
         async function updatePage(showOverlay, updateCharts = true, forcePriceUpdate = false, fastMode = false) {
           if (showOverlay) {
             loadingOverlay.classList.remove('hidden');
           }
           try {
             const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const portfolioData = await portfolioAPI.getSummary(startDate, endDate, fastMode);
-    
+            const endDate = startDateInput.value;
+            // Mostra placeholders na tabela e gráficos
+            const assetsTableBody = document.getElementById('assets-table-body');
+            assetsTableBody.innerHTML = `<tr><td colspan="10" class="table-loading">Carregando ativos...</td></tr>`;
+            if (updateCharts) {
+              document.getElementById('asset-distribution-chart').getContext('2d').clearRect(0,0,400,400);
+              document.getElementById('portfolio-evolution-chart').getContext('2d').clearRect(0,0,400,400);
+            }
+
+            // Busca summary e distribution em paralelo
+            const [portfolioData, distributionData] = await Promise.all([
+              portfolioAPI.getSummary(startDate, endDate, fastMode),
+              updateCharts ? portfolioAPI.getDistribution() : Promise.resolve(null)
+            ]);
+
+            // Atualiza cards principais imediatamente
             const updateDate = new Date(portfolioData.summary.updated_at);
             document.getElementById('last-update').textContent = `Última atualização: ${updateDate.toLocaleString('pt-BR')}`;
-    
-            // Atualizar cards informativos
             document.getElementById('total-value').textContent = formatter.format(portfolioData.summary.total_current_value);
             document.getElementById('total-invested').textContent = formatter.format(portfolioData.summary.total_invested);
             document.getElementById('total-return').textContent = formatter.format(portfolioData.summary.total_return);
-    
             const returnPercentElem = document.getElementById('return-percent');
             const returnPercent = portfolioData.summary.total_return_pct;
-            returnPercentElem.textContent = formatPercent(returnPercent);
             if (returnPercent >= 0) {
               returnPercentElem.classList.remove('change-negative');
               returnPercentElem.classList.add('change-positive');
@@ -1016,7 +1028,6 @@
               returnPercentElem.classList.add('change-negative');
               returnPercentElem.innerHTML = `<i class="fas fa-caret-down change-icon"></i> ${formatPercent(Math.abs(returnPercent))}`;
             }
-    
             if (portfolioData.summary.best_asset) {
               document.getElementById('best-asset').textContent = portfolioData.summary.best_asset;
               document.getElementById('best-asset-return').innerHTML = `<i class="fas fa-caret-up change-icon"></i> ${formatPercent(portfolioData.summary.best_asset_return_pct)}`;
@@ -1025,8 +1036,6 @@
               document.getElementById('worst-asset').textContent = portfolioData.summary.worst_asset;
               document.getElementById('worst-asset-return').innerHTML = `<i class="fas fa-caret-down change-icon"></i> ${formatPercent(Math.abs(portfolioData.summary.worst_asset_return_pct))}`;
             }
-    
-            // Atualizar informações de benchmark
             document.getElementById('cdi-return').textContent = `Retorno CDI: ${formatPercent(portfolioData.summary.cdi_return_pct)}`;
             const cdiDiffElem = document.getElementById('cdi-diff');
             const cdiDiff = portfolioData.summary.total_return_pct - portfolioData.summary.cdi_return_pct;
@@ -1040,47 +1049,30 @@
               cdiDiffElem.innerHTML = `<i class="fas fa-caret-down change-icon"></i> Diferença: ${formatPercent(Math.abs(cdiDiff))}`;
             }
             document.getElementById('cdi-percentage').textContent = `% do CDI: ${formatPercent(portfolioData.summary.percentage_of_cdi)}`;
-    
-            // Atualizar tabela de ativos
-            const assetsTableBody = document.getElementById('assets-table-body');
-            
-            // Inicializa previousPrices se não existir
-            if (!window.previousPrices) {
-              window.previousPrices = {};
-            }
-            
-            // Se a tabela estiver vazia, cria novas linhas
-            if (assetsTableBody.innerHTML === "" || assetsTableBody.querySelectorAll("tr").length !== portfolioData.assets.length) {
-              assetsTableBody.innerHTML = "";
-              // Total atual do portfólio para calcular o peso
-              const totalCurrentValue = portfolioData.summary.total_current_value || 0;
-              portfolioData.assets.sort((a, b) => b.invested_value - a.invested_value);
-              
-              portfolioData.assets.forEach(asset => {
+
+            // Renderiza tabela de ativos rapidamente (top 10 primeiro, depois o resto)
+            if (!window.previousPrices) window.previousPrices = {};
+            assetsTableBody.innerHTML = '';
+            const totalCurrentValue = portfolioData.summary.total_current_value || 0;
+            portfolioData.assets.sort((a, b) => b.invested_value - a.invested_value);
+            const frag = document.createDocumentFragment();
+            const renderChunk = (start, end) => {
+              for (let i = start; i < end && i < portfolioData.assets.length; i++) {
+                const asset = portfolioData.assets[i];
                 const row = document.createElement('tr');
                 const is_us_ticker = asset.is_us_ticker;
                 const is_bdr = asset.is_bdr;
-                let tickerType = "BR";
-                let badgeClass = "ticker-br";
-                if (is_us_ticker) {
-                  tickerType = "US";
-                  badgeClass = "ticker-us";
-                } else if (is_bdr) {
-                  tickerType = "BDR";
-                  badgeClass = "ticker-bdr";
-                }
+                let tickerType = 'BR';
+                let badgeClass = 'ticker-br';
+                if (is_us_ticker) { tickerType = 'US'; badgeClass = 'ticker-us'; }
+                else if (is_bdr) { tickerType = 'BDR'; badgeClass = 'ticker-bdr'; }
                 const tickerBadge = `<span class="ticker-badge ${badgeClass}">${tickerType}</span>`;
                 const returnValue = asset.current_value - asset.invested_value;
                 const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
                 let weightPercent = 0;
-                if (totalCurrentValue > 0) {
-                  weightPercent = (asset.current_value / totalCurrentValue) * 100;
-                }
+                if (totalCurrentValue > 0) weightPercent = (asset.current_value / totalCurrentValue) * 100;
                 const priceCellId = `price-cell-${asset.ticker.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                
-                // Armazena o preço para futuras comparações
                 window.previousPrices[asset.ticker] = asset.current_price;
-                
                 row.innerHTML = `
                   <td><strong>${asset.ticker}</strong></td>
                   <td class="type-cell">${tickerBadge}</td>
@@ -1093,72 +1085,18 @@
                   <td class="${returnClass}">${returnValue >= 0 ? '+' : ''}${asset.return_pct.toFixed(2)}%</td>
                   <td>${weightPercent.toFixed(2)}%</td>
                 `;
-                assetsTableBody.appendChild(row);
-              });
+                frag.appendChild(row);
+              }
+              assetsTableBody.appendChild(frag);
+            };
+            // Renderiza os 10 primeiros imediatamente
+            renderChunk(0, 10);
+            // Se houver mais ativos, renderiza o resto em background
+            if (portfolioData.assets.length > 10) {
+              setTimeout(() => renderChunk(10, portfolioData.assets.length), 0);
             }
-            // Se a tabela já existe, atualiza apenas os preços e valores
-            else {
-              portfolioData.assets.forEach(asset => {
-                const prevPrice = window.previousPrices[asset.ticker];
-                const priceCellId = `price-cell-${asset.ticker.replace(/[^a-zA-Z0-9]/g, '-')}`;
-                const priceCell = document.getElementById(priceCellId);
-                
-                if (priceCell) {
-                  const is_us_ticker = asset.is_us_ticker;
-                  let priceArrow = '';
-                  let animationClass = '';
-                  
-                  // Compara com o preço anterior para animação
-                  if (prevPrice !== undefined) {
-                    if (asset.current_price > prevPrice) {
-                      priceArrow = '<i class="fas fa-caret-up price-arrow" style="color: var(--green)"></i>';
-                      animationClass = 'price-blink-up';
-                    } else if (asset.current_price < prevPrice) {
-                      priceArrow = '<i class="fas fa-caret-down price-arrow" style="color: var(--red)"></i>';
-                      animationClass = 'price-blink-down';
-                    }
-                  }
-                  
-                  // Remove classes anteriores de animação
-                  priceCell.classList.remove('price-blink-up', 'price-blink-down');
-                  
-                  // Atualiza o conteúdo do preço
-                  priceCell.innerHTML = `${is_us_ticker ? 'US$' : 'R$'} ${asset.current_price.toFixed(2)}${priceArrow}`;
-                  
-                  // Aplica a nova animação se houver mudança de preço
-                  if (animationClass) {
-                    // Força um reflow para reiniciar a animação
-                    void priceCell.offsetWidth;
-                    priceCell.classList.add(animationClass);
-                  }
-                  
-                  // Atualiza os valores derivados do preço
-                  const row = priceCell.parentElement;
-                  if (row) {
-                    const returnValue = asset.current_value - asset.investido_value;
-                    const returnClass = returnValue >= 0 ? 'change-positive' : 'change-negative';
-                    const totalCurrentValue = portfolioData.summary.total_current_value || 0;
-                    let weightPercent = 0;
-                    if (totalCurrentValue > 0) {
-                      weightPercent = (asset.current_value / totalCurrentValue) * 100;
-                    }
-                    
-                    // Atualiza os valores relacionados
-                    row.cells[6].textContent = formatter.format(asset.current_value);
-                    row.cells[7].textContent = formatter.format(returnValue);
-                    row.cells[7].className = returnClass;
-                    row.cells[8].textContent = `${returnValue >= 0 ? '+' : ''}${asset.return_pct.toFixed(2)}%`;
-                    row.cells[8].className = returnClass;
-                    row.cells[9].textContent = `${weightPercent.toFixed(2)}%`;
-                  }
-                  
-                  // Armazena o novo preço para a próxima comparação
-                  window.previousPrices[asset.ticker] = asset.current_price;
-                }
-              });
-            }
-    
-            document.getElementById('table-total-invested').textContent = formatter.format(portfolioData.summary.total_invested);
+
+            document.getElementById('table-total-invested').textContent = formatter.format(portfolioData.summary.total_investido);
             document.getElementById('table-total-current').textContent = formatter.format(portfolioData.summary.total_current_value);
             const totalReturnValue = portfolioData.summary.total_return;
             const totalReturnClass = totalReturnValue >= 0 ? 'change-positive' : 'change-negative';
@@ -1167,82 +1105,42 @@
             const totalReturnPct = portfolioData.summary.total_return_pct;
             document.getElementById('table-total-return-pct').textContent = `${totalReturnPct >= 0 ? '+' : ''}${totalReturnPct.toFixed(2)}%`;
             document.getElementById('table-total-return-pct').className = totalReturnClass;
-    
-            // Atualizar gráficos apenas se solicitado
-            if (updateCharts) {
-              // Carregar dados de distribuição
-              const distributionData = await portfolioAPI.getDistribution();
-              const distributionLabels = [];
-              const distributionValues = [];
-              // Gera as cores em escala entre amarelo, laranja e vermelho
-              const maxValDist = Math.max(...distributionData.distribution.map(d => d.percentage));
-              const distributionColors = distributionData.distribution.map((d, idx) => {
-                return getColorFromRatioByIndex(idx, distributionData.distribution.length);
-              });
-              const topAssets = distributionData.distribution.slice(0, 25);
-              topAssets.forEach(asset => {
-                distributionLabels.push(asset.ticker);
-                distributionValues.push(asset.percentage);
-              });
-              createDistributionChart(distributionLabels, distributionValues, distributionColors);
-    
-              // Preparar dados para o gráfico de evolução
-              const evolutionLabels = [];
-              const evolutionValues = [];
-              
-              // Verificar se há dados de evolução
-              if (portfolioData.evolution && portfolioData.evolution.length > 0) {
-                console.log(`Dados de evolução recebidos: ${portfolioData.evolution.length} pontos`);
-                
-                // Processar dados de evolução
-                portfolioData.evolution.forEach(item => {
-                  if (item && item.date && item.value !== undefined) {
-                    // Converter data ISO para objeto Date
-                    const dateParts = item.date.split('-');
-                    const date = new Date(
-                      parseInt(dateParts[0]), 
-                      parseInt(dateParts[1]) - 1, // Mês em JS é 0-indexed
-                      parseInt(dateParts[2])
-                    );
-                    // Formatar data para exibição
-                    evolutionLabels.push(date.toLocaleDateString('pt-BR'));
-                    evolutionValues.push(item.value);
-                  }
+
+            // Carrega gráficos de forma assíncrona após cards/tabela
+            if (updateCharts && distributionData) {
+              setTimeout(() => {
+                const distributionLabels = [];
+                const distributionValues = [];
+                const distributionColors = distributionData.distribution.map((d, idx) => getColorFromRatioByIndex(idx, distributionData.distribution.length));
+                const topAssets = distributionData.distribution.slice(0, 25);
+                topAssets.forEach(asset => {
+                  distributionLabels.push(asset.ticker);
+                  distributionValues.push(asset.percentage);
                 });
-              } else {
-                console.warn("Dados de evolução do portfólio não disponíveis ou vazios.");
-                showAlert("Não foi possível obter dados históricos para o período selecionado.", "info");
-                
-                // Gerar dados simulados
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                const dayDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-                const stepSize = Math.max(1, Math.floor(dayDiff / 20)); // No máximo 20 pontos
-                
-                let currentValue = portfolioData.summary.total_invested * 0.95;
-                const targetValue = portfolioData.summary.total_current_value;
-                const valueIncrement = (targetValue - currentValue) / (dayDiff / stepSize);
-                
-                for (let i = 0; i <= dayDiff; i += stepSize) {
-                  const currentDate = new Date(start);
-                  currentDate.setDate(currentDate.getDate() + i);
-                  evolutionLabels.push(currentDate.toLocaleDateString('pt-BR'));
-                  
-                  // Adicionar um pouco de aleatoriedade para simular flutuações
-                  const randomFactor = 1 + (Math.random() * 0.04 - 0.02); // +/- 2%
-                  currentValue += valueIncrement * randomFactor;
-                  
-                  evolutionValues.push(currentValue);
-                }
-                
-                // Garantir que o último valor seja o valor atual
-                evolutionLabels[evolutionLabels.length - 1] = end.toLocaleDateString('pt-BR');
-                evolutionValues[evolutionValues.length - 1] = targetValue;
-              }
-              
-              createEvolutionChart(evolutionLabels, evolutionValues);
+                createDistributionChart(distributionLabels, distributionValues, distributionColors);
+              }, 0);
             }
-    
+            if (updateCharts && portfolioData.evolution) {
+              setTimeout(() => {
+                let evolutionLabels = [];
+                let evolutionValues = [];
+                if (portfolioData.evolution.length > 0) {
+                  const maxPoints = 100;
+                  const step = Math.ceil(portfolioData.evolution.length / maxPoints);
+                  portfolioData.evolution.forEach((item, idx) => {
+                    if (idx % step === 0 || idx === portfolioData.evolution.length - 1) {
+                      if (item && item.date && item.value !== undefined) {
+                        const dateParts = item.date.split('-');
+                        const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+                        evolutionLabels.push(date.toLocaleDateString('pt-BR'));
+                        evolutionValues.push(item.value);
+                      }
+                    }
+                  });
+                }
+                createEvolutionChart(evolutionLabels, evolutionValues);
+              }, 0);
+            }
             if (showOverlay) {
               loadingOverlay.classList.add('hidden');
             }
@@ -1373,8 +1271,6 @@
           if (window.evolutionChart) {
             window.evolutionChart.destroy();
           }
-          
-          // Configurar opções do gráfico
           window.evolutionChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -1383,7 +1279,7 @@
                 label: 'Valor do Portfólio',
                 data: values,
                 borderColor: '#ffc107',
-                backgroundColor: 'rgba(255, 193, 7, 0.1)', // Aumentei um pouco a opacidade
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
                 borderWidth: 2,
                 tension: 0.2,
                 fill: true,
@@ -1412,7 +1308,7 @@
                       return new Intl.NumberFormat('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
-                        minimumFractionDigits: 0, // Reduzir para não ficar muito extenso
+                        minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                       }).format(value);
                     },
@@ -1429,7 +1325,7 @@
                     maxRotation: 45,
                     minRotation: 45,
                     autoSkip: true,
-                    maxTicksLimit: 12 // Limitar o número de rótulos no eixo X
+                    maxTicksLimit: 12
                   }
                 }
               },
@@ -1543,14 +1439,6 @@
         // Inicializar a aplicação
         await loadExchangeRate();
         await updatePage(true, true, false, true);
-
-      // Botão de aplicar filtros de data (carregamento normal)
-      evolutionApplyBtn.addEventListener('click', async function () {
-        await updatePage(true, true, false, false);
-      });
-      // Botão de atualizar (carregamento normal)
-      refreshBtn.addEventListener('click', async function () {
-        await updatePage(true, true, true, false);
       });
     </script>
   </body>

@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta
 import json
+import time
 
 # Adiciona o diretório pai ao path para importações absolutas
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -27,6 +28,7 @@ analysis_bp = Blueprint('analysis', __name__, url_prefix='/api')
 @analysis_bp.route('/portfolio-summary', methods=['GET'])
 def portfolio_summary():
     """Endpoint para obter o resumo e evolução do portfólio."""
+    t0 = time.perf_counter()
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Usuário não autenticado'}), 401
@@ -35,6 +37,7 @@ def portfolio_summary():
     portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
     if not portfolio:
         return jsonify({'error': 'Portfólio não encontrado'}), 404
+    t1 = time.perf_counter()
 
     # Parâmetros de período
     start_date = request.args.get('start_date', (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d'))
@@ -59,26 +62,32 @@ def portfolio_summary():
     except Exception as e:
         print(f"Erro ao decodificar os dados do portfólio: {e}")
         return jsonify({'summary': {}, 'assets': [], 'evolution': []}), 200
+    t2 = time.perf_counter()
 
     # Verificar cache
     cache_key = f"{user_id}:{start_date}:{end_date}"
     cached_data = get_from_evolution_cache(cache_key)
     if cached_data:
+        print(f"[PERF] portfolio_summary: total={time.perf_counter()-t0:.3f}s | leitura={t2-t1:.3f}s (cache hit)")
         return jsonify(cached_data), 200
 
     # Verificar rate limit
     is_rate_limited_flag = is_rate_limited()
+    t3 = time.perf_counter()
 
     # Busca preços do cache
     price_cache = {p.ticker: p.price for p in PriceCache.query.all()}
     exch_rate = get_cached_dollar_rate()
+    t4 = time.perf_counter()
 
     # Busca preços faltantes
     if not is_rate_limited_flag:
         update_missing_prices(portfolio_data, price_cache)
+    t5 = time.perf_counter()
 
     # Calcula performance dos ativos
     assets_performance, summary = calculate_assets_performance(portfolio_data, price_cache, exch_rate)
+    t6 = time.perf_counter()
 
     # Calcula evolução do portfólio
     evolution_list = []
@@ -93,6 +102,7 @@ def portfolio_summary():
                 print("[INFO] Sem cache de evolução disponível durante rate limit")
                 evolution_list = None
         else:
+            evo_start = time.perf_counter()
             # Calcula normalmente
             evolution_list = calculate_portfolio_evolution(
                 portfolio_data=portfolio_data,
@@ -101,13 +111,15 @@ def portfolio_summary():
                 exchange_rate=exch_rate,
                 format_ticker_func=format_ticker
             )
-            
+            evo_end = time.perf_counter()
+            print(f"[PERF] Tempo cálculo evolução: {evo_end-evo_start:.3f}s")
         if not evolution_list or len(evolution_list) < 2:
             print("[INFO] Sem dados suficientes para evolução do portfólio.")
             evolution_list = None
     except Exception as e:
         print(f"[ERRO] Erro ao calcular evolução do portfólio: {e}")
         evolution_list = None
+    t7 = time.perf_counter()
 
     # Monta resposta final
     response_data = {
@@ -118,7 +130,7 @@ def portfolio_summary():
     
     # Salva no cache
     set_evolution_cache(cache_key, response_data)
-    
+    print(f"[PERF] portfolio_summary: total={t7-t0:.3f}s | leitura={t2-t1:.3f}s | precos={t4-t3:.3f}s | update_precos={t5-t4:.3f}s | ativos={t6-t5:.3f}s | evolucao={t7-t6:.3f}s | resposta={t7-t0:.3f}s")
     return jsonify(response_data), 200
 
 def update_missing_prices(portfolio_data, price_cache):

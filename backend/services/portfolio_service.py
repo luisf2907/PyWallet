@@ -3,6 +3,7 @@ import json
 import pandas as pd
 from datetime import datetime
 from flask import current_app
+import time
 
 from extensions.database import db
 from models.portfolio import Portfolio
@@ -40,6 +41,9 @@ def upload_portfolio(user_id, file):
         # Processa o arquivo
         portfolio_data, summary = process_portfolio_file(filepath)
         
+        # Atualiza imediatamente o cache de preços para ativos inéditos
+        from backend.portfolio_evolution import update_price_cache_for_new_assets
+        update_price_cache_for_new_assets(portfolio_data, min_update_interval_minutes=0)
         # Salva no banco de dados
         portfolio = Portfolio(
             user_id=user_id,
@@ -204,16 +208,17 @@ def get_portfolio_distribution(user_id):
     Returns:
         tuple: (dict, int) - Resposta e código HTTP
     """
+    t0 = time.perf_counter()
     # Busca o portfólio mais recente do usuário
     portfolio = Portfolio.query.filter_by(user_id=user_id).order_by(Portfolio.uploaded_at.desc()).first()
     if not portfolio:
         return {'error': 'Portfólio não encontrado'}, 404
-        
+    t1 = time.perf_counter()
     try:
         portfolio_data = json.loads(portfolio.data)
     except Exception as e:
         return {'distribution': []}, 200
-        
+    t2 = time.perf_counter()
     if not portfolio_data:
         return {'distribution': []}, 200
         
@@ -221,12 +226,11 @@ def get_portfolio_distribution(user_id):
     from models.price import PriceCache
     price_cache = {p.ticker: p.price for p in PriceCache.query.all()}
     exch_rate = get_cached_dollar_rate()
-    
+    t3 = time.perf_counter()
     total_current_value = 0.0
     dist_map = {}
-    
-    # Calcula o valor atual de cada ativo
     for asset in portfolio_data:
+        t_asset0 = time.perf_counter()
         ticker_orig = asset['ticker'].strip().upper()
         final_ticker = format_ticker(ticker_orig)
         try:
@@ -252,16 +256,18 @@ def get_portfolio_distribution(user_id):
             label += ' (BDR)'
             
         dist_map[label] = dist_map.get(label, 0) + current_value
-    
-    # Calcula percentuais
+        t_asset1 = time.perf_counter()
+        # Loga tempo de cada ativo se demorar mais de 0.05s
+        if t_asset1-t_asset0 > 0.05:
+            print(f"[PERF] get_portfolio_distribution: ativo {ticker_orig} levou {t_asset1-t_asset0:.3f}s")
+    t4 = time.perf_counter()
     distribution_list = []
     for tck, val in dist_map.items():
         pct = (val / total_current_value) * 100 if total_current_value else 0
         distribution_list.append({'ticker': tck, 'percentage': pct})
-        
-    # Ordena por percentual
     distribution_list.sort(key=lambda x: x['percentage'], reverse=True)
-    
+    t5 = time.perf_counter()
+    print(f"[PERF] get_portfolio_distribution: total={t5-t0:.3f}s | leitura={t1-t0:.3f}s | parse={t2-t1:.3f}s | precos={t3-t2:.3f}s | ativos={t4-t3:.3f}s | dist={t5-t4:.3f}s")
     return {'distribution': distribution_list}, 200
 
 # A função generate_template_file foi removida pois o template agora é obtido diretamente do Google Drive
@@ -542,6 +548,9 @@ def overwrite_portfolio_manual(user_id, ativos):
         if not portfolio_data:
             return {'error': 'Nenhum ativo válido informado'}, 400
             
+        # Atualiza imediatamente o cache de preços para ativos inéditos
+        from backend.portfolio_evolution import update_price_cache_for_new_assets
+        update_price_cache_for_new_assets(portfolio_data, min_update_interval_minutes=0)
         # Salvar novo portfólio
         new_portfolio = Portfolio(
             user_id=user_id,

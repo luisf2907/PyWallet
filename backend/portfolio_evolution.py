@@ -14,6 +14,7 @@ import time
 import threading
 import copy
 from models.portfolio import PortfolioEvolutionCache
+from models.price_history_cache import PriceHistoryCache
 from extensions.database import db
 from flask import session
 
@@ -70,6 +71,51 @@ def get_historical_prices(ticker, start_date, end_date, retries=3, delay=1):
                 
     return None
 
+def get_historical_prices_with_cache(ticker, start_date, end_date, retries=3, delay=1):
+    """
+    Obtém preços históricos de um ativo, consultando o cache antes de baixar do yfinance.
+    Salva no cache os dados baixados.
+    """
+    # Busca no cache
+    cached = PriceHistoryCache.query.filter(
+        PriceHistoryCache.ticker == ticker,
+        PriceHistoryCache.date >= start_date,
+        PriceHistoryCache.date <= end_date
+    ).all()
+    cache_map = {c.date: c.close for c in cached}
+    # Determina datas faltantes
+    date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+    missing_dates = [d.date() for d in date_range if d.date() not in cache_map]
+    df = None
+    if missing_dates:
+        # Baixa do yfinance apenas datas faltantes
+        min_date = min(missing_dates)
+        max_date = max(missing_dates)
+        df = get_historical_prices(ticker, min_date.strftime('%Y-%m-%d'), (max_date+timedelta(days=1)).strftime('%Y-%m-%d'), retries, delay)
+        if df is not None and not df.empty:
+            for idx, row in df.iterrows():
+                date = idx.date()
+                close = float(row['Close']) if 'Close' in row else None
+                if close is not None and date in missing_dates:
+                    # Salva no cache
+                    obj = PriceHistoryCache.query.filter_by(ticker=ticker, date=date).first()
+                    if obj:
+                        obj.close = close
+                        obj.last_updated = datetime.now()
+                    else:
+                        db.session.add(PriceHistoryCache(ticker=ticker, date=date, close=close, last_updated=datetime.now()))
+            db.session.commit()
+            # Atualiza cache_map
+            for idx, row in df.iterrows():
+                date = idx.date()
+                close = float(row['Close']) if 'Close' in row else None
+                if close is not None:
+                    cache_map[date] = close
+    # Monta DataFrame final
+    data = {'Close': [cache_map.get(d.date(), None) for d in date_range]}
+    result_df = pd.DataFrame(data, index=date_range)
+    return result_df
+
 def process_asset_historical_data(asset, start_date, end_date, date_range, exchange_rate=None, format_ticker_func=None):
     """
     Processa dados históricos de um ativo e retorna uma série com valores do ativo ao longo do tempo.
@@ -119,7 +165,7 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
     buffer_days = 14
     start_with_buffer = (datetime.strptime(start_date, '%Y-%m-%d') - timedelta(days=buffer_days)).strftime('%Y-%m-%d')
       # Obter dados históricos
-    history = get_historical_prices(final_ticker, start_with_buffer, end_date)
+    history = get_historical_prices_with_cache(final_ticker, start_with_buffer, end_date)
     
     if history is not None and not history.empty:
         try:
@@ -171,6 +217,7 @@ def process_asset_historical_data(asset, start_date, end_date, date_range, excha
         return pd.Series(avg_price * qty * conv_factor, index=date_range)
 
 def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange_rate=None, format_ticker_func=None, fast_mode=False, price_cache=None):
+    t0 = time.perf_counter()
     """
     Calcula a evolução histórica do valor do portfólio.
     Se fast_mode=True, usa apenas o PriceCache para evolução instantânea (sem yfinance).
@@ -213,6 +260,8 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
             total_current += current
         # Gera evolução simulada entre investido e atual
         evolution_list = generate_simulated_evolution(start_date, end_date, total_invested, total_current, num_points=len(date_range))
+        t1 = time.perf_counter()
+        print(f"[PERF] calculate_portfolio_evolution (fast_mode): total={t1-t0:.3f}s")
         return evolution_list
 
     try:
@@ -235,48 +284,42 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
             exchange_rate = 5.8187
         buffer_days = 14
         start_with_buffer = (start_date_obj - timedelta(days=buffer_days)).strftime('%Y-%m-%d')
-        try:
-            data = yf.download(tickers=list(set(tickers)), start=start_with_buffer, end=end_date, interval='1d', group_by='ticker', progress=False, threads=True)
-        except Exception as e:
-            print(f"Erro no download em lote do yfinance: {e}")
-            data = None
+        t2 = time.perf_counter()
+        # Substitui o download em lote por uso do cache inteligente
+        data_dict = {}
+        for final_ticker in set(tickers):
+            data_dict[final_ticker] = get_historical_prices_with_cache(final_ticker, start_with_buffer, end_date)
+        t3 = time.perf_counter()
         total_values = pd.Series(0.0, index=date_range)
         for final_ticker, asset in ticker_map.items():
+            t_asset0 = time.perf_counter()
             try:
                 qty = float(asset.get('quantidade', 0))
                 avg_price = float(asset.get('preco_medio', 0))
                 is_us = not final_ticker.endswith('.SA')
                 conv_factor = exchange_rate if is_us else 1.0
-                if data is not None:
-                    if len(tickers) == 1:
-                        close_prices = data['Close'].copy()
+                close_prices = data_dict[final_ticker]['Close'] if final_ticker in data_dict else pd.Series(dtype=float)
+                close_prices.index = pd.to_datetime(close_prices.index).tz_localize(None)
+                close_prices = close_prices.ffill()
+                try:
+                    asset_prices = close_prices.reindex(date_range, method='ffill')
+                except Exception as e:
+                    last_price = close_prices.iloc[-1] if not close_prices.empty else avg_price
+                    asset_prices = pd.Series(last_price, index=date_range)
+                if asset_prices.isna().any():
+                    first_valid = asset_prices.first_valid_index()
+                    if first_valid is not None:
+                        first_value = asset_prices.loc[first_valid]
+                        asset_prices = asset_prices.fillna(first_value)
                     else:
-                        if (final_ticker, 'Close') in data:
-                            close_prices = data[(final_ticker, 'Close')].copy()
-                        elif final_ticker in data and 'Close' in data[final_ticker]:
-                            close_prices = data[final_ticker]['Close'].copy()
-                        else:
-                            close_prices = pd.Series(dtype=float)
-                    close_prices.index = pd.to_datetime(close_prices.index).tz_localize(None)
-                    close_prices = close_prices.ffill()
-                    try:
-                        asset_prices = close_prices.reindex(date_range, method='ffill')
-                    except Exception as e:
-                        last_price = close_prices.iloc[-1] if not close_prices.empty else avg_price
-                        asset_prices = pd.Series(last_price, index=date_range)
-                    if asset_prices.isna().any():
-                        first_valid = asset_prices.first_valid_index()
-                        if first_valid is not None:
-                            first_value = asset_prices.loc[first_valid]
-                            asset_prices = asset_prices.fillna(first_value)
-                        else:
-                            asset_prices = pd.Series(avg_price, index=date_range)
-                    asset_values = asset_prices * qty * conv_factor
-                else:
-                    asset_values = pd.Series(avg_price * qty * conv_factor, index=date_range)
+                        asset_prices = pd.Series(avg_price, index=date_range)
+                asset_values = asset_prices * qty * conv_factor
                 total_values = total_values.add(asset_values, fill_value=0)
             except Exception as e:
                 print(f"Erro ao processar {final_ticker}: {e}")
+            t_asset1 = time.perf_counter()
+            print(f"[PERF] process_asset {final_ticker}: {t_asset1-t_asset0:.3f}s")
+        t4 = time.perf_counter()
         evolution_list = [
             {'date': d.strftime('%Y-%m-%d'), 'value': float(v)}
             for d, v in total_values.items()
@@ -298,6 +341,8 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
                         last_updated=datetime.now()
                     ))
             db.session.commit()
+        t5 = time.perf_counter()
+        print(f"[PERF] calculate_portfolio_evolution: tickers={t2-t0:.3f}s | download={t3-t2:.3f}s | assets={t4-t3:.3f}s | persist={t5-t4:.3f}s | total={t5-t0:.3f}s")
         return evolution_list
     except Exception as e:
         print(f"Erro ao calcular evolução do portfólio (multi-ticker): {e}")

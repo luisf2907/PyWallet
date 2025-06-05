@@ -21,6 +21,7 @@ import { Layout, Alert, FileUpload, FractionedTickerNote } from '../components/c
 import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
 import PortfolioImportTable from '../components/PortfolioImportTable';
+import './FileUpload.css';
 
 // Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
 const normalizeTicker = (ticker) => {
@@ -42,6 +43,8 @@ const FileUploadPage = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   
   const { showAlert } = useAlert();
   const navigate = useNavigate();
@@ -72,6 +75,23 @@ const FileUploadPage = () => {
   
   const handleDownloadTemplate = () => {
     portfolioAPI.downloadTemplate();
+  };
+  
+  // Função para resetar a conta
+  const handleResetAccount = async () => {
+    setResetLoading(true);
+    try {
+      const { authAPI } = await import('../api/authAPI');
+      await authAPI.resetAccount();
+      showAlert('Todos os dados da sua conta foram apagados com sucesso.', 'success');
+      setResetDialogOpen(false);
+      // Opcional: recarregar a página ou redirecionar
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      showAlert(error.message || 'Erro ao resetar a conta.', 'error');
+    } finally {
+      setResetLoading(false);
+    }
   };
   
   return (
@@ -210,6 +230,57 @@ const FileUploadPage = () => {
             </Button>
           </Box>
         </Paper>
+
+        {/* Botão de resetar conta - sem área envoltória */}
+        <Box mt={4}>
+          <Button
+            variant="contained"
+            sx={{
+              background: '#b91c1c', // vermelho mais escuro
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: '1.2rem',
+              borderRadius: 2,
+              boxShadow: '0 4px 16px rgba(185,28,28,0.10)',
+              py: 1.5, // igual ao botão azul
+              minHeight: undefined, // remove minHeight customizado
+              width: '100%',
+              maxWidth: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.5,
+              '&:hover': { background: '#991b1b' }
+            }}
+            startIcon={<span className="fas fa-exclamation-triangle" style={{ fontSize: '1.5rem' }} />}
+            onClick={() => setResetDialogOpen(true)}
+            disabled={resetLoading}
+          >
+            Resetar minha conta
+          </Button>
+        </Box>
+
+        {/* Dialog de confirmação customizado com layout igual ao de sobrescrever carteira */}
+        {resetDialogOpen && (
+          <div className="modal">
+            <div className="modal-content">
+              <h3><span style={{fontSize: '1.5rem'}}>⚠️</span> ATENÇÃO: RESETAR CONTA</h3>
+              <div className="modal-warning">
+                <strong style={{color:'#ff5722'}}>Você está prestes a apagar todos os dados da sua conta!</strong>
+              </div>
+              <p>Esta ação <b>não pode ser desfeita</b> e irá remover todos os seus ativos, proventos, histórico e planilhas.</p>
+              <p>Sua conta de acesso permanecerá ativa, mas todos os dados serão perdidos.</p>
+              <div className="modal-buttons">
+                <button className="confirm-btn warning-btn" onClick={handleResetAccount} disabled={resetLoading}>
+                  {resetLoading ? 'Processando...' : 'Sim, Resetar Conta'}
+                </button>
+                <button className="cancel-btn" onClick={() => setResetDialogOpen(false)} disabled={resetLoading}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Box>
     </Layout>
   );

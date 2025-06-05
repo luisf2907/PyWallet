@@ -30,75 +30,25 @@ def test_yfinance_request():
 
 def get_price(ticker, formatar=True):
     """
-    Busca o preço atual de um ticker via yfinance.
-    Se for um ativo brasileiro (sem separadores), adiciona ".SA" ao final.
-    Respeita o rate limit e usa cache se estiver em pausa.
-    Prioriza o uso do método info para obter preços em tempo real.
+    Busca o preço atual de um ticker apenas do cache (PriceCache).
+    Não faz download do yfinance.
     
     Args:
         ticker (str): Código do ticker
         formatar (bool): Se True, formata o ticker antes de buscar
         
     Returns:
-        float: Preço do ticker ou None em caso de erro
+        float: Preço do ticker ou None se não houver no cache
     """
-    # Verificar se está em pausa por rate limit
-    if is_rate_limited():
-        # Em pausa, busca apenas do cache
-        ticker_formatted = format_ticker(ticker) if formatar else ticker
-        ticker_stripped = ticker.strip().upper()
-        
-        # Procura no cache
-        obj = PriceCache.query.filter(
-            (PriceCache.ticker == ticker_stripped) | 
-            (PriceCache.ticker == ticker_formatted)
-        ).first()
-        
-        if obj and obj.price:
-            return obj.price
-        return None
-
-    try:
-        yf_ticker = format_ticker(ticker) if formatar else ticker
-        
-        # Primeiro tenta obter o preço direto da API info (preço em tempo real)
-        try:
-            ticker_info = yf.Ticker(yf_ticker).info
-            # Tenta obter o preço atual ou preço de mercado regular
-            price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
-            if price:
-                return float(price)
-        except Exception as e:
-            print(f"[get_price] Erro ao buscar info para {yf_ticker}: {e}")
-        
-        # Se não conseguiu via info, tenta usar o download histórico
-        df = None
-        try:
-            df = yf.download(yf_ticker, period="5d", interval="1d", progress=False)
-        except Exception as e:
-            if 'possibly delisted' in str(e) or 'no price data found' in str(e):
-                print(f"[get_price] YFPricesMissingError (simulado): {e}")
-            elif 'HTTP Error' in str(e):
-                print(f"[get_price] HTTPError: {e}")
-            elif 'timed out' in str(e):
-                print(f"[get_price] Timeout: {e}")
-            else:
-                print(f"[get_price] Erro inesperado no download do yfinance: {e}")
-                
-        if df is not None and not df.empty and 'Close' in df.columns:
-            try:
-                return float(df['Close'].dropna().iloc[-1])
-            except IndexError:
-                print(f"[get_price] IndexError: série vazia para {yf_ticker}, ignorando.")
-            except Exception as e:
-                print(f"[get_price] Erro ao acessar preço para {yf_ticker}: {e}")
-            
-        return None
-    except Exception as e:
-        print(f"[get_price] Erro ao buscar {ticker}: {e}")
-        if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
-            handle_rate_limit()
-        return None
+    ticker_formatted = format_ticker(ticker) if formatar else ticker
+    ticker_stripped = ticker.strip().upper()
+    obj = PriceCache.query.filter(
+        (PriceCache.ticker == ticker_stripped) | 
+        (PriceCache.ticker == ticker_formatted)
+    ).first()
+    if obj and obj.price:
+        return obj.price
+    return None
 
 def get_cached_dollar_rate(force_update=False):
     """

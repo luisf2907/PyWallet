@@ -12,5 +12,8 @@ export const authAPI = {
   logout: () => fetchAPI('/logout', 'POST'),
   
   // Get current user
-  getCurrentUser: () => fetchAPI('/user')
+  getCurrentUser: () => fetchAPI('/user'),
+
+  // Reset account (delete all user data except registration)
+  resetAccount: () => fetchAPI('/reset-account', 'POST'),
 };
