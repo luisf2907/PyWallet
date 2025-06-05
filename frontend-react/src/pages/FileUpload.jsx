@@ -17,10 +17,26 @@ import SaveIcon from '@mui/icons-material/Save';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import DownloadIcon from '@mui/icons-material/Download';
-import { Layout, Alert, FileUpload } from '../components/common';
+import { Layout, Alert, FileUpload, FractionedTickerNote } from '../components/common';
 import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
 import PortfolioImportTable from '../components/PortfolioImportTable';
+
+// Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
+const normalizeTicker = (ticker) => {
+  if (!ticker) return '';
+  
+  // Remove espaços e converte para maiúsculas
+  ticker = ticker.trim().toUpperCase();
+  
+  // Detecta se é um ticker fracionado (termina com F)
+  if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {
+    // Remove o F final para converter para a versão normal do ticker
+    return ticker.slice(0, -1);
+  }
+  
+  return ticker;
+};
 
 const FileUploadPage = () => {
   const [file, setFile] = useState(null);
@@ -121,16 +137,15 @@ const FileUploadPage = () => {
         >
           <Typography variant="h5" gutterBottom>
             Importar Arquivo
-          </Typography>
-          
-          <Typography variant="body2" color="text.secondary" paragraph>
+          </Typography>          <Typography variant="body2" color="text.secondary" paragraph>
             Você também pode fazer upload de um arquivo CSV ou XLSX com os dados da sua carteira.
           </Typography>
           
-          <Alert 
-            type="info" 
-            message="Formatos aceitos: CSV e XLSX"
-          />
+          <Typography variant="body2" paragraph>
+            Formatos aceitos: CSV e XLSX.
+          </Typography>
+          
+          <FractionedTickerNote />
           
           <Box mt={2}>
             <FileUpload 
@@ -221,13 +236,24 @@ const EmpresaUpdateSection = () => {
     setValidatingTicker(true);
     setTickerValid(null);
     setCodigoError(false);
-    try {      // Não aceita tickers de moedas nem strings de 1 caractere
+    
+    try {
+      // Não aceita tickers de moedas nem strings de 1 caractere
       if (ticker.length < 3 || ticker.includes('=') || ticker.match(/^[A-Z]{3,6}BRL=X$/)) {
         throw new Error('Ticker não permitido');
       }
+      
+      // Normaliza o ticker (converte fracionado para normal)
+      const normalizedTicker = normalizeTicker(ticker);
+      
       // Chama o endpoint de aporte com tipo 'compra', preco e quantidade dummy só para validar ticker
-      await portfolioAPI.registerAporte({ tipo: 'compra', ticker, preco: 1, quantidade: 1 });
+      await portfolioAPI.registerAporte({ tipo: 'compra', ticker: normalizedTicker, preco: 1, quantidade: 1 });
       setTickerValid(true);
+      
+      // Se o ticker foi normalizado (era fracionado), atualiza o valor do input
+      if (normalizedTicker !== ticker) {
+        setCodigo(normalizedTicker);
+      }
     } catch (err) {
       setTickerValid(false);
       setCodigoError(true);
@@ -241,6 +267,15 @@ const EmpresaUpdateSection = () => {
     if (codigo) {
       await validateTicker(codigo.trim().toUpperCase());
     }
+  };
+
+  // Handler para mudança no campo código
+  const handleCodigoChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setCodigo(value);
+    
+    // Reseta a validação quando o valor muda
+    setTickerValid(null);
   };
 
   const handleSubmit = async (e) => {
@@ -275,9 +310,12 @@ const EmpresaUpdateSection = () => {
       return;
     }
     
+    // Normalizar o ticker antes de enviar
+    const normalizedTicker = normalizeTicker(codigo);
+    
     // Preparar dados para envio
     const data = {
-      codigo: codigo.toUpperCase(),
+      codigo: normalizedTicker,
       preco: parseFloat(preco.replace(',', '.')),
       quantidade: parseInt(quantidade),
       tipo_operacao: operacaoTipo
@@ -298,10 +336,10 @@ const EmpresaUpdateSection = () => {
       let msg = error.message || 'Erro ao atualizar posição.';
       if (operacaoTipo === 'venda') {
         if (msg.includes('não existe no portfólio') || msg.includes('não está na carteira')) {
-          msg = `Você não possui o ativo ${codigo.toUpperCase()}`;
+          msg = `Você não possui o ativo ${normalizedTicker}`;
           setCodigoError(true);
         } else if (msg.includes('maior que a disponível') || msg.includes('insuficiente para venda')) {
-          msg = `Você não possui quantidade suficiente de ${codigo.toUpperCase()} para vender`;
+          msg = `Você não possui quantidade suficiente de ${normalizedTicker} para vender`;
           setQuantidadeError(true);
         }
       }
@@ -324,11 +362,11 @@ const EmpresaUpdateSection = () => {
     >
       <Typography variant="h5" gutterBottom>
         Alterar por Empresa
-      </Typography>
-      
-      <Typography variant="body2" color="text.secondary" paragraph>
+      </Typography>      <Typography variant="body2" color="text.secondary" paragraph>
         Adicione ou modifique a posição de uma empresa específica em seu portfólio.
       </Typography>
+
+      <FractionedTickerNote />
       
       {errorMessage && (
         <Alert 
@@ -358,10 +396,7 @@ const EmpresaUpdateSection = () => {
               id="empresa-codigo"
               placeholder="Ex: PETR4, VALE3, etc."
               value={codigo}
-              onChange={(e) => {
-                setCodigo(e.target.value);
-                setTickerValid(null);
-              }}
+              onChange={handleCodigoChange}
               onBlur={handleCodigoBlur}
               disabled={isSubmitting}
               size="small"

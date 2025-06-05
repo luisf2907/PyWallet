@@ -29,8 +29,7 @@ const Alert = ({ type = 'info', message, onClose }) => {
               <CloseIcon fontSize="inherit" />
             </IconButton>
           ) : undefined
-        }
-        sx={{
+        }        sx={{
           display: 'flex',
           alignItems: 'center',
           '& .MuiAlert-icon': {

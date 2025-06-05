@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PortfolioImportTable.css';
 import { portfolioAPI } from '../api/portfolioAPI';
+import { FractionedTickerNote } from '../components/common';
 
 // Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
 const normalizeTicker = (ticker) => {
@@ -485,13 +486,10 @@ export default function PortfolioImportTable({ onSave }) {
                 </td>
               </tr>
             ))}
-          </tbody>
-        </table>      </div>
+          </tbody>        </table>      </div>
         {error && <div className="error-msg">{error}</div>}
       
-      <p className="info ticker-info">
-        <strong>Nota:</strong> Ações fracionadas (ex: VALE3F) serão automaticamente convertidas para sua versão normal (VALE3).
-      </p>
+      <FractionedTickerNote />
       
       <button className="save-btn" onClick={handleSave} disabled={isSaving}>
         {isSaving ? 'Salvando...' : overwriteMode ? 'Sobrescrever Carteira' : 'Aplicar Alterações'}

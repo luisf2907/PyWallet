@@ -84,9 +84,13 @@ def process_portfolio_file(filepath):
         df = process_csv(filepath)
     else:
         df = process_excel(filepath)
-        
-    # Normaliza dados
+          # Normaliza dados
     df['ticker'] = df['ticker'].astype(str).str.strip().str.upper()
+    
+    # Converte tickers fracionados para normais (ex: VALE3F -> VALE3)
+    from utils.ticker_utils import normalize_fractional_ticker
+    df['ticker'] = df['ticker'].apply(lambda x: normalize_fractional_ticker(x))
+    
     df['preco_medio'] = pd.to_numeric(df['preco_medio'], errors='coerce')
     df['quantidade'] = pd.to_numeric(df['quantidade'], errors='coerce')
     
