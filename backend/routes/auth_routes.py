@@ -155,7 +155,7 @@ def reset_account():
     from models.dividends import DividendsCache
     from models.price import PriceCache
     from models.price_history_cache import PriceHistoryCache
-    from models.portfolio_history import PortfolioEvolutionCache
+    from models.portfolio import PortfolioEvolutionCache
     from extensions.database import db
     user_id = session.get('user_id')
     if not user_id:
@@ -167,6 +167,7 @@ def reset_account():
     # Remove todos os preços individuais do usuário (se houver)
     PriceCache.query.filter_by(user_id=user_id).delete()
     # Remove históricos de preço individuais do usuário (se houver)
-    PriceHistoryCache.query.filter_by(user_id=user_id).delete()
+    # PriceHistoryCache não tem user_id, então não precisa deletar por usuário
+    # PriceHistoryCache.query.filter_by(user_id=user_id).delete()
     db.session.commit()
     return {"message": "Conta resetada com sucesso. Todos os dados foram apagados."}, 200
