@@ -52,8 +52,7 @@ export const portfolioAPI = {
       console.log('Erro na primeira tentativa, tentando URL alternativa...');
       // Em caso de falha, tentar com a URL alternativa
       return await fetchAPI('/batch-update', 'POST', data);
-    }
-  },
+    }  },
   
   // Validar um ticker
   validateTicker: async (ticker) => {
@@ -74,6 +73,34 @@ export const portfolioAPI = {
       return { isValid: true };
     } catch (error) {
       return { isValid: false, error };
+    }
+  },
+  // Obter o portfólio atual com todos os ativos
+  getPortfolio: async () => {
+    try {
+      // Usa o mesmo endpoint do summary que já retorna os holdings
+      const response = await fetchAPI('/portfolio-summary');
+      console.log('Resposta da API /portfolio-summary:', response);
+      
+      // Verifica se a resposta contém dados esperados
+      if (response && response.holdings) {
+        return response;
+      } else if (response && response.assets) {
+        // Se o campo se chamar assets, adapta para o formato esperado
+        return { 
+          ...response, 
+          holdings: response.assets 
+        };
+      } else if (Array.isArray(response)) {
+        // Se a resposta for um array, assume que é diretamente o array de holdings
+        return { holdings: response };
+      } else {
+        console.warn('Formato de resposta desconhecido:', response);
+        return { holdings: [] };
+      }
+    } catch (error) {
+      console.error('Erro ao obter portfólio:', error);
+      throw error;
     }
   }
 };

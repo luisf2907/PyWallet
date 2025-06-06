@@ -132,14 +132,17 @@ const FileUploadPage = () => {
   return (
     <Layout>
       {/* Adicionar o CompactHoldingsTable apenas se houver ativos */}
-      {hasHoldings && <CompactHoldingsTable holdings={holdings} />}
+      {hasHoldings ? <CompactHoldingsTable holdings={holdings} /> : 
+        <Box position="fixed" right={5} top={80} p={1} bgcolor="rgba(0,0,0,0.5)" color="white" sx={{zIndex: 100}}>
+          Sem ativos para exibir tabela
+        </Box>
+      }
         <Box 
         maxWidth="md" 
         sx={{
           mx: hasHoldings ? '5px' : 'auto', // 5px da sidebar se tiver ativos, auto se não
           ml: hasHoldings ? '5px' : 'auto', // 5px da sidebar se tiver ativos, auto se não
-          width: hasHoldings ? 'calc(100% - 310px)' : undefined, // Considerar o espaço para a tabela compacta (280px + 30px de margem)
-          mr: hasHoldings ? '310px' : 'auto', // Garantir espaço à direita para a tabela
+          width: hasHoldings ? 'calc(100% - 240px)' : undefined, // Considerar o espaço para a tabela compacta (220px + 20px de margem)
           transition: 'margin 0.3s, width 0.3s' // Transição suave
         }}
       >
