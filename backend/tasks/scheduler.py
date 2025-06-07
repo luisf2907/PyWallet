@@ -10,6 +10,7 @@ import random
 import atexit
 import uuid
 import sys
+import logging
 
 from flask import Flask
 from services.price_service import update_price_cache_for_all_tickers, get_cached_dollar_rate
@@ -18,6 +19,13 @@ from utils.market_utils import is_market_open
 from utils.cache_utils import is_rate_limited, handle_rate_limit, reset_rate_limit
 from extensions.database import execute_with_retry, db
 from models.price import PriceCache
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.executors.pool import ThreadPoolExecutor
+
+# Configuração de logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("pywallet.scheduler")
 
 # Detectar se está rodando no reloader do Flask
 # WERKZEUG_RUN_MAIN == 'true' indica processo principal do Flask
@@ -36,8 +44,15 @@ last_price_update_time = datetime.now() - timedelta(hours=1)
 # Lista de tickers que foram marcados como "delisted" e devem ser ignorados
 delisted_tickers = set()
 
+# Número de workers configurável via env ou padrão 6
+NUM_WORKERS = int(os.getenv("PYWALLET_PRICE_THREADS", 6))
+# Intervalo de atualização em minutos (padrão: 10)
+UPDATE_INTERVAL_MINUTES = int(os.getenv("PYWALLET_PRICE_UPDATE_MINUTES", 10))
+
+scheduler = None
+
 # Função para atualizar preços com remoção de tickers "possibly delisted"
-def update_prices_with_delisted_handling():
+def update_prices_with_delisted_handling(app=None):
     """
     Atualiza preços e remove tickers marcados como "possibly delisted"
     """
@@ -61,8 +76,9 @@ def update_prices_with_delisted_handling():
     all_tickers_failed = False
     
     try:
-        # Primeira tentativa de atualização normal
-        result = update_price_cache_for_all_tickers()
+        # Passa o app explicitamente para garantir contexto nas threads
+        from flask import current_app
+        result = update_price_cache_for_all_tickers(app=app or current_app)
         
         # Verificar se temos tickers com erro "possibly delisted"
         if hasattr(result, 'delisted_tickers') and result.delisted_tickers:
@@ -92,73 +108,45 @@ def update_prices_with_delisted_handling():
     except Exception as e:
         print(f"[ERROR] Erro ao atualizar preços com tratamento de delisted: {e}")
 
-def schedule_dividends_update():
+def schedule_dividends_update(app):
     """
     Thread para atualização diária de dividendos (10:30 da manhã).
     """
     tz = pytz.timezone('America/Sao_Paulo')
-    
-    # Captura a referência da aplicação Flask do módulo principal
-    import sys
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-    from backend.app import app as flask_app
-    
-    # Adiciona jitter (atraso aleatório) para evitar colisão com outras threads
     time.sleep(random.uniform(3, 10))
-    
-    # Variável para controlar última atualização
     last_update_date = datetime.now(tz).date() - timedelta(days=1)
-    
     while True:
         now = datetime.now(tz)
-        
-        # Verifica se já atualizou hoje
         if now.date() == last_update_date:
-            # Já atualizou hoje, espera até amanhã
             next_run = now.replace(hour=10, minute=30, second=0, microsecond=0) + timedelta(days=1)
             sleep_seconds = (next_run - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 3600:.1f} horas")
-            time.sleep(min(sleep_seconds, 3600))  # Dorme no máximo 1 hora para poder verificar novamente
+            time.sleep(min(sleep_seconds, 3600))
             continue
-        
-        # Verifica se já passou do horário de hoje
         target_time = now.replace(hour=10, minute=30, second=0, microsecond=0)
         if now >= target_time:
             try:
                 print('[DIVIDENDS] Atualização diária programada iniciada.')
-                with flask_app.app_context():
-                    # Usando o sistema de retry
+                with app.app_context():
                     execute_with_retry(update_dividends_cache_for_all_users)
-                    # Marca que atualizou hoje
                     last_update_date = now.date()
             except Exception as e:
                 print(f'[DIVIDENDS] Erro na atualização diária programada: {e}')
-            
-            # Aguarda até o próximo dia
             next_run = now.replace(hour=10, minute=30, second=0, microsecond=0) + timedelta(days=1)
             sleep_seconds = (next_run - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 3600:.1f} horas")
-            time.sleep(min(sleep_seconds, 3600))  # Dorme no máximo 1 hora para poder verificar novamente
+            time.sleep(min(sleep_seconds, 3600))
         else:
-            # Ainda não chegou a hora hoje, espera até a hora
             sleep_seconds = (target_time - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 60:.1f} minutos")
-            time.sleep(min(sleep_seconds, 1800))  # Dorme no máximo 30 minutos para poder verificar novamente
+            time.sleep(min(sleep_seconds, 1800))
 
-def schedule_prices_update():
+def schedule_prices_update(app):
     """
     Thread para atualização diária de preços (18:00 em dias úteis).
     """
     tz = pytz.timezone('America/Sao_Paulo')
-    
-    # Captura a referência da aplicação Flask do módulo principal
-    import sys
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-    from backend.app import app as flask_app
-    
-    # Adiciona jitter (atraso aleatório) para evitar colisão com outras threads
     time.sleep(random.uniform(5, 15))
-    
     while True:
         now = datetime.now(tz)
         # Só roda em dias úteis (segunda a sexta)
@@ -177,9 +165,8 @@ def schedule_prices_update():
                 
             try:
                 print('[PRICECACHE] Atualização diária programada iniciada.')
-                with flask_app.app_context():
-                    # Usando o sistema de retry
-                    execute_with_retry(update_price_cache_for_all_tickers)
+                with app.app_context():
+                    execute_with_retry(lambda: update_price_cache_for_all_tickers(app=app))
             except Exception as e:
                 print(f'[PRICECACHE] Erro na atualização diária programada: {e}')
                 
@@ -192,78 +179,35 @@ def schedule_prices_update():
             sleep_seconds = (next_run - now).total_seconds()
             time.sleep(sleep_seconds)
 
-def update_all_portfolios():
+def update_all_portfolios(app):
     """
-    Thread para atualização automática de preços enquanto o mercado está aberto.
+    Thread para atualização automática de preços religiosamente a cada 30 minutos em horários fixos (ex: 9:00, 9:30, 10:00, ...), independente do mercado estar aberto ou fechado.
     """
-    last_market_status = None
-    dollar_counter = 0
-    flask_app = None
-    
-    # Captura a referência da aplicação Flask do módulo principal
-    import sys
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-    from backend.app import app as flask_app
-    
-    # Adiciona jitter (atraso aleatório) para evitar colisão com outras threads
+    tz = pytz.timezone('America/Sao_Paulo')
     time.sleep(random.uniform(1, 8))
-    
-    print(f"[SCHEDULER] Thread de atualização iniciada com ID {instance_id}")
-    
+    print(f"[SCHEDULER] Thread de atualização periódica (30min fixos) iniciada com ID {instance_id}")
     while True:
         try:
-            # Verifica rate limit
-            if is_rate_limited():
-                print(f"[RATE LIMIT] Pausando atualizações devido ao rate limit")
-                time.sleep(60)
-                continue
-                
-            # Verifica se o mercado está aberto
-            market_is_open_flag = is_market_open()
-            
-            if market_is_open_flag:
-                # Mercado aberto, atualiza preços
-                if last_market_status is False:
-                    print("Mercado abriu. Atualizando preços...")
-                    
-                last_market_status = True
-                
-                with flask_app.app_context():
-                    try:
-                        # Usando o sistema de retry com tratamento de delisted
-                        execute_with_retry(update_prices_with_delisted_handling)
-                    except Exception as e:
-                        print(f"[ERROR] Erro ao atualizar preços: {e}")
-                
-                # Atualiza o dólar a cada 10 ciclos (30 minutos)
-                dollar_counter += 1
-                if dollar_counter >= 10:
-                    with flask_app.app_context():
-                        try:
-                            def update_dollar():
-                                get_cached_dollar_rate(force_update=True)
-                                reset_rate_limit()
-                                
-                            execute_with_retry(update_dollar)
-                        except Exception as e:
-                            print(f"Erro ao atualizar dólar: {e}")
-                            if 'rate limit' in str(e).lower() or 'too many requests' in str(e).lower():
-                                handle_rate_limit()
-                    dollar_counter = 0
-                
-                print(f"[SCHEDULER] Dormindo por 30 minutos antes da próxima atualização (mercado aberto)")
-                time.sleep(1800)  # 30 minutos entre atualizações quando mercado aberto
-            else:
-                # Mercado fechado
-                if last_market_status != False:
-                    print("Mercado fechado, não atualizando preços.")
-                    
-                last_market_status = False
-                print("[AGUARDANDO] Mercado fechado. Próxima atualização em 30 minutos.")
-                time.sleep(1800)  # 30 minutos entre verificações quando mercado fechado
+            now = datetime.now(tz)
+            # Calcula o próximo horário cheio de 30 minutos
+            next_minute = 30 if now.minute < 30 else 0
+            next_hour = now.hour if now.minute < 30 else (now.hour + 1) % 24
+            next_run = now.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
+            if next_run <= now:
+                # Se já passou, soma 30 minutos
+                next_run += timedelta(minutes=30)
+            sleep_seconds = (next_run - now).total_seconds()
+            print(f"[SCHEDULER] Próxima atualização de preços em {sleep_seconds/60:.1f} minutos (às {next_run.strftime('%H:%M')})")
+            time.sleep(sleep_seconds)
+            with app.app_context():
+                try:
+                    print(f"[SCHEDULER] Atualização periódica de preços iniciada às {datetime.now(tz).strftime('%H:%M')}")
+                    update_prices_with_delisted_handling(app=app)
+                except Exception as e:
+                    print(f"[ERROR] Erro ao atualizar preços: {e}")
         except Exception as e:
-            print(f"[ERROR] Erro no loop de atualização: {e}")
-            time.sleep(60)  # Espera um pouco antes de tentar novamente
+            print(f"[ERROR] Erro no loop de atualização periódica: {e}")
+            time.sleep(60)
 
 def cleanup():
     """Função de limpeza chamada quando o processo termina"""
@@ -277,39 +221,28 @@ def start_scheduled_tasks(app):
         app (Flask): Instância da aplicação Flask
     """
     global threads_started, last_price_update_time
-    
-    # Evitar iniciar as threads mais de uma vez (em caso de reload do Flask)
-    # ou se estiver rodando no processo reloader do Flask
-    if threads_started or is_reloader:
-        print("[SCHEDULER] Threads já iniciadas ou rodando no reloader do Flask. Pulando...")
-        return
-        
+
+    # Removida checagem de threads_started e is_reloader para sempre iniciar as threads
     # Registra função de limpeza
     atexit.register(cleanup)
-    
+
     with app.app_context():
         print(f"Inicializando tarefas agendadas (instância {instance_id})...")
-        
         try:
-            # Verifica se a última atualização de preços foi recente (menos de 10 minutos)
             now = datetime.now()
-            if (now - last_price_update_time).total_seconds() > 600:  # 10 minutos
-                # Executa a atualização de preços em uma thread separada para não bloquear a inicialização
+            if (now - last_price_update_time).total_seconds() > 600:
                 def async_price_update():
                     with app.app_context():
                         try:
                             print("[SCHEDULER] Iniciando atualização de preços em segundo plano...")
-                            execute_with_retry(update_prices_with_delisted_handling)
+                            execute_with_retry(lambda: update_prices_with_delisted_handling(app=app))
                             print("[SCHEDULER] Atualização de preços em segundo plano concluída.")
                         except Exception as e:
                             print(f"[SCHEDULER] Erro na atualização de preços em segundo plano: {e}")
-                
                 price_thread = threading.Thread(target=async_price_update, daemon=True)
                 price_thread.start()
             else:
                 print(f"[SCHEDULER] Última atualização de preços foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos. Pulando atualização inicial.")
-            
-            # Atualiza dividendos na inicialização (também em uma thread separada)
             def async_dividend_update():
                 with app.app_context():
                     try:
@@ -318,25 +251,56 @@ def start_scheduled_tasks(app):
                         print("[SCHEDULER] Atualização de dividendos em segundo plano concluída.")
                     except Exception as e:
                         print(f"[SCHEDULER] Erro na atualização de dividendos em segundo plano: {e}")
-            
             dividend_thread = threading.Thread(target=async_dividend_update, daemon=True)
             dividend_thread.start()
         except Exception as e:
             print(f"[SCHEDULER] Erro durante inicialização das tarefas: {e}")
-        
-        # Thread para atualização automática durante o horário de mercado
-        updater_thread = threading.Thread(target=update_all_portfolios, daemon=True)
+        updater_thread = threading.Thread(target=lambda: update_all_portfolios(app), daemon=True)
         updater_thread.start()
-
-        # Thread para atualizar dividendos todos os dias às 10:30
-        dividends_thread = threading.Thread(target=schedule_dividends_update, daemon=True)
+        dividends_thread = threading.Thread(target=lambda: schedule_dividends_update(app), daemon=True)
         dividends_thread.start()
-
-        # Thread para atualizar preços todos os dias úteis às 18:00
-        prices_thread = threading.Thread(target=schedule_prices_update, daemon=True)
+        prices_thread = threading.Thread(target=lambda: schedule_prices_update(app), daemon=True)
         prices_thread.start()
-        
-        # Marca que as threads foram iniciadas
         threads_started = True
-        
         print(f"Tarefas agendadas iniciadas com sucesso! (instância {instance_id})")
+
+def start_scheduler(app):
+    global scheduler
+    if scheduler is not None:
+        logger.info("Scheduler já está rodando.")
+        return
+
+    logger.info(f"Iniciando scheduler com {NUM_WORKERS} threads e intervalo de {UPDATE_INTERVAL_MINUTES} minutos.")
+    executors = {
+        'default': ThreadPoolExecutor(1),  # Só 1 job de atualização por vez
+    }
+    scheduler = BackgroundScheduler(executors=executors, timezone="UTC")
+
+    def job_wrapper():
+        logger.info(f"[SCHEDULER] Iniciando atualização de preços: {datetime.now()}")
+        start = datetime.now()
+        try:
+            with app.app_context():
+                # Passa o número de workers para a função de atualização
+                update_price_cache_for_all_tickers(app=app, num_workers=NUM_WORKERS)
+            logger.info(f"[SCHEDULER] Atualização de preços concluída em {datetime.now() - start}.")
+        except Exception as e:
+            logger.error(f"[SCHEDULER] Erro na atualização de preços: {e}")
+
+    scheduler.add_job(
+        job_wrapper,
+        trigger=IntervalTrigger(minutes=UPDATE_INTERVAL_MINUTES),
+        id="price_update_job",
+        max_instances=1,
+        replace_existing=True,
+        coalesce=True,
+    )
+    scheduler.start()
+    logger.info("Scheduler iniciado.")
+
+def shutdown_scheduler():
+    global scheduler
+    if scheduler:
+        scheduler.shutdown(wait=False)
+        logger.info("Scheduler finalizado.")
+        scheduler = None

@@ -23,7 +23,7 @@ def print_header():
     clear_screen()
     print(f"{Colors.HEADER}{Colors.BOLD}")
     print("╔═══════════════════════════════════════════╗")
-    print("║                 PyWallet                  ║")
+    print("║                 Prophit!                  ║")
     print("║      Analisador de Investimentos          ║")
     print("╚═══════════════════════════════════════════╝")
     print(f"{Colors.ENDC}")
@@ -80,7 +80,7 @@ def main():
     # Descomente a função abaixo e sua chamada se desejar este comportamento
     # open_browser()
 
-    print(f"PyWallet está rodando!\nFrontend: http://localhost:8000\nBackend: http://localhost:5000\n")
+    print(f"Prophit! está rodando!\nFrontend: http://localhost:8000\nBackend: http://localhost:5000\n")
     print("Pressione Ctrl+C para sair.")
 
     # Mantém processo rodando

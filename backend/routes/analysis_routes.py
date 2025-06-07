@@ -166,11 +166,11 @@ def update_missing_prices(portfolio_data, price_cache):
 
 def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
     """Calcula a performance dos ativos e retorna resumo."""
-    from services.price_service import get_price
+    # NÃO chamar get_price aqui! Usar apenas o price_cache preenchido do banco
     total_invested = 0.0
     total_current_value = 0.0
     assets_performance = []
-    
+    import sys
     for asset in portfolio_data:
         ticker_orig = asset['ticker'].strip().upper()
         final_ticker = format_ticker(ticker_orig)
@@ -179,7 +179,6 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
             quantity = float(asset.get('quantidade', 0))
         except:
             continue
-
         is_bdr = False
         is_us = False
         if final_ticker.endswith('.SA'):
@@ -187,39 +186,19 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
                 is_bdr = True
         else:
             is_us = True
-
-        # Busca preço mais recente do yfinance (ou cache se falhar)
-        current_price_original = get_price(ticker_orig) or price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
+        # Busca preço apenas do cache do banco
+        current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
+        print(f"[DASHBOARD][PRICE] {ticker_orig} (final: {final_ticker}) -> {current_price_original}", file=sys.stdout)
         price_cache[ticker_orig] = current_price_original  # Atualiza cache local
-
-        # Atualiza o banco de dados PriceCache sempre que buscar um preço novo
-        obj = PriceCache.query.filter_by(ticker=ticker_orig).first()
-        if obj:
-            if obj.price != current_price_original:
-                obj.price = current_price_original
-                obj.last_updated = datetime.now()
-                db.session.commit()
-        else:
-            db.session.add(PriceCache(
-                user_id=None,
-                ticker=ticker_orig,
-                price=current_price_original,
-                last_updated=datetime.now()
-            ))
-            db.session.commit()
-
         if is_us:
             invested_value = avg_price * quantity * exch_rate
             current_value = current_price_original * quantity * exch_rate
         else:
             invested_value = avg_price * quantity
             current_value = current_price_original * quantity
-
         total_invested += invested_value
         total_current_value += current_value
-
         return_pct = ((current_value / invested_value) - 1) * 100 if invested_value > 0 else 0
-
         assets_performance.append({
             'ticker': ticker_orig,
             'final_ticker': final_ticker,
@@ -232,12 +211,10 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
             'is_us_ticker': is_us,
             'is_bdr': is_bdr
         })
-
     # Calcula indicadores gerais
     total_return = total_current_value - total_invested
     total_return_pct = ((total_current_value / total_invested) - 1) * 100 if total_invested > 0 else 0
     cdi_return = 0.1135  # ~11.35% ao ano
-
     # Identifica melhor e pior ativo
     if assets_performance:
         best = max(assets_performance, key=lambda x: x['return_pct'])
@@ -251,7 +228,6 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
         worst_ticker = None
         best_return_pct = None
         worst_return_pct = None
-
     # Monta resumo
     summary = {
         'total_invested': total_invested,

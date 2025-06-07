@@ -219,6 +219,7 @@ def update_assets_cache(specific_tickers=None, max_retries=3, retry_delay=5):
         'rate_limited': False
     }
     
+    logger.info("[DEBUG] Iniciando update_assets_cache (forçando atualização do yfinance para todos os ativos)")
     # Se não houver tickers específicos, atualiza todos os tickers do cache
     if not specific_tickers:
         with assets_cache_lock:
@@ -239,7 +240,6 @@ def update_assets_cache(specific_tickers=None, max_retries=3, retry_delay=5):
         for ticker in batch:
             retry_count = 0
             success = False
-            
             while retry_count < max_retries and not success:
                 try:
                     # Verifica se está em rate limit antes de tentar
@@ -255,8 +255,8 @@ def update_assets_cache(specific_tickers=None, max_retries=3, retry_delay=5):
                         formatted_ticker = format_ticker(ticker)
                     
                     price = get_price(formatted_ticker, formatar=False, force_yfinance=True)
-                    
                     if price is not None:
+                        logger.info(f"[DEBUG] Preço atualizado para {ticker}: {price}")
                         # Atualiza o cache
                         with assets_cache_lock:
                             assets_cache[ticker] = {

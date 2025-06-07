@@ -318,7 +318,15 @@ def calculate_portfolio_evolution(portfolio_data, start_date, end_date, exchange
             except Exception as e:
                 print(f"Erro ao processar {final_ticker}: {e}")
             t_asset1 = time.perf_counter()
-            print(f"[PERF] process_asset {final_ticker}: {t_asset1-t_asset0:.3f}s")
+            # Valor absoluto do último preço usado para o ativo
+            try:
+                last_value = float(asset_prices.iloc[-1]) * qty * conv_factor if 'asset_prices' in locals() else None
+            except Exception:
+                last_value = None
+            if last_value is not None:
+                print(f"[PERF] process_asset {final_ticker}: {t_asset1-t_asset0:.3f}s {last_value:.2f}")
+            else:
+                print(f"[PERF] process_asset {final_ticker}: {t_asset1-t_asset0:.3f}s")
         t4 = time.perf_counter()
         evolution_list = [
             {'date': d.strftime('%Y-%m-%d'), 'value': float(v)}

@@ -17,6 +17,15 @@ from routes import register_blueprints
 # Tarefas agendadas
 from tasks.scheduler import start_scheduled_tasks
 
+# Redireciona stdout e stderr para o arquivo de log (sobrescreve a cada execução)
+log_path = os.path.join(os.path.dirname(__file__), 'logs', 'terminal_log.txt')
+try:
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    sys.stdout = open(log_path, 'w', encoding='utf-8', buffering=1)
+    sys.stderr = sys.stdout
+except Exception as e:
+    print(f'[LOGGING] Falha ao redirecionar stdout/stderr para log: {e}')
+
 def create_app(config_name='default'):
     """
     Factory para criar a aplicação Flask.
@@ -69,7 +78,13 @@ def init_app():
         
         # Carregar valor do dólar do banco
         load_dollar_from_db()
-        
+
+        # REMOVIDO: FORÇA ATUALIZAÇÃO DE TODOS OS PREÇOS NO INÍCIO
+        # from services.price_service import update_price_cache_for_all_tickers
+        # print('[STARTUP] Atualizando todos os preços do PriceCache...')
+        # update_price_cache_for_all_tickers(app=app)
+        # print('[STARTUP] Atualização de preços concluída.')
+
         # Iniciar tarefas agendadas
         start_scheduled_tasks(app)
     
