@@ -149,6 +149,7 @@ def get_asset_price(ticker):
 def save_to_price_cache(ticker, price):
     """
     Salva ou atualiza um registro no banco de dados PriceCache.
+    Também atualiza price_history_cache para refletir o último preço do dia.
     
     Args:
         ticker (str): Código do ativo
@@ -167,6 +168,21 @@ def save_to_price_cache(ticker, price):
                 user_id=None,
                 ticker=ticker,
                 price=price,
+                last_updated=now
+            ))
+        # Atualiza também price_history_cache para o dia de hoje
+        from models.price_history_cache import PriceHistoryCache
+        from datetime import date
+        today = date.today()
+        phc = PriceHistoryCache.query.filter_by(ticker=ticker, date=today).first()
+        if phc:
+            phc.close = price
+            phc.last_updated = now
+        else:
+            db.session.add(PriceHistoryCache(
+                ticker=ticker,
+                date=today,
+                close=price,
                 last_updated=now
             ))
         db.session.commit()

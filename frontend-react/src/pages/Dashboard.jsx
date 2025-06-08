@@ -29,6 +29,7 @@ import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
 import useDeviceType from '../hooks/useDeviceType'; // Corrected: Import default export
 import './Dashboard.css';
+import SystemStatus from '../components/dashboard/SystemStatus';
 
 const Dashboard = () => {
   const deviceType = useDeviceType();
@@ -127,6 +128,7 @@ const Dashboard = () => {
   
   return (
     <Layout>
+      <SystemStatus />
       <Container maxWidth={false} disableGutters className="dashboard-wrapper" sx={{ px: 2 }}>
         <Box mb={3} display="flex" justifyContent="space-between" alignItems="center" width="100%">
           <Box>

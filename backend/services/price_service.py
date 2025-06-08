@@ -6,6 +6,9 @@ import types  # Para retornar objeto de resultado com atributos
 import threading
 import concurrent.futures
 import sys  # Para flush do stdout
+from models.price_history_cache import PriceHistoryCache
+from datetime import date
+import pytz
 
 # Lock global para operações de escrita no PriceCache
 pricecache_write_lock = threading.Lock()
@@ -56,6 +59,7 @@ def get_price(ticker, formatar=True, force_yfinance=False):
         return None
 
     # Se force_yfinance=True, tenta buscar do yfinance
+    tz = pytz.timezone('America/Sao_Paulo')
     try:
         ticker_yf = yf.Ticker(ticker_formatted)
         price = ticker_yf.info.get('currentPrice') or ticker_yf.info.get('regularMarketPrice')
@@ -63,13 +67,13 @@ def get_price(ticker, formatar=True, force_yfinance=False):
             with pricecache_write_lock:
                 if obj:
                     obj.price = price
-                    obj.last_updated = datetime.now()
+                    obj.last_updated = datetime.now(tz)
                 else:
                     db.session.add(PriceCache(
                         user_id=None,
                         ticker=ticker_formatted,
                         price=price,
-                        last_updated=datetime.now()
+                        last_updated=datetime.now(tz)
                     ))
                 db.session.commit()
             return price
@@ -81,13 +85,13 @@ def get_price(ticker, formatar=True, force_yfinance=False):
                 with pricecache_write_lock:
                     if obj:
                         obj.price = price
-                        obj.last_updated = datetime.now()
+                        obj.last_updated = datetime.now(tz)
                     else:
                         db.session.add(PriceCache(
                             user_id=None,
                             ticker=ticker_formatted,
                             price=price,
-                            last_updated=datetime.now()
+                            last_updated=datetime.now(tz)
                         ))
                     db.session.commit()
                 return price
@@ -115,8 +119,12 @@ def get_cached_dollar_rate(force_update=False):
             return dollar_cache['rate']
             
     with dollar_cache_lock:
-        now = datetime.now()
-        if not force_update and (now - dollar_cache['timestamp']).total_seconds() < 1800: # Alterado de 300 para 1800 (30 minutos)
+        tz = pytz.timezone('America/Sao_Paulo')
+        now = datetime.now(tz)
+        ts = dollar_cache['timestamp']
+        if ts is not None and ts.tzinfo is None:
+            ts = tz.localize(ts)
+        if not force_update and ts is not None and (now - ts).total_seconds() < 1800:
             return dollar_cache['rate']
             
         last_rate = dollar_cache['rate']
@@ -150,9 +158,10 @@ def save_dollar_to_db(rate):
     if rate is None:
         print("[PRICECACHE] Ignorando update/insert para USDBRL=X pois price=None")
         return
-        
+    
+    tz = pytz.timezone('America/Sao_Paulo')
     obj = PriceCache.query.filter_by(user_id=None, ticker="USDBRL=X").first()
-    now = datetime.now()
+    now = datetime.now(tz)
     
     if obj:
         obj.price = rate
@@ -162,7 +171,7 @@ def save_dollar_to_db(rate):
         
     db.session.commit()
 
-def update_price_cache_for_all_tickers(app=None):
+def update_price_cache_for_all_tickers(app=None, num_workers=6):
     """
     Atualiza o cache de preços para todos os tickers únicos no sistema.
     Busca tickers de todos os portfolios e do cache existente.
@@ -311,92 +320,109 @@ def process_yfinance_results(df, tickers, result=None, app=None):
         return [iterable[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
 
     def process_ticker_batch(ticker_batch):
-            with app.app_context():
-                print(f"[BATCH] Iniciando batch com {len(ticker_batch)} tickers: {ticker_batch}")
-                sys.stdout.flush()
-                local_batch_count = 0
-                local_delisted = []
-                try:
-                    for ticker in ticker_batch:
-                        if result and ticker in result.delisted_tickers:
+        import pytz
+        tz = pytz.timezone('America/Sao_Paulo')
+        with app.app_context():
+            print(f"[BATCH] Iniciando batch com {len(ticker_batch)} tickers: {ticker_batch}")
+            sys.stdout.flush()
+            local_batch_count = 0
+            local_delisted = []
+            try:
+                for ticker in ticker_batch:
+                    if result and ticker in result.delisted_tickers:
+                        continue
+                    price = None
+                    try:
+                        ticker_info = yf.Ticker(ticker).info
+                        price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
+                        if price:
+                            print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
+                    except Exception as e:
+                        print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
+                        if 'possibly delisted' in str(e).lower() and result is not None:
+                            print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
+                            local_delisted.append(ticker)
                             continue
-                        price = None
+                    if price is None and df is not None:
+                        close_series = None
+                        if len(tickers) == 1:
+                            close_series = df['Close'] if 'Close' in df else None
+                        else:
+                            if (ticker, 'Close') in df:
+                                close_series = df[(ticker, 'Close')]
+                            elif ticker in df and 'Close' in df[ticker]:
+                                close_series = df[ticker]['Close']
                         try:
-                            ticker_info = yf.Ticker(ticker).info
-                            price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
-                            if price:
-                                print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
-                        except Exception as e:
-                            print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
-                            if 'possibly delisted' in str(e).lower() and result is not None:
-                                print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
-                                local_delisted.append(ticker)
-                                continue
-                        if price is None and df is not None:
-                            close_series = None
-                            if len(tickers) == 1:
-                                close_series = df['Close'] if 'Close' in df else None
+                            if close_series is not None and not close_series.empty:
+                                price = float(close_series.dropna().iloc[-1])
+                                print(f"[PRICECACHE] Preço histórico usado para {ticker}: {price}")
                             else:
-                                if (ticker, 'Close') in df:
-                                    close_series = df[(ticker, 'Close')]
-                                elif ticker in df and 'Close' in df[ticker]:
-                                    close_series = df[ticker]['Close']
-                            try:
-                                if close_series is not None and not close_series.empty:
-                                    price = float(close_series.dropna().iloc[-1])
-                                    print(f"[PRICECACHE] Preço histórico usado para {ticker}: {price}")
-                                else:
-                                    print(f"[PRICECACHE] Série de preços vazia para {ticker}, ignorando.")
-                                    if result is not None:
-                                        local_delisted.append(ticker)
-                                        print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via série vazia)")
-                            except IndexError:
-                                print(f"[PRICECACHE] IndexError: série vazia para {ticker}, ignorando.")
+                                print(f"[PRICECACHE] Série de preços vazia para {ticker}, ignorando.")
                                 if result is not None:
                                     local_delisted.append(ticker)
-                                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via IndexError)")
-                            except Exception as e:
-                                print(f"[PRICECACHE] Erro ao acessar preço para {ticker}: {e}")
-                        if price is not None:
-                            with pricecache_write_lock:
-                                obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
-                                if obj:
-                                    old_price = obj.price
-                                    obj.price = price
-                                    obj.last_updated = datetime.now()
-                                    print(f"[PRICECACHE][UPDATE] {ticker}: {old_price} -> {price} (last_updated={obj.last_updated})")
-                                else:
-                                    db.session.add(PriceCache(
-                                        user_id=None,
-                                        ticker=ticker,
-                                        price=price,
-                                        last_updated=datetime.now()
-                                    ))
-                                    print(f"[PRICECACHE][INSERT] {ticker}: {price}")
-                                local_batch_count += 1
-                                if local_batch_count % BATCH_SIZE == 0:
-                                    db.session.commit()
-                                    print(f"[PRICECACHE][COMMIT] Batch commit realizado para {BATCH_SIZE} tickers.")
-                        else:
-                            print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
-                            if result is not None and ticker not in local_delisted:
+                                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via série vazia)")
+                        except IndexError:
+                            print(f"[PRICECACHE] IndexError: série vazia para {ticker}, ignorando.")
+                            if result is not None:
                                 local_delisted.append(ticker)
-                                print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via price=None)")
-                    with pricecache_write_lock:
-                        db.session.commit()
-                        print(f"[PRICECACHE][COMMIT] Batch commit realizado para {len(ticker_batch)} tickers.")
-                        print("[PRICECACHE][DB] Valores finais salvos no banco:")
-                        for ticker in ticker_batch:
+                                print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via IndexError)")
+                        except Exception as e:
+                            print(f"[PRICECACHE] Erro ao acessar preço para {ticker}: {e}")
+                    if price is not None:
+                        with pricecache_write_lock:
                             obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
                             if obj:
-                                print(f"[PRICECACHE][DB] {ticker}: {obj.price} (last_updated={obj.last_updated})")
-                    print(f"[BATCH] Fim do batch com {len(ticker_batch)} tickers")
-                    sys.stdout.flush()
-                    return local_delisted
-                except Exception as e:
-                    print(f"[BATCH][ERROR] Exceção no batch: {e}")
-                    sys.stdout.flush()
-                    return []
+                                old_price = obj.price
+                                obj.price = price
+                                obj.last_updated = datetime.now(tz)
+                                print(f"[PRICECACHE][UPDATE] {ticker}: {old_price} -> {price} (last_updated={obj.last_updated})")
+                            else:
+                                db.session.add(PriceCache(
+                                    user_id=None,
+                                    ticker=ticker,
+                                    price=price,
+                                    last_updated=datetime.now(tz)
+                                ))
+                                print(f"[PRICECACHE][INSERT] {ticker}: {price}")
+                            # Atualiza também price_history_cache para o dia de hoje, sempre usando ticker normalizado
+                            ticker_norm = format_ticker(ticker)
+                            today = date.today()
+                            phc = PriceHistoryCache.query.filter_by(ticker=ticker_norm, date=today).first()
+                            now = datetime.now(tz)
+                            if phc:
+                                phc.close = price
+                                phc.last_updated = now
+                            else:
+                                db.session.add(PriceHistoryCache(
+                                    ticker=ticker_norm,
+                                    date=today,
+                                    close=price,
+                                    last_updated=now
+                                ))
+                            local_batch_count += 1
+                            if local_batch_count % BATCH_SIZE == 0:
+                                db.session.commit()
+                                print(f"[PRICECACHE][COMMIT] Batch commit realizado para {BATCH_SIZE} tickers.")
+                    else:
+                        print(f"[PRICECACHE] Ignorando update/insert para {ticker} pois price=None")
+                        if result is not None and ticker not in local_delisted:
+                            local_delisted.append(ticker)
+                            print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via price=None)")
+                with pricecache_write_lock:
+                    db.session.commit()
+                    print(f"[PRICECACHE][COMMIT] Batch commit realizado para {len(ticker_batch)} tickers.")
+                    print("[PRICECACHE][DB] Valores finais salvos no banco:")
+                    for ticker in ticker_batch:
+                        obj = PriceCache.query.filter_by(user_id=None, ticker=ticker).first()
+                        if obj:
+                            print(f"[PRICECACHE][DB] {ticker}: {obj.price} (last_updated={obj.last_updated})")
+                print(f"[BATCH] Fim do batch com {len(ticker_batch)} tickers")
+                sys.stdout.flush()
+                return local_delisted
+            except Exception as e:
+                print(f"[BATCH][ERROR] Exceção no batch: {e}")
+                sys.stdout.flush()
+                return []
 
     batches = chunked(tickers, NUM_WORKERS)
     all_delisted = []

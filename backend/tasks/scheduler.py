@@ -63,7 +63,7 @@ def update_prices_with_delisted_handling(app=None):
     
     # Verifica se já atualizou recentemente (menos de 25 minutos atrás)
     now = datetime.now()
-    if (now - last_price_update_time).total_seconds() < 1500:  # 25 minutos em segundos
+    if (now - last_price_update_time).total_seconds() < 30:  # 30 segundos para evitar requests duplicados
         print(f"[PRICECACHE] Última atualização foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos. Pulando atualização.")
         return
     

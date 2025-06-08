@@ -83,11 +83,9 @@ def init_app():
         # from services.price_service import update_price_cache_for_all_tickers
         # print('[STARTUP] Atualizando todos os preços do PriceCache...')
         # update_price_cache_for_all_tickers(app=app)
-        # print('[STARTUP] Atualização de preços concluída.')
-
-        # Iniciar tarefas agendadas
+        # print('[STARTUP] Atualização de preços concluída.')        # Iniciar tarefas agendadas
         start_scheduled_tasks(app)
-    
+        # (Desativado: scheduler removido)
     return app
 
 # Aplicação global

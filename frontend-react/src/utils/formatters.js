@@ -89,3 +89,23 @@ export const formatFileSize = (bytes) => {
   
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+/**
+ * Formats a date to DD/MM/YYYY HH:mm:ss
+ * @param {Date|string} date - Date to format
+ * @returns {string} Formatted date and time string
+ */
+export const formatDateTime = (date) => {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+};

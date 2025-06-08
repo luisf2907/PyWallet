@@ -679,18 +679,18 @@
       }
     </style>
   </head>  <body>
+    <!-- System Status Indicator -->
+    <div class="system-status" id="system-status" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 1000;">
+      <span class="spinner" style="display: none;"><i class="fas fa-sync-alt fa-spin"></i></span>
+      <span id="status-text">Verificando status...</span>
+    </div>
+
     <!-- Loading Overlay -->
       <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text">Carregando dashboard...</div>
       </div>
       
-      <!-- System Status Indicator -->
-      <div id="system-status" class="system-status" style="display: none;">
-        <i class="fas fa-sync-alt spinner"></i>
-        <span id="status-text">Atualizando preços...</span>
-      </div>
-
       <!-- Sidebar -->
       <div class="sidebar">
         <div class="logo-container">

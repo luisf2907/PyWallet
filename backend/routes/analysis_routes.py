@@ -3,6 +3,7 @@ import sys
 from datetime import datetime, timedelta
 import json
 import time
+import pytz
 
 # Adiciona o diretório pai ao path para importações absolutas
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -143,6 +144,7 @@ def update_missing_prices(portfolio_data, price_cache):
         if ticker_orig not in price_cache:
             missing_tickers.append(ticker_orig)
             
+    tz = pytz.timezone('America/Sao_Paulo')
     if missing_tickers:
         print(f"Buscando preços para ativos não presentes no cache: {missing_tickers}")
         for ticker in missing_tickers:
@@ -153,14 +155,14 @@ def update_missing_prices(portfolio_data, price_cache):
                 obj = PriceCache.query.filter_by(ticker=ticker).first()
                 if obj:
                     obj.price = price
-                    obj.last_updated = datetime.now()
+                    obj.last_updated = datetime.now(tz)
                     db.session.commit()
                 else:
                     db.session.add(PriceCache(
                         user_id=None,
                         ticker=ticker,
                         price=price,
-                        last_updated=datetime.now()
+                        last_updated=datetime.now(tz)
                     ))
                     db.session.commit()
 
@@ -171,6 +173,8 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
     total_current_value = 0.0
     assets_performance = []
     import sys
+    import pytz
+    tz = pytz.timezone('America/Sao_Paulo')
     for asset in portfolio_data:
         ticker_orig = asset['ticker'].strip().upper()
         final_ticker = format_ticker(ticker_orig)
@@ -240,7 +244,7 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
         'best_asset_return_pct': best_return_pct,
         'worst_asset': worst_ticker,
         'worst_asset_return_pct': worst_return_pct,
-        'updated_at': datetime.now().isoformat()
+        'updated_at': datetime.now(tz).isoformat()
     }
     
     return assets_performance, summary
