@@ -1,395 +1,200 @@
-Inicializando tarefas agendadas (instância c37a4080-4a63-4a46-9dfd-9cea9248b564)...
+Inicializando tarefas agendadas (instância 8a8f8232-f648-494c-b1e8-3232751363d4)...
 [SCHEDULER] Iniciando atualização de preços em segundo plano...
 [PRICECACHE] Iniciando atualização de preços (última atualização: 60.0 minutos atrás).
 [DEBUG] update_price_cache_for_all_tickers: app={'provided' if app else 'not provided'}, type=<class 'flask.app.Flask'>, has_app_context={has_app_context()}
 [SCHEDULER] Iniciando atualização de dividendos em segundo plano...
 [DIVIDENDS] Verificando necessidade de atualização do cache de dividendos...
-Tarefas agendadas iniciadas com sucesso! (instância c37a4080-4a63-4a46-9dfd-9cea9248b564)
+Tarefas agendadas iniciadas com sucesso! (instância 8a8f8232-f648-494c-b1e8-3232751363d4)
  * Serving Flask app 'app'
  * Debug mode: on
 YF.download() has changed argument auto_adjust default to True
-[SCHEDULER] Próxima atualização de preços em 0.6 minutos (às 21:00)
-Exception in thread Thread-3 (<lambda>):
-Traceback (most recent call last):
-  File "C:\Users\w10\AppData\Local\Programs\Python\Python313\Lib\threading.py", line 1041, in _bootstrap_inner
-    self.run()
-    ~~~~~~~~^^
-  File "C:\Users\w10\AppData\Local\Programs\Python\Python313\Lib\threading.py", line 992, in run
-    self._target(*self._args, **self._kwargs)
-    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\w10\Documents\PyWallet\backend\tasks\scheduler.py", line 291, in <lambda>
-    updater_thread = threading.Thread(target=lambda: update_all_portfolios(app), daemon=True)
-                                                     ~~~~~~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\w10\Documents\PyWallet\backend\tasks\scheduler.py", line 240, in update_all_portfolios
-    if (now - last_price_update_time).total_seconds() > (25 * 60):  # 25 minutos
-        ~~~~^~~~~~~~~~~~~~~~~~~~~~~~
-TypeError: can't subtract offset-naive and offset-aware datetimes
-[PRICECACHE] Atualizando cache de preços dos ativos únicos...
-[PRICECACHE] Iniciando download de preços para 46 ativos únicos...
-[DEBUG] Antes do yf.download
-[SCHEDULER] Atualização de dividendos em segundo plano concluída.
-[DIVIDENDS] Atualização diária programada iniciada.
-[DIVIDENDS] Verificando necessidade de atualização do cache de dividendos...
-[DIVIDENDS] Próxima atualização em 13.5 horas
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[PERF] get_portfolio_distribution: total=0.007s | leitura=0.005s | parse=0.000s | precos=0.002s | ativos=0.000s | dist=0.000s
-[DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
-[DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
-[DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
-[DASHBOARD][PRICE] ITSA3 (final: ITSA3.SA) -> 10.989999771118164
-[DASHBOARD][PRICE] BBAS3 (final: BBAS3.SA) -> 29.760000228881836
-[DASHBOARD][PRICE] AGRO3 (final: AGRO3.SA) -> 20.809999465942383
-[DASHBOARD][PRICE] TAEE11 (final: TAEE11.SA) -> 34.869998931884766
-[DASHBOARD][PRICE] NVDC34 (final: NVDC34.SA) -> 15.829999923706055
-[DASHBOARD][PRICE] A1MD34 (final: A1MD34.SA) -> 82.44999694824219
-[DASHBOARD][PRICE] GOGL34 (final: GOGL34.SA) -> 77.30000305175781
-[DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
-[DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
-[DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
-[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.67
-[DASHBOARD][PRICE] IEF (final: IEF) -> 93.51
-[DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
-[DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
-[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
-[DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
-[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para BCRI11.SA
-[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para AGRO3.SA
-[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para T1TW34.SA
-[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para TAEE11.SA
-[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para POMO3.SA
-[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para GOGL34.SA
-[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para CSMG3.SA
-[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para A1MD34.SA
-[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para VALE3.SA
-[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para ITSA3.SA
-[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para GOAU3.SA
-[INFO] Obtendo preços históricos para IEF de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para IEF
-[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para PETR4.SA
-[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para BBAS3.SA
-[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para IRDM11.SA
-[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para NVDC34.SA
-[INFO] Obtendo preços históricos para SPYI de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para SPYI
-[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para VGHF11.SA
-[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para SAPR11.SA
-[PERF] process_asset PETR4.SA: 0.002s 2133.36
-[PERF] process_asset VALE3.SA: 0.002s 1748.34
-[PERF] process_asset GOAU3.SA: 0.002s 1655.75
-[PERF] process_asset ITSA3.SA: 0.002s 728.29
-[PERF] process_asset BBAS3.SA: 0.002s 542.75
-[PERF] process_asset AGRO3.SA: 0.002s 935.00
-[PERF] process_asset TAEE11.SA: 0.002s 549.92
-[PERF] process_asset NVDC34.SA: 0.002s 2042.50
-[PERF] process_asset A1MD34.SA: 0.002s 1221.75
-[PERF] process_asset GOGL34.SA: 0.002s 645.52
-[PERF] process_asset BCRI11.SA: 0.002s 1825.47
-[PERF] process_asset VGHF11.SA: 0.002s 1925.00
-[PERF] process_asset IRDM11.SA: 0.002s 1326.20
-[PERF] process_asset SPYI: 0.002s 2486.47
-[PERF] process_asset IEF: 0.002s 520.12
-[PERF] process_asset T1TW34.SA: 0.002s 324.00
-[PERF] process_asset POMO3.SA: 0.002s 1193.94
-[PERF] process_asset SAPR11.SA: 0.001s 1586.40
-[PERF] process_asset CSMG3.SA: 0.001s 364.35
-[PERF] calculate_portfolio_evolution: tickers=0.001s | download=5.385s | assets=0.032s | persist=0.126s | total=5.543s
-[PERF] Tempo cálculo evolução: 5.543s
-[PERF] portfolio_summary: total=5.559s | leitura=0.000s | precos=0.012s | update_precos=0.000s | ativos=0.000s | evolucao=5.543s | resposta=5.559s
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[SCHEDULER] Atualização periódica de preços iniciada às 21:00
-[PRICECACHE] Iniciando atualização de preços (última atualização: 60.6 minutos atrás).
+[SCHEDULER] Próxima atualização de preços em 25.8 minutos (às 12:00)
+[SCHEDULER] Executando atualização imediata (última foi há 60.0 minutos)
+[SCHEDULER] Atualização periódica de preços iniciada às 11:34
+[PRICECACHE] Iniciando atualização de preços (última atualização: 60.0 minutos atrás).
 [DEBUG] update_price_cache_for_all_tickers: app={'provided' if app else 'not provided'}, type=<class 'flask.app.Flask'>, has_app_context={has_app_context()}
 [PRICECACHE] Atualizando cache de preços dos ativos únicos...
 [PRICECACHE] Iniciando download de preços para 46 ativos únicos...
 [DEBUG] Antes do yf.download
+[PRICECACHE] Atualizando cache de preços dos ativos únicos...
+[PRICECACHE] Iniciando download de preços para 46 ativos únicos...
+[DEBUG] Antes do yf.download
+[SCHEDULER] Atualização de dividendos em segundo plano concluída.
+[DEBUG] Depois do yf.download
 [DEBUG] Depois do yf.download
 [DEBUG] process_yfinance_results: app type=<class 'flask.app.Flask'>
-[BATCH] Iniciando batch com 46 tickers: ['BCRI11.SA', 'AGRO3.SA', 'T1TW34.SA', 'TAEE11.SA', 'NVDA', 'BRBI11.SA', 'POMO3.SA', 'GOOGL', 'BTC', 'GOLD11.SA', 'MSFT', 'SPY', 'GOGL34.SA', 'CSMG3.SA', 'A1MD34.SA', 'AMZN', 'VALE', 'PETR3.SA', 'JPMC34.SA', 'NSDV11.SA', 'RAIL3.SA', 'IVVB11.SA', 'VALE3.SA', 'USDBRL=X', 'SOJA3.SA', 'ITSA3.SA', 'X', 'GOAU3.SA', 'SPYI11.SA', 'IEF', 'BITH11.SA', 'PETR4.SA', 'BBAS3.SA', 'IRDM11.SA', 'NVDC34.SA', 'SPYI', 'VGHF11.SA', 'POMO3F.SA', 'KLBN11.SA', 'ITUB3.SA', 'SAPR11.SA', 'BBDC4.SA', 'PRIO3.SA', 'MSFT34.SA', 'AMER3.SA', 'WEGE3.SA']
-[DEBUG] Depois do yf.download
 [DEBUG] process_yfinance_results: app type=<class 'flask.app.Flask'>
-[BATCH] Iniciando batch com 46 tickers: ['BCRI11.SA', 'AGRO3.SA', 'T1TW34.SA', 'TAEE11.SA', 'NVDA', 'BRBI11.SA', 'POMO3.SA', 'GOOGL', 'BTC', 'GOLD11.SA', 'MSFT', 'SPY', 'GOGL34.SA', 'CSMG3.SA', 'A1MD34.SA', 'AMZN', 'VALE', 'PETR3.SA', 'JPMC34.SA', 'NSDV11.SA', 'RAIL3.SA', 'IVVB11.SA', 'VALE3.SA', 'USDBRL=X', 'SOJA3.SA', 'ITSA3.SA', 'X', 'GOAU3.SA', 'SPYI11.SA', 'IEF', 'BITH11.SA', 'PETR4.SA', 'BBAS3.SA', 'IRDM11.SA', 'NVDC34.SA', 'SPYI', 'VGHF11.SA', 'POMO3F.SA', 'KLBN11.SA', 'ITUB3.SA', 'SAPR11.SA', 'BBDC4.SA', 'PRIO3.SA', 'MSFT34.SA', 'AMER3.SA', 'WEGE3.SA']
-[PRICECACHE] Preço em tempo real obtido para BCRI11.SA: 67.61
-[PRICECACHE][UPDATE] BCRI11.SA: 67.61000061035156 -> 67.61 (last_updated=2025-06-08 21:00:04.091063-03:00)
-[PRICECACHE] Preço em tempo real obtido para BCRI11.SA: 67.61
-[PRICECACHE][UPDATE] BCRI11.SA: 67.61000061035156 -> 67.61 (last_updated=2025-06-08 21:00:04.095948-03:00)
-[PRICECACHE] Preço em tempo real obtido para AGRO3.SA: 21.25
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[BATCH] Iniciando batch com 46 tickers: ['IVVB11.SA', 'TAEE11.SA', 'KLBN11.SA', 'GOGL34.SA', 'SPYI11.SA', 'BITH11.SA', 'IRDM11.SA', 'AMZN', 'MSFT', 'T1TW34.SA', 'POMO3F.SA', 'GOOGL', 'NVDC34.SA', 'MSFT34.SA', 'ITUB3.SA', 'X', 'BTC', 'VALE3.SA', 'JPMC34.SA', 'IEF', 'SAPR11.SA', 'WEGE3.SA', 'AGRO3.SA', 'SOJA3.SA', 'POMO3.SA', 'AMER3.SA', 'CSMG3.SA', 'BRBI11.SA', 'BCRI11.SA', 'BBDC4.SA', 'VALE', 'ITSA3.SA', 'PETR4.SA', 'SPYI', 'GOLD11.SA', 'VGHF11.SA', 'SPY', 'BBAS3.SA', 'RAIL3.SA', 'GOAU3.SA', 'PRIO3.SA', 'USDBRL=X', 'PETR3.SA', 'A1MD34.SA', 'NVDA', 'NSDV11.SA']
+[BATCH] Iniciando batch com 46 tickers: ['IVVB11.SA', 'TAEE11.SA', 'KLBN11.SA', 'GOGL34.SA', 'SPYI11.SA', 'BITH11.SA', 'IRDM11.SA', 'AMZN', 'MSFT', 'T1TW34.SA', 'POMO3F.SA', 'GOOGL', 'NVDC34.SA', 'MSFT34.SA', 'ITUB3.SA', 'X', 'BTC', 'VALE3.SA', 'JPMC34.SA', 'IEF', 'SAPR11.SA', 'WEGE3.SA', 'AGRO3.SA', 'SOJA3.SA', 'POMO3.SA', 'AMER3.SA', 'CSMG3.SA', 'BRBI11.SA', 'BCRI11.SA', 'BBDC4.SA', 'VALE', 'ITSA3.SA', 'PETR4.SA', 'SPYI', 'GOLD11.SA', 'VGHF11.SA', 'SPY', 'BBAS3.SA', 'RAIL3.SA', 'GOAU3.SA', 'PRIO3.SA', 'USDBRL=X', 'PETR3.SA', 'A1MD34.SA', 'NVDA', 'NSDV11.SA']
+[PRICECACHE] Preço em tempo real obtido para IVVB11.SA: 376.33
+[PRICECACHE][UPDATE] IVVB11.SA: 374.7 -> 376.33 (last_updated=2025-06-09 11:34:15.911414-03:00)
+[PRICECACHE] Preço em tempo real obtido para IVVB11.SA: 376.33
+[PRICECACHE][UPDATE] IVVB11.SA: 374.7 -> 376.33 (last_updated=2025-06-09 11:34:15.920613-03:00)
+[PRICECACHE] Preço em tempo real obtido para TAEE11.SA: 33.8
+[DIVIDENDS] Atualização diária programada iniciada.
+[DIVIDENDS] Verificando necessidade de atualização do cache de dividendos...
+[DIVIDENDS] Próxima atualização em 22.9 horas
 [BATCH][ERROR] Exceção no batch: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely)
 (sqlite3.OperationalError) database is locked
 [SQL: UPDATE price_cache SET price=?, last_updated=? WHERE price_cache.id = ?]
-[parameters: (67.61, '2025-06-08 21:00:04.095948', 116)]
+[parameters: (376.33, '2025-06-09 11:34:15.920613', 103)]
 (Background on this error at: https://sqlalche.me/e/20/e3q8)
-[PRICECACHE][UPDATE] AGRO3.SA: 21.25 -> 21.25 (last_updated=2025-06-08 21:00:37.636130-03:00)
 [PRICECACHE] Preços atualizados para 46 ativos únicos
-[PRICECACHE] Atualização concluída com sucesso às 20:59:23
+[PRICECACHE] Atualização concluída com sucesso às 11:34:09
+[PRICECACHE][UPDATE] TAEE11.SA: 34.37 -> 33.8 (last_updated=2025-06-09 11:34:49.372414-03:00)
 [SCHEDULER] Atualização de preços em segundo plano concluída.
-[PRICECACHE] Preço em tempo real obtido para T1TW34.SA: 324.0
-[PRICECACHE][UPDATE] T1TW34.SA: 324.0 -> 324.0 (last_updated=2025-06-08 21:00:38.248014-03:00)
-[PRICECACHE] Preço em tempo real obtido para TAEE11.SA: 34.37
-[PRICECACHE][UPDATE] TAEE11.SA: 34.369998931884766 -> 34.37 (last_updated=2025-06-08 21:00:38.827979-03:00)
-[PRICECACHE] Preço em tempo real obtido para NVDA: 141.72
-[PRICECACHE][UPDATE] NVDA: 141.72 -> 141.72 (last_updated=2025-06-08 21:00:39.420811-03:00)
-[PRICECACHE] Preço em tempo real obtido para BRBI11.SA: 15.15
-[PRICECACHE][UPDATE] BRBI11.SA: 15.15 -> 15.15 (last_updated=2025-06-08 21:00:40.017951-03:00)
-[PRICECACHE] Preço em tempo real obtido para POMO3.SA: 6.03
-[PRICECACHE][UPDATE] POMO3.SA: 6.03000020980835 -> 6.03 (last_updated=2025-06-08 21:00:40.610930-03:00)
-[PRICECACHE] Preço em tempo real obtido para GOOGL: 173.68
-[PRICECACHE][UPDATE] GOOGL: 173.68 -> 173.68 (last_updated=2025-06-08 21:00:41.195705-03:00)
-[PRICECACHE] Preço em tempo real obtido para BTC: 46.19
-[PRICECACHE][UPDATE] BTC: 46.19 -> 46.19 (last_updated=2025-06-08 21:00:41.800456-03:00)
-[PRICECACHE] Preço em tempo real obtido para GOLD11.SA: 19.29
-[PRICECACHE][UPDATE] GOLD11.SA: 19.29 -> 19.29 (last_updated=2025-06-08 21:00:42.684305-03:00)
+[PRICECACHE] Preço em tempo real obtido para KLBN11.SA: 18.41
+[PRICECACHE][UPDATE] KLBN11.SA: 18.43 -> 18.41 (last_updated=2025-06-09 11:34:50.697490-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOGL34.SA: 81.86
+[PRICECACHE][UPDATE] GOGL34.SA: 80.69 -> 81.86 (last_updated=2025-06-09 11:34:51.351211-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPYI11.SA: 111.06
+[PRICECACHE][UPDATE] SPYI11.SA: 110.58 -> 111.06 (last_updated=2025-06-09 11:34:52.049105-03:00)
+[PRICECACHE] Preço em tempo real obtido para BITH11.SA: 137.26
+[PRICECACHE][UPDATE] BITH11.SA: 132.98 -> 137.26 (last_updated=2025-06-09 11:34:52.743147-03:00)
+[PRICECACHE] Preço em tempo real obtido para IRDM11.SA: 69.59
+[PRICECACHE][UPDATE] IRDM11.SA: 69.8 -> 69.59 (last_updated=2025-06-09 11:34:53.374728-03:00)
+[PRICECACHE] Preço em tempo real obtido para AMZN: 214.7099
+[PRICECACHE][UPDATE] AMZN: 213.57 -> 214.7099 (last_updated=2025-06-09 11:34:54.016924-03:00)
+[PRICECACHE] Preço em tempo real obtido para MSFT: 470.6132
+[PRICECACHE][UPDATE] MSFT: 470.38 -> 470.6132 (last_updated=2025-06-09 11:34:54.976707-03:00)
+[PRICECACHE] Preço em tempo real obtido para T1TW34.SA: 321.86
+[PRICECACHE][UPDATE] T1TW34.SA: 324.0 -> 321.86 (last_updated=2025-06-09 11:34:55.970373-03:00)
 [PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
-[PRICECACHE] Preço em tempo real obtido para MSFT: 470.38
-[PRICECACHE][UPDATE] MSFT: 470.38 -> 470.38 (last_updated=2025-06-08 21:00:43.266782-03:00)
-[PRICECACHE] Preço em tempo real obtido para SPY: 599.14
-[PRICECACHE][UPDATE] SPY: 599.14 -> 599.14 (last_updated=2025-06-08 21:00:43.995215-03:00)
-[PRICECACHE] Preço em tempo real obtido para GOGL34.SA: 80.69
-[PRICECACHE][UPDATE] GOGL34.SA: 80.69000244140625 -> 80.69 (last_updated=2025-06-08 21:00:44.878873-03:00)
-[PRICECACHE] Preço em tempo real obtido para CSMG3.SA: 24.29
-[PRICECACHE][UPDATE] CSMG3.SA: 24.290000915527344 -> 24.29 (last_updated=2025-06-08 21:00:45.454315-03:00)
-[PRICECACHE] Preço em tempo real obtido para A1MD34.SA: 81.45
-[PRICECACHE][UPDATE] A1MD34.SA: 81.44999694824219 -> 81.45 (last_updated=2025-06-08 21:00:46.038295-03:00)
-[PRICECACHE] Preço em tempo real obtido para AMZN: 213.57
-[PRICECACHE][UPDATE] AMZN: 213.57 -> 213.57 (last_updated=2025-06-08 21:00:46.627913-03:00)
-[PRICECACHE] Preço em tempo real obtido para VALE: 9.49
-[PRICECACHE][UPDATE] VALE: 9.49 -> 9.49 (last_updated=2025-06-08 21:00:47.350202-03:00)
-[PRICECACHE] Preço em tempo real obtido para PETR3.SA: 31.57
-[PRICECACHE][UPDATE] PETR3.SA: 31.57 -> 31.57 (last_updated=2025-06-08 21:00:47.952210-03:00)
-[PRICECACHE] Preço em tempo real obtido para JPMC34.SA: 147.21
-[PRICECACHE][UPDATE] JPMC34.SA: 147.21 -> 147.21 (last_updated=2025-06-08 21:00:48.836789-03:00)
-[PRICECACHE] Preço em tempo real obtido para NSDV11.SA: 124.31
-[PRICECACHE][UPDATE] NSDV11.SA: 124.31 -> 124.31 (last_updated=2025-06-08 21:00:49.421617-03:00)
+[PRICECACHE] Preço em tempo real obtido para POMO3F.SA: 5.86
+[PRICECACHE][UPDATE] POMO3F.SA: 5.91 -> 5.86 (last_updated=2025-06-09 11:34:56.614121-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOOGL: 175.8794
+[PRICECACHE][UPDATE] GOOGL: 173.68 -> 175.8794 (last_updated=2025-06-09 11:34:57.247936-03:00)
+[PRICECACHE] Preço em tempo real obtido para NVDC34.SA: 16.74
+[PRICECACHE][UPDATE] NVDC34.SA: 16.34 -> 16.74 (last_updated=2025-06-09 11:34:57.903079-03:00)
+[PRICECACHE] Preço em tempo real obtido para MSFT34.SA: 109.58
+[PRICECACHE][UPDATE] MSFT34.SA: 109.3 -> 109.58 (last_updated=2025-06-09 11:34:58.868999-03:00)
+[PRICECACHE] Preço em tempo real obtido para ITUB3.SA: 31.89
+[PRICECACHE][UPDATE] ITUB3.SA: 32.51 -> 31.89 (last_updated=2025-06-09 11:34:59.525214-03:00)
+[PRICECACHE] Preço em tempo real obtido para X: 53.135
+[PRICECACHE][UPDATE] X: 53.4 -> 53.135 (last_updated=2025-06-09 11:35:00.183917-03:00)
+[PRICECACHE] Preço em tempo real obtido para BTC: 47.78
+[PRICECACHE][UPDATE] BTC: 46.19 -> 47.78 (last_updated=2025-06-09 11:35:01.144841-03:00)
+[PRICECACHE] Preço em tempo real obtido para VALE3.SA: 52.79
+[PRICECACHE][UPDATE] VALE3.SA: 52.98 -> 52.79 (last_updated=2025-06-09 11:35:02.097717-03:00)
+[PRICECACHE] Preço em tempo real obtido para JPMC34.SA: 147.71
+[PRICECACHE][UPDATE] JPMC34.SA: 147.21 -> 147.71 (last_updated=2025-06-09 11:35:02.717377-03:00)
+[PRICECACHE] Preço em tempo real obtido para IEF: 93.56
+[PRICECACHE][UPDATE] IEF: 93.51 -> 93.56 (last_updated=2025-06-09 11:35:03.393939-03:00)
 [PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
-[PRICECACHE] Preço em tempo real obtido para RAIL3.SA: 19.08
-[PRICECACHE][UPDATE] RAIL3.SA: 19.08 -> 19.08 (last_updated=2025-06-08 21:00:50.012885-03:00)
-[PRICECACHE] Preço em tempo real obtido para IVVB11.SA: 374.7
-[PRICECACHE][UPDATE] IVVB11.SA: 374.7 -> 374.7 (last_updated=2025-06-08 21:00:50.629758-03:00)
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[PERF] get_portfolio_distribution: total=0.006s | leitura=0.002s | parse=0.000s | precos=0.004s | ativos=0.000s | dist=0.000s
-[DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
-[DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
-[DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
-[DASHBOARD][PRICE] ITSA3 (final: ITSA3.SA) -> 10.989999771118164
-[DASHBOARD][PRICE] BBAS3 (final: BBAS3.SA) -> 29.760000228881836
-[DASHBOARD][PRICE] AGRO3 (final: AGRO3.SA) -> 20.809999465942383
-[DASHBOARD][PRICE] TAEE11 (final: TAEE11.SA) -> 34.869998931884766
-[DASHBOARD][PRICE] NVDC34 (final: NVDC34.SA) -> 15.829999923706055
-[DASHBOARD][PRICE] A1MD34 (final: A1MD34.SA) -> 82.44999694824219
-[DASHBOARD][PRICE] GOGL34 (final: GOGL34.SA) -> 77.30000305175781
-[DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
-[DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
-[DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
-[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.67
-[DASHBOARD][PRICE] IEF (final: IEF) -> 93.51
-[DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
-[DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
-[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
-[DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
-[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para VALE3.SA: 52.98
-[PRICECACHE][UPDATE] VALE3.SA: 52.97999954223633 -> 52.98 (last_updated=2025-06-08 21:00:51.251348-03:00)
-[SUCCESS] Obtidos 258 registros para BCRI11.SA
-[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para AGRO3.SA
-[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para T1TW34.SA
-[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para TAEE11.SA
-[PRICECACHE] Preço em tempo real obtido para USDBRL=X: 5.5622
-[PRICECACHE][UPDATE] USDBRL=X: 5.5622 -> 5.5622 (last_updated=2025-06-08 21:00:52.208437-03:00)
-[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para POMO3.SA
-[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para GOGL34.SA
-[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para SOJA3.SA: 11.33
-[PRICECACHE][UPDATE] SOJA3.SA: 11.33 -> 11.33 (last_updated=2025-06-08 21:00:52.788925-03:00)
-[SUCCESS] Obtidos 258 registros para CSMG3.SA
-[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para A1MD34.SA
-[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para ITSA3.SA: 10.87
-[PRICECACHE][UPDATE] ITSA3.SA: 10.869999885559082 -> 10.87 (last_updated=2025-06-08 21:00:53.389250-03:00)
-[SUCCESS] Obtidos 258 registros para VALE3.SA
-[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para ITSA3.SA
-[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para X: 53.4
-[PRICECACHE][UPDATE] X: 53.4 -> 53.4 (last_updated=2025-06-08 21:00:53.998005-03:00)
-[SUCCESS] Obtidos 258 registros para GOAU3.SA
-[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para IEF
-[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para GOAU3.SA: 9.25
-[PRICECACHE][UPDATE] GOAU3.SA: 9.25 -> 9.25 (last_updated=2025-06-08 21:00:54.640837-03:00)
-[SUCCESS] Obtidos 258 registros para PETR4.SA
-[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para BBAS3.SA
-[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para IRDM11.SA
-[PRICECACHE] Preço em tempo real obtido para SPYI11.SA: 110.58
-[PRICECACHE][UPDATE] SPYI11.SA: 110.58 -> 110.58 (last_updated=2025-06-08 21:00:55.255179-03:00)
-[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para NVDC34.SA
-[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para SPYI
-[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-10
-[PRICECACHE] Preço em tempo real obtido para IEF: 93.51
-[PRICECACHE][UPDATE] IEF: 93.51 -> 93.51 (last_updated=2025-06-08 21:00:55.830563-03:00)
+[PRICECACHE] Preço em tempo real obtido para SAPR11.SA: 32.51
+[PRICECACHE][UPDATE] SAPR11.SA: 33.05 -> 32.51 (last_updated=2025-06-09 11:35:04.334766-03:00)
+[PRICECACHE] Preço em tempo real obtido para WEGE3.SA: 42.07
+[PRICECACHE][UPDATE] WEGE3.SA: 42.57 -> 42.07 (last_updated=2025-06-09 11:35:05.013712-03:00)
+[PRICECACHE] Preço em tempo real obtido para AGRO3.SA: 20.74
+[PRICECACHE][UPDATE] AGRO3.SA: 21.25 -> 20.74 (last_updated=2025-06-09 11:35:05.670631-03:00)
+[PRICECACHE] Preço em tempo real obtido para SOJA3.SA: 11.05
+[PRICECACHE][UPDATE] SOJA3.SA: 11.33 -> 11.05 (last_updated=2025-06-09 11:35:06.576427-03:00)
+[PRICECACHE] Preço em tempo real obtido para POMO3.SA: 5.85
+[PRICECACHE][UPDATE] POMO3.SA: 6.03 -> 5.85 (last_updated=2025-06-09 11:35:07.205328-03:00)
+[PRICECACHE] Preço em tempo real obtido para AMER3.SA: 5.66
+[PRICECACHE][UPDATE] AMER3.SA: 5.8 -> 5.66 (last_updated=2025-06-09 11:35:07.822066-03:00)
+[PRICECACHE] Preço em tempo real obtido para CSMG3.SA: 23.78
+[PRICECACHE][UPDATE] CSMG3.SA: 24.29 -> 23.78 (last_updated=2025-06-09 11:35:08.462689-03:00)
+[PRICECACHE] Preço em tempo real obtido para BRBI11.SA: 15.04
+[PRICECACHE][UPDATE] BRBI11.SA: 15.15 -> 15.04 (last_updated=2025-06-09 11:35:09.437603-03:00)
+[PRICECACHE] Preço em tempo real obtido para BCRI11.SA: 67.67
+[PRICECACHE][UPDATE] BCRI11.SA: 67.61 -> 67.67 (last_updated=2025-06-09 11:35:10.111952-03:00)
+[PRICECACHE] Preço em tempo real obtido para BBDC4.SA: 15.63
+[PRICECACHE][UPDATE] BBDC4.SA: 15.96 -> 15.63 (last_updated=2025-06-09 11:35:10.704476-03:00)
 [PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
-[SUCCESS] Obtidos 258 registros para VGHF11.SA
-[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para SAPR11.SA
-[PERF] process_asset PETR4.SA: 0.002s 2133.36
-[PERF] process_asset VALE3.SA: 0.002s 1748.34
-[PERF] process_asset GOAU3.SA: 0.002s 1655.75
-[PERF] process_asset ITSA3.SA: 0.001s 728.29
-[PERF] process_asset BBAS3.SA: 0.002s 542.75
-[PERF] process_asset AGRO3.SA: 0.002s 935.00
-[PERF] process_asset TAEE11.SA: 0.002s 549.92
-[PERF] process_asset NVDC34.SA: 0.001s 2042.50
-[PERF] process_asset A1MD34.SA: 0.002s 1221.75
-[PERF] process_asset GOGL34.SA: 0.002s 645.52
-[PERF] process_asset BCRI11.SA: 0.001s 1825.47
-[PERF] process_asset VGHF11.SA: 0.001s 1925.00
-[PERF] process_asset IRDM11.SA: 0.001s 1326.20
-[PERF] process_asset SPYI: 0.002s 2486.47
-[PERF] process_asset IEF: 0.001s 520.12
-[PERF] process_asset T1TW34.SA: 0.001s 324.00
-[PERF] process_asset POMO3.SA: 0.001s 1193.94
-[PERF] process_asset SAPR11.SA: 0.001s 1586.40
-[PERF] process_asset CSMG3.SA: 0.001s 364.35
-[PRICECACHE] Preço em tempo real obtido para BITH11.SA: 132.98
-[PRICECACHE][UPDATE] BITH11.SA: 132.98 -> 132.98 (last_updated=2025-06-08 21:00:56.440907-03:00)
-[PERF] calculate_portfolio_evolution: tickers=0.001s | download=5.248s | assets=0.030s | persist=0.120s | total=5.399s
-[PERF] Tempo cálculo evolução: 5.400s
-[PERF] portfolio_summary: total=5.414s | leitura=0.000s | precos=0.009s | update_precos=0.000s | ativos=0.000s | evolucao=5.400s | resposta=5.414s
-[PRICECACHE] Preço em tempo real obtido para PETR4.SA: 29.63
-[PRICECACHE][UPDATE] PETR4.SA: 29.670000076293945 -> 29.63 (last_updated=2025-06-08 21:00:57.046889-03:00)
-[PRICECACHE] Preço em tempo real obtido para BBAS3.SA: 21.71
-[PRICECACHE][UPDATE] BBAS3.SA: 21.709999084472656 -> 21.71 (last_updated=2025-06-08 21:00:57.648221-03:00)
-[PRICECACHE] Preço em tempo real obtido para IRDM11.SA: 69.8
-[PRICECACHE][UPDATE] IRDM11.SA: 69.80000305175781 -> 69.8 (last_updated=2025-06-08 21:00:58.245851-03:00)
-[PRICECACHE] Preço em tempo real obtido para NVDC34.SA: 16.34
-[PRICECACHE][UPDATE] NVDC34.SA: 16.34000015258789 -> 16.34 (last_updated=2025-06-08 21:00:58.829612-03:00)
-[PRICECACHE] Preço em tempo real obtido para SPYI: 49.67
-[PRICECACHE][UPDATE] SPYI: 49.67 -> 49.67 (last_updated=2025-06-08 21:00:59.429459-03:00)
-[PRICECACHE] Preço em tempo real obtido para VGHF11.SA: 7.7
-[PRICECACHE][UPDATE] VGHF11.SA: 7.699999809265137 -> 7.7 (last_updated=2025-06-08 21:01:00.326367-03:00)
-[PRICECACHE] Preço em tempo real obtido para POMO3F.SA: 5.91
-[PRICECACHE][UPDATE] POMO3F.SA: 5.91 -> 5.91 (last_updated=2025-06-08 21:01:00.904341-03:00)
-[PRICECACHE] Preço em tempo real obtido para KLBN11.SA: 18.43
-[PRICECACHE][UPDATE] KLBN11.SA: 18.43 -> 18.43 (last_updated=2025-06-08 21:01:01.532814-03:00)
-[PRICECACHE] Preço em tempo real obtido para ITUB3.SA: 32.51
-[PRICECACHE][UPDATE] ITUB3.SA: 32.51 -> 32.51 (last_updated=2025-06-08 21:01:02.148316-03:00)
+[PRICECACHE] Preço em tempo real obtido para VALE: 9.44
+[PRICECACHE][UPDATE] VALE: 9.49 -> 9.44 (last_updated=2025-06-09 11:35:11.349251-03:00)
+[PRICECACHE] Preço em tempo real obtido para ITSA3.SA: 10.67
+[PRICECACHE][UPDATE] ITSA3.SA: 10.87 -> 10.67 (last_updated=2025-06-09 11:35:11.943528-03:00)
+[PRICECACHE] Preço em tempo real obtido para PETR4.SA: 28.99
+[PRICECACHE][UPDATE] PETR4.SA: 29.63 -> 28.99 (last_updated=2025-06-09 11:35:12.588999-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPYI: 49.7346
+[PRICECACHE][UPDATE] SPYI: 49.67 -> 49.7346 (last_updated=2025-06-09 11:35:13.251642-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOLD11.SA: 19.46
+[PRICECACHE][UPDATE] GOLD11.SA: 19.29 -> 19.46 (last_updated=2025-06-09 11:35:13.870667-03:00)
+[PRICECACHE] Preço em tempo real obtido para VGHF11.SA: 7.6
+[PRICECACHE][UPDATE] VGHF11.SA: 7.7 -> 7.6 (last_updated=2025-06-09 11:35:14.497540-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPY: 600.01
+[PRICECACHE][UPDATE] SPY: 599.14 -> 600.01 (last_updated=2025-06-09 11:35:15.156480-03:00)
+[PRICECACHE] Preço em tempo real obtido para BBAS3.SA: 21.52
+[PRICECACHE][UPDATE] BBAS3.SA: 21.71 -> 21.52 (last_updated=2025-06-09 11:35:16.129712-03:00)
+[PRICECACHE] Preço em tempo real obtido para RAIL3.SA: 18.61
+[PRICECACHE][UPDATE] RAIL3.SA: 19.08 -> 18.61 (last_updated=2025-06-09 11:35:16.834923-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOAU3.SA: 9.46
+[PRICECACHE][UPDATE] GOAU3.SA: 9.25 -> 9.46 (last_updated=2025-06-09 11:35:17.475500-03:00)
 [PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
-[PRICECACHE] Preço em tempo real obtido para SAPR11.SA: 33.05
-[PRICECACHE][UPDATE] SAPR11.SA: 33.04999923706055 -> 33.05 (last_updated=2025-06-08 21:01:03.051309-03:00)
-[PRICECACHE] Preço em tempo real obtido para BBDC4.SA: 15.96
-[PRICECACHE][UPDATE] BBDC4.SA: 15.96 -> 15.96 (last_updated=2025-06-08 21:01:03.778408-03:00)
-[PRICECACHE] Preço em tempo real obtido para PRIO3.SA: 42.51
-[PRICECACHE][UPDATE] PRIO3.SA: 42.51 -> 42.51 (last_updated=2025-06-08 21:01:04.371659-03:00)
-[PRICECACHE] Preço em tempo real obtido para MSFT34.SA: 109.3
-[PRICECACHE][UPDATE] MSFT34.SA: 109.3 -> 109.3 (last_updated=2025-06-08 21:01:04.988125-03:00)
-[PRICECACHE] Preço em tempo real obtido para AMER3.SA: 5.8
-[PRICECACHE][UPDATE] AMER3.SA: 5.8 -> 5.8 (last_updated=2025-06-08 21:01:05.619890-03:00)
-[PRICECACHE] Preço em tempo real obtido para WEGE3.SA: 42.57
-[PRICECACHE][UPDATE] WEGE3.SA: 42.57 -> 42.57 (last_updated=2025-06-08 21:01:06.246779-03:00)
+[PRICECACHE] Preço em tempo real obtido para PRIO3.SA: 41.75
+[PRICECACHE][UPDATE] PRIO3.SA: 42.51 -> 41.75 (last_updated=2025-06-09 11:35:18.070239-03:00)
+[PRICECACHE] Preço em tempo real obtido para USDBRL=X: 5.5899
+[PRICECACHE][UPDATE] USDBRL=X: 5.571 -> 5.5899 (last_updated=2025-06-09 11:35:18.694574-03:00)
+[PRICECACHE] Preço em tempo real obtido para PETR3.SA: 31.07
+[PRICECACHE][UPDATE] PETR3.SA: 31.57 -> 31.07 (last_updated=2025-06-09 11:35:19.652019-03:00)
+[PRICECACHE] Preço em tempo real obtido para A1MD34.SA: 84.61
+[PRICECACHE][UPDATE] A1MD34.SA: 81.45 -> 84.61 (last_updated=2025-06-09 11:35:20.348314-03:00)
+[PRICECACHE] Preço em tempo real obtido para NVDA: 144.75
+[PRICECACHE][UPDATE] NVDA: 141.72 -> 144.75 (last_updated=2025-06-09 11:35:20.972441-03:00)
+[PRICECACHE] Preço em tempo real obtido para NSDV11.SA: 123.22
+[PRICECACHE][UPDATE] NSDV11.SA: 124.31 -> 123.22 (last_updated=2025-06-09 11:35:21.655086-03:00)
 [PRICECACHE][COMMIT] Batch commit realizado para 46 tickers.
 [PRICECACHE][DB] Valores finais salvos no banco:
-[PRICECACHE][DB] BCRI11.SA: 67.61 (last_updated=2025-06-08 21:00:04.091063)
-[PRICECACHE][DB] AGRO3.SA: 21.25 (last_updated=2025-06-08 21:00:37.636130)
-[PRICECACHE][DB] T1TW34.SA: 324.0 (last_updated=2025-06-08 21:00:38.248014)
-[PRICECACHE][DB] TAEE11.SA: 34.37 (last_updated=2025-06-08 21:00:38.827979)
-[PRICECACHE][DB] NVDA: 141.72 (last_updated=2025-06-08 21:00:39.420811)
-[PRICECACHE][DB] BRBI11.SA: 15.15 (last_updated=2025-06-08 21:00:40.017951)
-[PRICECACHE][DB] POMO3.SA: 6.03 (last_updated=2025-06-08 21:00:40.610930)
-[PRICECACHE][DB] GOOGL: 173.68 (last_updated=2025-06-08 21:00:41.195705)
-[PRICECACHE][DB] BTC: 46.19 (last_updated=2025-06-08 21:00:41.800456)
-[PRICECACHE][DB] GOLD11.SA: 19.29 (last_updated=2025-06-08 21:00:42.684305)
-[PRICECACHE][DB] MSFT: 470.38 (last_updated=2025-06-08 21:00:43.266782)
-[PRICECACHE][DB] SPY: 599.14 (last_updated=2025-06-08 21:00:43.995215)
-[PRICECACHE][DB] GOGL34.SA: 80.69 (last_updated=2025-06-08 21:00:44.878873)
-[PRICECACHE][DB] CSMG3.SA: 24.29 (last_updated=2025-06-08 21:00:45.454315)
-[PRICECACHE][DB] A1MD34.SA: 81.45 (last_updated=2025-06-08 21:00:46.038295)
-[PRICECACHE][DB] AMZN: 213.57 (last_updated=2025-06-08 21:00:46.627913)
-[PRICECACHE][DB] VALE: 9.49 (last_updated=2025-06-08 21:00:47.350202)
-[PRICECACHE][DB] PETR3.SA: 31.57 (last_updated=2025-06-08 21:00:47.952210)
-[PRICECACHE][DB] JPMC34.SA: 147.21 (last_updated=2025-06-08 21:00:48.836789)
-[PRICECACHE][DB] NSDV11.SA: 124.31 (last_updated=2025-06-08 21:00:49.421617)
-[PRICECACHE][DB] RAIL3.SA: 19.08 (last_updated=2025-06-08 21:00:50.012885)
-[PRICECACHE][DB] IVVB11.SA: 374.7 (last_updated=2025-06-08 21:00:50.629758)
-[PRICECACHE][DB] VALE3.SA: 52.98 (last_updated=2025-06-08 21:00:51.251348)
-[PRICECACHE][DB] USDBRL=X: 5.5622 (last_updated=2025-06-08 21:00:52.208437)
-[PRICECACHE][DB] SOJA3.SA: 11.33 (last_updated=2025-06-08 21:00:52.788925)
-[PRICECACHE][DB] ITSA3.SA: 10.87 (last_updated=2025-06-08 21:00:53.389250)
-[PRICECACHE][DB] X: 53.4 (last_updated=2025-06-08 21:00:53.998005)
-[PRICECACHE][DB] GOAU3.SA: 9.25 (last_updated=2025-06-08 21:00:54.640837)
-[PRICECACHE][DB] SPYI11.SA: 110.58 (last_updated=2025-06-08 21:00:55.255179)
-[PRICECACHE][DB] IEF: 93.51 (last_updated=2025-06-08 21:00:55.830563)
-[PRICECACHE][DB] BITH11.SA: 132.98 (last_updated=2025-06-08 21:00:56.440907)
-[PRICECACHE][DB] PETR4.SA: 29.63 (last_updated=2025-06-08 21:00:57.046889)
-[PRICECACHE][DB] BBAS3.SA: 21.71 (last_updated=2025-06-08 21:00:57.648221)
-[PRICECACHE][DB] IRDM11.SA: 69.8 (last_updated=2025-06-08 21:00:58.245851)
-[PRICECACHE][DB] NVDC34.SA: 16.34 (last_updated=2025-06-08 21:00:58.829612)
-[PRICECACHE][DB] SPYI: 49.67 (last_updated=2025-06-08 21:00:59.429459)
-[PRICECACHE][DB] VGHF11.SA: 7.7 (last_updated=2025-06-08 21:01:00.326367)
-[PRICECACHE][DB] POMO3F.SA: 5.91 (last_updated=2025-06-08 21:01:00.904341)
-[PRICECACHE][DB] KLBN11.SA: 18.43 (last_updated=2025-06-08 21:01:01.532814)
-[PRICECACHE][DB] ITUB3.SA: 32.51 (last_updated=2025-06-08 21:01:02.148316)
-[PRICECACHE][DB] SAPR11.SA: 33.05 (last_updated=2025-06-08 21:01:03.051309)
-[PRICECACHE][DB] BBDC4.SA: 15.96 (last_updated=2025-06-08 21:01:03.778408)
-[PRICECACHE][DB] PRIO3.SA: 42.51 (last_updated=2025-06-08 21:01:04.371659)
-[PRICECACHE][DB] MSFT34.SA: 109.3 (last_updated=2025-06-08 21:01:04.988125)
-[PRICECACHE][DB] AMER3.SA: 5.8 (last_updated=2025-06-08 21:01:05.619890)
-[PRICECACHE][DB] WEGE3.SA: 42.57 (last_updated=2025-06-08 21:01:06.246779)
+[PRICECACHE][DB] IVVB11.SA: 376.33 (last_updated=2025-06-09 11:34:15.911414)
+[PRICECACHE][DB] TAEE11.SA: 33.8 (last_updated=2025-06-09 11:34:49.372414)
+[PRICECACHE][DB] KLBN11.SA: 18.41 (last_updated=2025-06-09 11:34:50.697490)
+[PRICECACHE][DB] GOGL34.SA: 81.86 (last_updated=2025-06-09 11:34:51.351211)
+[PRICECACHE][DB] SPYI11.SA: 111.06 (last_updated=2025-06-09 11:34:52.049105)
+[PRICECACHE][DB] BITH11.SA: 137.26 (last_updated=2025-06-09 11:34:52.743147)
+[PRICECACHE][DB] IRDM11.SA: 69.59 (last_updated=2025-06-09 11:34:53.374728)
+[PRICECACHE][DB] AMZN: 214.7099 (last_updated=2025-06-09 11:34:54.016924)
+[PRICECACHE][DB] MSFT: 470.6132 (last_updated=2025-06-09 11:34:54.976707)
+[PRICECACHE][DB] T1TW34.SA: 321.86 (last_updated=2025-06-09 11:34:55.970373)
+[PRICECACHE][DB] POMO3F.SA: 5.86 (last_updated=2025-06-09 11:34:56.614121)
+[PRICECACHE][DB] GOOGL: 175.8794 (last_updated=2025-06-09 11:34:57.247936)
+[PRICECACHE][DB] NVDC34.SA: 16.74 (last_updated=2025-06-09 11:34:57.903079)
+[PRICECACHE][DB] MSFT34.SA: 109.58 (last_updated=2025-06-09 11:34:58.868999)
+[PRICECACHE][DB] ITUB3.SA: 31.89 (last_updated=2025-06-09 11:34:59.525214)
+[PRICECACHE][DB] X: 53.135 (last_updated=2025-06-09 11:35:00.183917)
+[PRICECACHE][DB] BTC: 47.78 (last_updated=2025-06-09 11:35:01.144841)
+[PRICECACHE][DB] VALE3.SA: 52.79 (last_updated=2025-06-09 11:35:02.097717)
+[PRICECACHE][DB] JPMC34.SA: 147.71 (last_updated=2025-06-09 11:35:02.717377)
+[PRICECACHE][DB] IEF: 93.56 (last_updated=2025-06-09 11:35:03.393939)
+[PRICECACHE][DB] SAPR11.SA: 32.51 (last_updated=2025-06-09 11:35:04.334766)
+[PRICECACHE][DB] WEGE3.SA: 42.07 (last_updated=2025-06-09 11:35:05.013712)
+[PRICECACHE][DB] AGRO3.SA: 20.74 (last_updated=2025-06-09 11:35:05.670631)
+[PRICECACHE][DB] SOJA3.SA: 11.05 (last_updated=2025-06-09 11:35:06.576427)
+[PRICECACHE][DB] POMO3.SA: 5.85 (last_updated=2025-06-09 11:35:07.205328)
+[PRICECACHE][DB] AMER3.SA: 5.66 (last_updated=2025-06-09 11:35:07.822066)
+[PRICECACHE][DB] CSMG3.SA: 23.78 (last_updated=2025-06-09 11:35:08.462689)
+[PRICECACHE][DB] BRBI11.SA: 15.04 (last_updated=2025-06-09 11:35:09.437603)
+[PRICECACHE][DB] BCRI11.SA: 67.67 (last_updated=2025-06-09 11:35:10.111952)
+[PRICECACHE][DB] BBDC4.SA: 15.63 (last_updated=2025-06-09 11:35:10.704476)
+[PRICECACHE][DB] VALE: 9.44 (last_updated=2025-06-09 11:35:11.349251)
+[PRICECACHE][DB] ITSA3.SA: 10.67 (last_updated=2025-06-09 11:35:11.943528)
+[PRICECACHE][DB] PETR4.SA: 28.99 (last_updated=2025-06-09 11:35:12.588999)
+[PRICECACHE][DB] SPYI: 49.7346 (last_updated=2025-06-09 11:35:13.251642)
+[PRICECACHE][DB] GOLD11.SA: 19.46 (last_updated=2025-06-09 11:35:13.870667)
+[PRICECACHE][DB] VGHF11.SA: 7.6 (last_updated=2025-06-09 11:35:14.497540)
+[PRICECACHE][DB] SPY: 600.01 (last_updated=2025-06-09 11:35:15.156480)
+[PRICECACHE][DB] BBAS3.SA: 21.52 (last_updated=2025-06-09 11:35:16.129712)
+[PRICECACHE][DB] RAIL3.SA: 18.61 (last_updated=2025-06-09 11:35:16.834923)
+[PRICECACHE][DB] GOAU3.SA: 9.46 (last_updated=2025-06-09 11:35:17.475500)
+[PRICECACHE][DB] PRIO3.SA: 41.75 (last_updated=2025-06-09 11:35:18.070239)
+[PRICECACHE][DB] USDBRL=X: 5.5899 (last_updated=2025-06-09 11:35:18.694574)
+[PRICECACHE][DB] PETR3.SA: 31.07 (last_updated=2025-06-09 11:35:19.652019)
+[PRICECACHE][DB] A1MD34.SA: 84.61 (last_updated=2025-06-09 11:35:20.348314)
+[PRICECACHE][DB] NVDA: 144.75 (last_updated=2025-06-09 11:35:20.972441)
+[PRICECACHE][DB] NSDV11.SA: 123.22 (last_updated=2025-06-09 11:35:21.655086)
 [BATCH] Fim do batch com 46 tickers
 [PRICECACHE] Preços atualizados para 46 ativos únicos
-[PRICECACHE] Atualização concluída com sucesso às 21:00:00
+[PRICECACHE] Atualização concluída com sucesso às 11:34:09
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[AUTH] Iniciando sessão para usuário marquesmatheusfelippe@gmail.com (ID: c72102d3-a8c0-4b48-bd80-362e0592aa28)
+[AUTH] Sessão iniciada. Conteúdo: <SecureCookieSession {'_permanent': True, 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28', 'last_activity': '2025-06-09T14:37:01', 'authenticated': True}>
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] get_portfolio_distribution: total=0.014s | leitura=0.005s | parse=0.000s | precos=0.009s | ativos=0.000s | dist=0.000s
 [DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
 [DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
 [DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
@@ -403,81 +208,87 @@ TypeError: can't subtract offset-naive and offset-aware datetimes
 [DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
 [DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
 [DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
-[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.67
-[DASHBOARD][PRICE] IEF (final: IEF) -> 93.51
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] IEF (final: IEF) -> 93.56
 [DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
 [DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
 [DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
 [DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
-[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para BCRI11.SA
-[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para AGRO3.SA
-[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para T1TW34.SA
-[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-25 a 2025-06-02
+[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-02
 [SUCCESS] Obtidos 253 registros para TAEE11.SA
-[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para POMO3.SA
-[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-25 a 2025-06-02
+[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-02
 [SUCCESS] Obtidos 253 registros para GOGL34.SA
-[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para CSMG3.SA
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para A1MD34.SA
-[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-25 a 2025-06-02
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[SUCCESS] Obtidos 253 registros para VALE3.SA
-[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para ITSA3.SA
-[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-25 a 2025-06-02
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[SUCCESS] Obtidos 253 registros para GOAU3.SA
-[INFO] Obtendo preços históricos para IEF de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para IEF
-[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-25 a 2025-06-02
-[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[SUCCESS] Obtidos 253 registros para PETR4.SA
-[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para BBAS3.SA
-[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-25 a 2025-06-02
+[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-02
 [SUCCESS] Obtidos 253 registros para IRDM11.SA
-[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-25 a 2025-06-02
+[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para T1TW34.SA
+[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-02
 [SUCCESS] Obtidos 253 registros para NVDC34.SA
-[INFO] Obtendo preços históricos para SPYI de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para SPYI
-[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-25 a 2025-06-02
-[SUCCESS] Obtidos 253 registros para VGHF11.SA
-[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-25 a 2025-06-02
+[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VALE3.SA
+[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IEF
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
 [SUCCESS] Obtidos 253 registros para SAPR11.SA
-[PERF] process_asset PETR4.SA: 0.001s 2133.36
-[PERF] process_asset VALE3.SA: 0.001s 1748.34
-[PERF] process_asset GOAU3.SA: 0.001s 1655.75
-[PERF] process_asset ITSA3.SA: 0.001s 728.29
-[PERF] process_asset BBAS3.SA: 0.001s 542.75
-[PERF] process_asset AGRO3.SA: 0.001s 935.00
-[PERF] process_asset TAEE11.SA: 0.001s 549.92
-[PERF] process_asset NVDC34.SA: 0.001s 2042.50
-[PERF] process_asset A1MD34.SA: 0.001s 1221.75
-[PERF] process_asset GOGL34.SA: 0.001s 645.52
-[PERF] process_asset BCRI11.SA: 0.001s 1825.47
-[PERF] process_asset VGHF11.SA: 0.001s 1925.00
-[PERF] process_asset IRDM11.SA: 0.001s 1326.20
-[PERF] process_asset SPYI: 0.001s 2486.47
-[PERF] process_asset IEF: 0.001s 520.12
-[PERF] process_asset T1TW34.SA: 0.001s 324.00
-[PERF] process_asset POMO3.SA: 0.001s 1193.94
-[PERF] process_asset SAPR11.SA: 0.001s 1586.40
-[PERF] process_asset CSMG3.SA: 0.001s 364.35
-[PERF] calculate_portfolio_evolution: tickers=0.002s | download=6.303s | assets=0.026s | persist=0.112s | total=6.442s
-[PERF] Tempo cálculo evolução: 6.443s
-[PERF] portfolio_summary: total=6.446s | leitura=0.000s | precos=0.002s | update_precos=0.000s | ativos=0.000s | evolucao=6.443s | resposta=6.446s
+[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para AGRO3.SA
+[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para POMO3.SA
+[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para CSMG3.SA
+[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BCRI11.SA
+[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para ITSA3.SA
+[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para PETR4.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VGHF11.SA
+[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BBAS3.SA
+[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOAU3.SA
+[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para A1MD34.SA
+[PERF] process_asset PETR4.SA: 0.002s 2087.28
+[PERF] process_asset VALE3.SA: 0.002s 1742.07
+[PERF] process_asset GOAU3.SA: 0.001s 1693.34
+[PERF] process_asset ITSA3.SA: 0.001s 714.89
+[PERF] process_asset BBAS3.SA: 0.002s 538.00
+[PERF] process_asset AGRO3.SA: 0.002s 912.56
+[PERF] process_asset TAEE11.SA: 0.002s 540.80
+[PERF] process_asset NVDC34.SA: 0.001s 2092.50
+[PERF] process_asset A1MD34.SA: 0.002s 1269.15
+[PERF] process_asset GOGL34.SA: 0.001s 654.88
+[PERF] process_asset BCRI11.SA: 0.001s 1827.09
+[PERF] process_asset VGHF11.SA: 0.001s 1900.00
+[PERF] process_asset IRDM11.SA: 0.001s 1322.21
+[PERF] process_asset SPYI: 0.001s 2493.64
+[PERF] process_asset IEF: 0.001s 521.22
+[PERF] process_asset T1TW34.SA: 0.001s 321.86
+[PERF] process_asset POMO3.SA: 0.001s 1158.30
+[PERF] process_asset SAPR11.SA: 0.001s 1560.48
+[PERF] process_asset CSMG3.SA: 0.001s 356.70
+[PERF] calculate_portfolio_evolution: tickers=0.001s | download=6.967s | assets=0.030s | persist=0.127s | total=7.126s
+[PERF] Tempo cálculo evolução: 7.126s
+[PERF] portfolio_summary: total=7.159s | leitura=0.000s | precos=0.029s | update_precos=0.000s | ativos=0.001s | evolucao=7.126s | resposta=7.159s
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
 [INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
-[PERF] get_portfolio_distribution: total=0.013s | leitura=0.004s | parse=0.000s | precos=0.008s | ativos=0.000s | dist=0.000s
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] get_portfolio_distribution: total=0.007s | leitura=0.004s | parse=0.000s | precos=0.003s | ativos=0.000s | dist=0.000s
 [DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
 [DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
 [DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
@@ -491,69 +302,644 @@ TypeError: can't subtract offset-naive and offset-aware datetimes
 [DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
 [DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
 [DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
-[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.67
-[DASHBOARD][PRICE] IEF (final: IEF) -> 93.51
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] IEF (final: IEF) -> 93.56
 [DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
 [DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
 [DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
 [DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
-[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para BCRI11.SA
-[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para AGRO3.SA
-[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para T1TW34.SA
-[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para TAEE11.SA
-[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para POMO3.SA
-[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para GOGL34.SA
-[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para CSMG3.SA
-[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para A1MD34.SA
-[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para VALE3.SA
-[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para ITSA3.SA
-[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para GOAU3.SA
-[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para IEF
-[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para PETR4.SA
-[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para BBAS3.SA
-[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para IRDM11.SA
-[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para NVDC34.SA
-[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para SPYI
-[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para VGHF11.SA
-[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-10
-[SUCCESS] Obtidos 258 registros para SAPR11.SA
-[PERF] process_asset PETR4.SA: 0.002s 2133.36
-[PERF] process_asset VALE3.SA: 0.002s 1748.34
-[PERF] process_asset GOAU3.SA: 0.001s 1655.75
-[PERF] process_asset ITSA3.SA: 0.002s 728.29
-[PERF] process_asset BBAS3.SA: 0.001s 542.75
-[PERF] process_asset AGRO3.SA: 0.001s 935.00
-[PERF] process_asset TAEE11.SA: 0.001s 549.92
-[PERF] process_asset NVDC34.SA: 0.001s 2042.50
-[PERF] process_asset A1MD34.SA: 0.002s 1221.75
-[PERF] process_asset GOGL34.SA: 0.001s 645.52
-[PERF] process_asset BCRI11.SA: 0.001s 1825.47
-[PERF] process_asset VGHF11.SA: 0.001s 1925.00
-[PERF] process_asset IRDM11.SA: 0.001s 1326.20
-[PERF] process_asset SPYI: 0.001s 2486.47
-[PERF] process_asset IEF: 0.002s 520.12
-[PERF] process_asset T1TW34.SA: 0.001s 324.00
-[PERF] process_asset POMO3.SA: 0.001s 1193.94
-[PERF] process_asset SAPR11.SA: 0.001s 1586.40
-[PERF] process_asset CSMG3.SA: 0.001s 364.35
-[PERF] calculate_portfolio_evolution: tickers=0.001s | download=5.223s | assets=0.030s | persist=0.115s | total=5.369s
-[PERF] Tempo cálculo evolução: 5.369s
-[PERF] portfolio_summary: total=5.383s | leitura=0.000s | precos=0.005s | update_precos=0.000s | ativos=0.002s | evolucao=5.369s | resposta=5.383s
+[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para TAEE11.SA
+[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOGL34.SA
+[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IRDM11.SA
+[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para T1TW34.SA
+[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para NVDC34.SA
+[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VALE3.SA
+[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IEF
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SAPR11.SA
+[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para AGRO3.SA
+[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para POMO3.SA
+[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para CSMG3.SA
+[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BCRI11.SA
+[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para ITSA3.SA
+[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para PETR4.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VGHF11.SA
+[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BBAS3.SA
+[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOAU3.SA
+[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para A1MD34.SA
+[PERF] process_asset PETR4.SA: 0.001s 2087.28
+[PERF] process_asset VALE3.SA: 0.001s 1742.07
+[PERF] process_asset GOAU3.SA: 0.001s 1693.34
+[PERF] process_asset ITSA3.SA: 0.001s 714.89
+[PERF] process_asset BBAS3.SA: 0.001s 538.00
+[PERF] process_asset AGRO3.SA: 0.001s 912.56
+[PERF] process_asset TAEE11.SA: 0.001s 540.80
+[PERF] process_asset NVDC34.SA: 0.001s 2092.50
+[PERF] process_asset A1MD34.SA: 0.001s 1269.15
+[PERF] process_asset GOGL34.SA: 0.001s 654.88
+[PERF] process_asset BCRI11.SA: 0.001s 1827.09
+[PERF] process_asset VGHF11.SA: 0.001s 1900.00
+[PERF] process_asset IRDM11.SA: 0.001s 1322.21
+[PERF] process_asset SPYI: 0.001s 2493.64
+[PERF] process_asset IEF: 0.001s 521.22
+[PERF] process_asset T1TW34.SA: 0.001s 321.86
+[PERF] process_asset POMO3.SA: 0.001s 1158.30
+[PERF] process_asset SAPR11.SA: 0.001s 1560.48
+[PERF] process_asset CSMG3.SA: 0.001s 356.70
+[PERF] calculate_portfolio_evolution: tickers=0.002s | download=0.865s | assets=0.026s | persist=0.114s | total=1.006s
+[PERF] Tempo cálculo evolução: 1.007s
+[PERF] portfolio_summary: total=1.015s | leitura=0.000s | precos=0.005s | update_precos=0.000s | ativos=0.001s | evolucao=1.007s | resposta=1.015s
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] portfolio_summary: total=0.002s | leitura=0.000s (cache hit)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T14:39:20', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T14:40:13', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T14:41:49', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] get_portfolio_distribution: total=0.013s | leitura=0.002s | parse=0.000s | precos=0.010s | ativos=0.000s | dist=0.000s
+[DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
+[DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
+[DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
+[DASHBOARD][PRICE] ITSA3 (final: ITSA3.SA) -> 10.989999771118164
+[DASHBOARD][PRICE] BBAS3 (final: BBAS3.SA) -> 29.760000228881836
+[DASHBOARD][PRICE] AGRO3 (final: AGRO3.SA) -> 20.809999465942383
+[DASHBOARD][PRICE] TAEE11 (final: TAEE11.SA) -> 34.869998931884766
+[DASHBOARD][PRICE] NVDC34 (final: NVDC34.SA) -> 15.829999923706055
+[DASHBOARD][PRICE] A1MD34 (final: A1MD34.SA) -> 82.44999694824219
+[DASHBOARD][PRICE] GOGL34 (final: GOGL34.SA) -> 77.30000305175781
+[DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
+[DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
+[DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] IEF (final: IEF) -> 93.56
+[DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
+[DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
+[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
+[DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
+[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para TAEE11.SA
+[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOGL34.SA
+[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IRDM11.SA
+[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para T1TW34.SA
+[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para NVDC34.SA
+[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VALE3.SA
+[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IEF
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SAPR11.SA
+[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para AGRO3.SA
+[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para POMO3.SA
+[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para CSMG3.SA
+[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BCRI11.SA
+[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para ITSA3.SA
+[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para PETR4.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VGHF11.SA
+[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BBAS3.SA
+[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOAU3.SA
+[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para A1MD34.SA
+[PERF] process_asset PETR4.SA: 0.001s 2087.28
+[PERF] process_asset VALE3.SA: 0.001s 1742.07
+[PERF] process_asset GOAU3.SA: 0.001s 1693.34
+[PERF] process_asset ITSA3.SA: 0.001s 714.89
+[PERF] process_asset BBAS3.SA: 0.001s 538.00
+[PERF] process_asset AGRO3.SA: 0.001s 912.56
+[PERF] process_asset TAEE11.SA: 0.001s 540.80
+[PERF] process_asset NVDC34.SA: 0.001s 2092.50
+[PERF] process_asset A1MD34.SA: 0.001s 1269.15
+[PERF] process_asset GOGL34.SA: 0.001s 654.88
+[PERF] process_asset BCRI11.SA: 0.001s 1827.09
+[PERF] process_asset VGHF11.SA: 0.001s 1900.00
+[PERF] process_asset IRDM11.SA: 0.001s 1322.21
+[PERF] process_asset SPYI: 0.001s 2502.10
+[PERF] process_asset IEF: 0.001s 522.99
+[PERF] process_asset T1TW34.SA: 0.001s 321.86
+[PERF] process_asset POMO3.SA: 0.001s 1158.30
+[PERF] process_asset SAPR11.SA: 0.001s 1560.48
+[PERF] process_asset CSMG3.SA: 0.001s 356.70
+[PERF] calculate_portfolio_evolution: tickers=0.002s | download=0.916s | assets=0.027s | persist=0.119s | total=1.063s
+[PERF] Tempo cálculo evolução: 1.063s
+[PERF] portfolio_summary: total=1.082s | leitura=0.000s | precos=0.010s | update_precos=0.000s | ativos=0.001s | evolucao=1.063s | resposta=1.082s
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[AUTH] Iniciando sessão para usuário root@example.com (ID: bd2eb29d-677e-45c8-8a95-a2a46fd562f4)
+[AUTH] Sessão iniciada. Conteúdo: <SecureCookieSession {'_permanent': True, 'user_id': 'bd2eb29d-677e-45c8-8a95-a2a46fd562f4', 'last_activity': '2025-06-09T14:50:07', 'authenticated': True}>
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] get_portfolio_distribution: total=0.007s | leitura=0.003s | parse=0.000s | precos=0.004s | ativos=0.000s | dist=0.000s
+[DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
+[DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
+[DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
+[DASHBOARD][PRICE] ITSA3 (final: ITSA3.SA) -> 10.989999771118164
+[DASHBOARD][PRICE] BBAS3 (final: BBAS3.SA) -> 29.760000228881836
+[DASHBOARD][PRICE] AGRO3 (final: AGRO3.SA) -> 20.809999465942383
+[DASHBOARD][PRICE] TAEE11 (final: TAEE11.SA) -> 34.869998931884766
+[DASHBOARD][PRICE] NVDC34 (final: NVDC34.SA) -> 15.829999923706055
+[DASHBOARD][PRICE] A1MD34 (final: A1MD34.SA) -> 82.44999694824219
+[DASHBOARD][PRICE] GOGL34 (final: GOGL34.SA) -> 77.30000305175781
+[DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
+[DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
+[DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] IEF (final: IEF) -> 93.56
+[DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
+[DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
+[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
+[DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
+[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para TAEE11.SA
+[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOGL34.SA
+[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IRDM11.SA
+[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para T1TW34.SA
+[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para NVDC34.SA
+[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VALE3.SA
+[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IEF
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SAPR11.SA
+[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para AGRO3.SA
+[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para POMO3.SA
+[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para CSMG3.SA
+[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BCRI11.SA
+[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para ITSA3.SA
+[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para PETR4.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VGHF11.SA
+[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BBAS3.SA
+[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOAU3.SA
+[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para A1MD34.SA
+[PERF] process_asset PETR4.SA: 0.001s 2087.28
+[PERF] process_asset VALE3.SA: 0.001s 1742.07
+[PERF] process_asset GOAU3.SA: 0.001s 1693.34
+[PERF] process_asset ITSA3.SA: 0.001s 714.89
+[PERF] process_asset BBAS3.SA: 0.001s 538.00
+[PERF] process_asset AGRO3.SA: 0.001s 912.56
+[PERF] process_asset TAEE11.SA: 0.001s 540.80
+[PERF] process_asset NVDC34.SA: 0.001s 2092.50
+[PERF] process_asset A1MD34.SA: 0.001s 1269.15
+[PERF] process_asset GOGL34.SA: 0.001s 654.88
+[PERF] process_asset BCRI11.SA: 0.001s 1827.09
+[PERF] process_asset VGHF11.SA: 0.001s 1900.00
+[PERF] process_asset IRDM11.SA: 0.001s 1322.21
+[PERF] process_asset SPYI: 0.001s 2502.10
+[PERF] process_asset IEF: 0.001s 522.99
+[PERF] process_asset T1TW34.SA: 0.001s 321.86
+[PERF] process_asset POMO3.SA: 0.001s 1158.30
+[PERF] process_asset SAPR11.SA: 0.001s 1560.48
+[PERF] process_asset CSMG3.SA: 0.001s 356.70
+[PERF] calculate_portfolio_evolution: tickers=0.001s | download=1.005s | assets=0.026s | persist=0.155s | total=1.187s
+[PERF] Tempo cálculo evolução: 1.188s
+[PERF] portfolio_summary: total=1.200s | leitura=0.000s | precos=0.007s | update_precos=0.000s | ativos=0.002s | evolucao=1.188s | resposta=1.200s
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] portfolio_summary: total=0.002s | leitura=0.000s (cache hit)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PriceCache] Falha ao atualizar preço para MSFT.SA: HTTP Error 404: 
+[PriceCache] Falha ao atualizar preço para SPYI.SA: HTTP Error 404: 
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PERF] get_portfolio_distribution: total=0.014s | leitura=0.007s | parse=0.000s | precos=0.007s | ativos=0.000s | dist=0.000s
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] MSFT (final: MSFT) -> 470.6132
+[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SAPR11.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para MSFT de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para MSFT
+[PERF] process_asset SPYI: 0.002s 27801.14
+[PERF] process_asset MSFT: 0.001s 263068.07
+[PERF] process_asset SAPR11.SA: 0.001s 16255.00
+[PERF] calculate_portfolio_evolution: tickers=0.001s | download=0.489s | assets=0.005s | persist=0.124s | total=0.618s
+[PERF] Tempo cálculo evolução: 0.618s
+[PERF] portfolio_summary: total=0.639s | leitura=0.000s | precos=0.016s | update_precos=0.000s | ativos=0.000s | evolucao=0.618s | resposta=0.639s
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T14:50:07', 'user_id': 'bd2eb29d-677e-45c8-8a95-a2a46fd562f4'}>
+[DIVIDENDS] Buscando dividendos para usuário bd2eb29d-677e-45c8-8a95-a2a46fd562f4
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T14:59:54', 'user_id': 'bd2eb29d-677e-45c8-8a95-a2a46fd562f4'}>
+[DIVIDENDS] Buscando dividendos para usuário bd2eb29d-677e-45c8-8a95-a2a46fd562f4
+[SCHEDULER] Atualização periódica de preços iniciada às 12:00
+[PRICECACHE] Iniciando atualização de preços (última atualização: 25.8 minutos atrás).
+[DEBUG] update_price_cache_for_all_tickers: app={'provided' if app else 'not provided'}, type=<class 'flask.app.Flask'>, has_app_context={has_app_context()}
+[PRICECACHE] Atualizando cache de preços dos ativos únicos...
+[PRICECACHE] Iniciando download de preços para 46 ativos únicos...
+[DEBUG] Antes do yf.download
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[AUTH] Iniciando sessão para usuário marquesmatheusfelippe@gmail.com (ID: c72102d3-a8c0-4b48-bd80-362e0592aa28)
+[AUTH] Sessão iniciada. Conteúdo: <SecureCookieSession {'_permanent': True, 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28', 'last_activity': '2025-06-09T15:00:07', 'authenticated': True}>
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DASHBOARD][PRICE] PETR4 (final: PETR4.SA) -> 31.90999984741211
+[DASHBOARD][PRICE] VALE3 (final: VALE3.SA) -> 54.900001525878906
+[DASHBOARD][PRICE] GOAU3 (final: GOAU3.SA) -> 8.850000381469727
+[DASHBOARD][PRICE] ITSA3 (final: ITSA3.SA) -> 10.989999771118164
+[DASHBOARD][PRICE] BBAS3 (final: BBAS3.SA) -> 29.760000228881836
+[DASHBOARD][PRICE] AGRO3 (final: AGRO3.SA) -> 20.809999465942383
+[DASHBOARD][PRICE] TAEE11 (final: TAEE11.SA) -> 34.869998931884766
+[DASHBOARD][PRICE] NVDC34 (final: NVDC34.SA) -> 15.829999923706055
+[DASHBOARD][PRICE] A1MD34 (final: A1MD34.SA) -> 82.44999694824219
+[DASHBOARD][PRICE] GOGL34 (final: GOGL34.SA) -> 77.30000305175781
+[DASHBOARD][PRICE] BCRI11 (final: BCRI11.SA) -> 66.33999633789062
+[DASHBOARD][PRICE] VGHF11 (final: VGHF11.SA) -> 7.679999828338623
+[DASHBOARD][PRICE] IRDM11 (final: IRDM11.SA) -> 68.72000122070312
+[DASHBOARD][PRICE] SPYI (final: SPYI) -> 49.7346
+[DASHBOARD][PRICE] IEF (final: IEF) -> 93.56
+[DASHBOARD][PRICE] T1TW34 (final: T1TW34.SA) -> 330.3999938964844
+[DASHBOARD][PRICE] POMO3 (final: POMO3.SA) -> 5.460000038146973
+[DASHBOARD][PRICE] SAPR11 (final: SAPR11.SA) -> 30.729999542236328
+[DASHBOARD][PRICE] CSMG3 (final: CSMG3.SA) -> 23.22
+[PERF] get_portfolio_distribution: total=0.008s | leitura=0.003s | parse=0.000s | precos=0.005s | ativos=0.000s | dist=0.000s
+[INFO] Obtendo preços históricos para TAEE11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para TAEE11.SA
+[INFO] Obtendo preços históricos para GOGL34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOGL34.SA
+[INFO] Obtendo preços históricos para IRDM11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IRDM11.SA
+[INFO] Obtendo preços históricos para T1TW34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para T1TW34.SA
+[INFO] Obtendo preços históricos para NVDC34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para NVDC34.SA
+[INFO] Obtendo preços históricos para VALE3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VALE3.SA
+[INFO] Obtendo preços históricos para IEF de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para IEF
+[INFO] Obtendo preços históricos para SAPR11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SAPR11.SA
+[INFO] Obtendo preços históricos para AGRO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para AGRO3.SA
+[INFO] Obtendo preços históricos para POMO3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para POMO3.SA
+[INFO] Obtendo preços históricos para CSMG3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para CSMG3.SA
+[INFO] Obtendo preços históricos para BCRI11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BCRI11.SA
+[INFO] Obtendo preços históricos para ITSA3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para ITSA3.SA
+[INFO] Obtendo preços históricos para PETR4.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para PETR4.SA
+[INFO] Obtendo preços históricos para SPYI de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para SPYI
+[INFO] Obtendo preços históricos para VGHF11.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para VGHF11.SA
+[INFO] Obtendo preços históricos para BBAS3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para BBAS3.SA
+[INFO] Obtendo preços históricos para GOAU3.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para GOAU3.SA
+[INFO] Obtendo preços históricos para A1MD34.SA de 2024-05-26 a 2025-06-02
+[SUCCESS] Obtidos 253 registros para A1MD34.SA
+[PERF] process_asset PETR4.SA: 0.001s 2087.28
+[PERF] process_asset VALE3.SA: 0.001s 1742.07
+[PERF] process_asset GOAU3.SA: 0.001s 1693.34
+[PERF] process_asset ITSA3.SA: 0.001s 714.89
+[PERF] process_asset BBAS3.SA: 0.001s 538.00
+[PERF] process_asset AGRO3.SA: 0.001s 912.56
+[PERF] process_asset TAEE11.SA: 0.001s 540.80
+[PERF] process_asset NVDC34.SA: 0.001s 2092.50
+[PERF] process_asset A1MD34.SA: 0.002s 1269.15
+[PERF] process_asset GOGL34.SA: 0.001s 654.88
+[PERF] process_asset BCRI11.SA: 0.001s 1827.09
+[PERF] process_asset VGHF11.SA: 0.001s 1900.00
+[PERF] process_asset IRDM11.SA: 0.001s 1322.21
+[PERF] process_asset SPYI: 0.001s 2502.10
+[PERF] process_asset IEF: 0.002s 522.99
+[PERF] process_asset T1TW34.SA: 0.002s 321.86
+[PERF] process_asset POMO3.SA: 0.002s 1158.30
+[PERF] process_asset SAPR11.SA: 0.001s 1560.48
+[PERF] process_asset CSMG3.SA: 0.001s 356.70
+[PERF] calculate_portfolio_evolution: tickers=0.001s | download=0.945s | assets=0.029s | persist=0.124s | total=1.100s
+[PERF] Tempo cálculo evolução: 1.100s
+[PERF] portfolio_summary: total=1.112s | leitura=0.000s | precos=0.005s | update_precos=0.000s | ativos=0.002s | evolucao=1.100s | resposta=1.112s
+[DEBUG] Depois do yf.download
+[DEBUG] process_yfinance_results: app type=<class 'flask.app.Flask'>
+[BATCH] Iniciando batch com 46 tickers: ['IVVB11.SA', 'TAEE11.SA', 'KLBN11.SA', 'GOGL34.SA', 'SPYI11.SA', 'BITH11.SA', 'IRDM11.SA', 'AMZN', 'MSFT', 'T1TW34.SA', 'POMO3F.SA', 'GOOGL', 'NVDC34.SA', 'MSFT34.SA', 'ITUB3.SA', 'X', 'BTC', 'VALE3.SA', 'JPMC34.SA', 'IEF', 'SAPR11.SA', 'WEGE3.SA', 'AGRO3.SA', 'SOJA3.SA', 'POMO3.SA', 'AMER3.SA', 'CSMG3.SA', 'BRBI11.SA', 'BCRI11.SA', 'BBDC4.SA', 'VALE', 'ITSA3.SA', 'PETR4.SA', 'SPYI', 'GOLD11.SA', 'VGHF11.SA', 'SPY', 'BBAS3.SA', 'RAIL3.SA', 'GOAU3.SA', 'PRIO3.SA', 'USDBRL=X', 'PETR3.SA', 'A1MD34.SA', 'NVDA', 'NSDV11.SA']
+[PRICECACHE] Preço em tempo real obtido para IVVB11.SA: 375.5
+[PRICECACHE][UPDATE] IVVB11.SA: 376.33 -> 375.5 (last_updated=2025-06-09 12:00:13.406246-03:00)
+[PRICECACHE] Preço em tempo real obtido para TAEE11.SA: 33.85
+[PRICECACHE][UPDATE] TAEE11.SA: 33.8 -> 33.85 (last_updated=2025-06-09 12:00:14.078885-03:00)
+[PRICECACHE] Preço em tempo real obtido para KLBN11.SA: 18.38
+[PRICECACHE][UPDATE] KLBN11.SA: 18.41 -> 18.38 (last_updated=2025-06-09 12:00:14.697307-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOGL34.SA: 81.7
+[PRICECACHE][UPDATE] GOGL34.SA: 81.86 -> 81.7 (last_updated=2025-06-09 12:00:15.665340-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPYI11.SA: 111.03
+[PRICECACHE][UPDATE] SPYI11.SA: 111.06 -> 111.03 (last_updated=2025-06-09 12:00:16.607267-03:00)
+[PRICECACHE] Preço em tempo real obtido para BITH11.SA: 137.44
+[PRICECACHE][UPDATE] BITH11.SA: 137.26 -> 137.44 (last_updated=2025-06-09 12:00:17.621988-03:00)
+[PRICECACHE] Preço em tempo real obtido para IRDM11.SA: 69.31
+[PRICECACHE][UPDATE] IRDM11.SA: 69.59 -> 69.31 (last_updated=2025-06-09 12:00:18.343499-03:00)
+[PRICECACHE] Preço em tempo real obtido para AMZN: 214.53
+[PRICECACHE][UPDATE] AMZN: 214.7099 -> 214.53 (last_updated=2025-06-09 12:00:19.206904-03:00)
+[PRICECACHE] Preço em tempo real obtido para MSFT: 470.11
+[PRICECACHE][UPDATE] MSFT: 470.6132 -> 470.11 (last_updated=2025-06-09 12:00:20.896063-03:00)
+[PRICECACHE] Preço em tempo real obtido para T1TW34.SA: 323.4
+[PRICECACHE][UPDATE] T1TW34.SA: 321.86 -> 323.4 (last_updated=2025-06-09 12:00:21.606196-03:00)
+[PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
+[PRICECACHE] Preço em tempo real obtido para POMO3F.SA: 5.9
+[PRICECACHE][UPDATE] POMO3F.SA: 5.86 -> 5.9 (last_updated=2025-06-09 12:00:22.277494-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOOGL: 175.1
+[PRICECACHE][UPDATE] GOOGL: 175.8794 -> 175.1 (last_updated=2025-06-09 12:00:22.702372-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PRICECACHE] Preço em tempo real obtido para NVDC34.SA: 16.8
+[PRICECACHE][UPDATE] NVDC34.SA: 16.74 -> 16.8 (last_updated=2025-06-09 12:00:23.391562-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:00:07', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[PRICECACHE] Preço em tempo real obtido para MSFT34.SA: 109.42
+[PRICECACHE][UPDATE] MSFT34.SA: 109.58 -> 109.42 (last_updated=2025-06-09 12:00:24.084304-03:00)
+[PRICECACHE] Preço em tempo real obtido para ITUB3.SA: 31.91
+[PRICECACHE][UPDATE] ITUB3.SA: 31.89 -> 31.91 (last_updated=2025-06-09 12:00:24.754796-03:00)
+[PRICECACHE] Preço em tempo real obtido para X: 53.29
+[PRICECACHE][UPDATE] X: 53.135 -> 53.29 (last_updated=2025-06-09 12:00:25.381908-03:00)
+[PRICECACHE] Preço em tempo real obtido para BTC: 47.725
+[PRICECACHE][UPDATE] BTC: 47.78 -> 47.725 (last_updated=2025-06-09 12:00:26.010424-03:00)
+[PRICECACHE] Preço em tempo real obtido para VALE3.SA: 52.74
+[PRICECACHE][UPDATE] VALE3.SA: 52.79 -> 52.74 (last_updated=2025-06-09 12:00:26.705436-03:00)
+[PRICECACHE] Preço em tempo real obtido para JPMC34.SA: 147.94
+[PRICECACHE][UPDATE] JPMC34.SA: 147.71 -> 147.94 (last_updated=2025-06-09 12:00:27.394731-03:00)
+[PRICECACHE] Preço em tempo real obtido para IEF: 93.63
+[PRICECACHE][UPDATE] IEF: 93.56 -> 93.63 (last_updated=2025-06-09 12:00:28.356415-03:00)
+[PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
+[PRICECACHE] Preço em tempo real obtido para SAPR11.SA: 32.63
+[PRICECACHE][UPDATE] SAPR11.SA: 32.599998474121094 -> 32.63 (last_updated=2025-06-09 12:00:28.789786-03:00)
+[PRICECACHE] Preço em tempo real obtido para WEGE3.SA: 42.1
+[PRICECACHE][UPDATE] WEGE3.SA: 42.07 -> 42.1 (last_updated=2025-06-09 12:00:29.413804-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PRICECACHE] Preço em tempo real obtido para AGRO3.SA: 20.79
+[PRICECACHE][UPDATE] AGRO3.SA: 20.74 -> 20.79 (last_updated=2025-06-09 12:00:30.383028-03:00)
+[PRICECACHE] Preço em tempo real obtido para SOJA3.SA: 11.1
+[PRICECACHE][UPDATE] SOJA3.SA: 11.05 -> 11.1 (last_updated=2025-06-09 12:00:31.011787-03:00)
+[PRICECACHE] Preço em tempo real obtido para POMO3.SA: 5.87
+[PRICECACHE][UPDATE] POMO3.SA: 5.85 -> 5.87 (last_updated=2025-06-09 12:00:31.737117-03:00)
+[PRICECACHE] Preço em tempo real obtido para AMER3.SA: 5.65
+[PRICECACHE][UPDATE] AMER3.SA: 5.66 -> 5.65 (last_updated=2025-06-09 12:00:32.332446-03:00)
+[PRICECACHE] Preço em tempo real obtido para CSMG3.SA: 23.77
+[PRICECACHE][UPDATE] CSMG3.SA: 23.78 -> 23.77 (last_updated=2025-06-09 12:00:32.967884-03:00)
+[PRICECACHE] Preço em tempo real obtido para BRBI11.SA: 15.07
+[PRICECACHE][UPDATE] BRBI11.SA: 15.04 -> 15.07 (last_updated=2025-06-09 12:00:33.571280-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[PRICECACHE] Preço em tempo real obtido para BCRI11.SA: 67.54
+[PRICECACHE][UPDATE] BCRI11.SA: 67.67 -> 67.54 (last_updated=2025-06-09 12:00:34.173549-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:00:33', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[PRICECACHE] Preço em tempo real obtido para BBDC4.SA: 15.69
+[PRICECACHE][UPDATE] BBDC4.SA: 15.63 -> 15.69 (last_updated=2025-06-09 12:00:34.805708-03:00)
+[PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
+[PRICECACHE] Preço em tempo real obtido para VALE: 9.435
+[PRICECACHE][UPDATE] VALE: 9.44 -> 9.435 (last_updated=2025-06-09 12:00:35.419442-03:00)
+[PRICECACHE] Preço em tempo real obtido para ITSA3.SA: 10.63
+[PRICECACHE][UPDATE] ITSA3.SA: 10.67 -> 10.63 (last_updated=2025-06-09 12:00:36.028348-03:00)
+[PRICECACHE] Preço em tempo real obtido para PETR4.SA: 29.18
+[PRICECACHE][UPDATE] PETR4.SA: 28.99 -> 29.18 (last_updated=2025-06-09 12:00:36.641294-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPYI: 49.6969
+[PRICECACHE][UPDATE] SPYI: 49.7346 -> 49.6969 (last_updated=2025-06-09 12:00:37.057395-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOLD11.SA: 19.4
+[PRICECACHE][UPDATE] GOLD11.SA: 19.46 -> 19.4 (last_updated=2025-06-09 12:00:37.965162-03:00)
+[PRICECACHE] Preço em tempo real obtido para VGHF11.SA: 7.6
+[PRICECACHE][UPDATE] VGHF11.SA: 7.6 -> 7.6 (last_updated=2025-06-09 12:00:38.610959-03:00)
+[PRICECACHE] Preço em tempo real obtido para SPY: 599.6599
+[PRICECACHE][UPDATE] SPY: 600.01 -> 599.6599 (last_updated=2025-06-09 12:00:39.226312-03:00)
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:00:33', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[PRICECACHE] Preço em tempo real obtido para BBAS3.SA: 21.58
+[PRICECACHE][UPDATE] BBAS3.SA: 21.52 -> 21.58 (last_updated=2025-06-09 12:00:39.886255-03:00)
+[PRICECACHE] Preço em tempo real obtido para RAIL3.SA: 18.64
+[PRICECACHE][UPDATE] RAIL3.SA: 18.61 -> 18.64 (last_updated=2025-06-09 12:00:40.525388-03:00)
+[PRICECACHE] Preço em tempo real obtido para GOAU3.SA: 9.42
+[PRICECACHE][UPDATE] GOAU3.SA: 9.46 -> 9.42 (last_updated=2025-06-09 12:00:41.137817-03:00)
+[PRICECACHE][COMMIT] Batch commit realizado para 10 tickers.
+[PRICECACHE] Preço em tempo real obtido para PRIO3.SA: 41.92
+[PRICECACHE][UPDATE] PRIO3.SA: 41.75 -> 41.92 (last_updated=2025-06-09 12:00:41.803933-03:00)
+[PRICECACHE] Preço em tempo real obtido para USDBRL=X: 5.5854
+[PRICECACHE][UPDATE] USDBRL=X: 5.5899 -> 5.5854 (last_updated=2025-06-09 12:00:42.415023-03:00)
+[PRICECACHE] Preço em tempo real obtido para PETR3.SA: 31.31
+[PRICECACHE][UPDATE] PETR3.SA: 31.07 -> 31.31 (last_updated=2025-06-09 12:00:43.024627-03:00)
+[PRICECACHE] Preço em tempo real obtido para A1MD34.SA: 84.76
+[PRICECACHE][UPDATE] A1MD34.SA: 84.61 -> 84.76 (last_updated=2025-06-09 12:00:43.978218-03:00)
+[PRICECACHE] Preço em tempo real obtido para NVDA: 144.255
+[PRICECACHE][UPDATE] NVDA: 144.75 -> 144.255 (last_updated=2025-06-09 12:00:44.611870-03:00)
+[PRICECACHE] Preço em tempo real obtido para NSDV11.SA: 123.29
+[PRICECACHE][UPDATE] NSDV11.SA: 123.22 -> 123.29 (last_updated=2025-06-09 12:00:45.298229-03:00)
+[PRICECACHE][COMMIT] Batch commit realizado para 46 tickers.
+[PRICECACHE][DB] Valores finais salvos no banco:
+[PRICECACHE][DB] IVVB11.SA: 375.5 (last_updated=2025-06-09 12:00:13.406246)
+[PRICECACHE][DB] TAEE11.SA: 33.85 (last_updated=2025-06-09 12:00:14.078885)
+[PRICECACHE][DB] KLBN11.SA: 18.38 (last_updated=2025-06-09 12:00:14.697307)
+[PRICECACHE][DB] GOGL34.SA: 81.7 (last_updated=2025-06-09 12:00:15.665340)
+[PRICECACHE][DB] SPYI11.SA: 111.03 (last_updated=2025-06-09 12:00:16.607267)
+[PRICECACHE][DB] BITH11.SA: 137.44 (last_updated=2025-06-09 12:00:17.621988)
+[PRICECACHE][DB] IRDM11.SA: 69.31 (last_updated=2025-06-09 12:00:18.343499)
+[PRICECACHE][DB] AMZN: 214.53 (last_updated=2025-06-09 12:00:19.206904)
+[PRICECACHE][DB] MSFT: 470.11 (last_updated=2025-06-09 12:00:20.896063)
+[PRICECACHE][DB] T1TW34.SA: 323.4 (last_updated=2025-06-09 12:00:21.606196)
+[PRICECACHE][DB] POMO3F.SA: 5.9 (last_updated=2025-06-09 12:00:22.277494)
+[PRICECACHE][DB] GOOGL: 175.1 (last_updated=2025-06-09 12:00:22.702372)
+[PRICECACHE][DB] NVDC34.SA: 16.8 (last_updated=2025-06-09 12:00:23.391562)
+[PRICECACHE][DB] MSFT34.SA: 109.42 (last_updated=2025-06-09 12:00:24.084304)
+[PRICECACHE][DB] ITUB3.SA: 31.91 (last_updated=2025-06-09 12:00:24.754796)
+[PRICECACHE][DB] X: 53.29 (last_updated=2025-06-09 12:00:25.381908)
+[PRICECACHE][DB] BTC: 47.725 (last_updated=2025-06-09 12:00:26.010424)
+[PRICECACHE][DB] VALE3.SA: 52.74 (last_updated=2025-06-09 12:00:26.705436)
+[PRICECACHE][DB] JPMC34.SA: 147.94 (last_updated=2025-06-09 12:00:27.394731)
+[PRICECACHE][DB] IEF: 93.63 (last_updated=2025-06-09 12:00:28.356415)
+[PRICECACHE][DB] SAPR11.SA: 32.63 (last_updated=2025-06-09 12:00:28.789786)
+[PRICECACHE][DB] WEGE3.SA: 42.1 (last_updated=2025-06-09 12:00:29.413804)
+[PRICECACHE][DB] AGRO3.SA: 20.79 (last_updated=2025-06-09 12:00:30.383028)
+[PRICECACHE][DB] SOJA3.SA: 11.1 (last_updated=2025-06-09 12:00:31.011787)
+[PRICECACHE][DB] POMO3.SA: 5.87 (last_updated=2025-06-09 12:00:31.737117)
+[PRICECACHE][DB] AMER3.SA: 5.65 (last_updated=2025-06-09 12:00:32.332446)
+[PRICECACHE][DB] CSMG3.SA: 23.77 (last_updated=2025-06-09 12:00:32.967884)
+[PRICECACHE][DB] BRBI11.SA: 15.07 (last_updated=2025-06-09 12:00:33.571280)
+[PRICECACHE][DB] BCRI11.SA: 67.54 (last_updated=2025-06-09 12:00:34.173549)
+[PRICECACHE][DB] BBDC4.SA: 15.69 (last_updated=2025-06-09 12:00:34.805708)
+[PRICECACHE][DB] VALE: 9.435 (last_updated=2025-06-09 12:00:35.419442)
+[PRICECACHE][DB] ITSA3.SA: 10.63 (last_updated=2025-06-09 12:00:36.028348)
+[PRICECACHE][DB] PETR4.SA: 29.18 (last_updated=2025-06-09 12:00:36.641294)
+[PRICECACHE][DB] SPYI: 49.6969 (last_updated=2025-06-09 12:00:37.057395)
+[PRICECACHE][DB] GOLD11.SA: 19.4 (last_updated=2025-06-09 12:00:37.965162)
+[PRICECACHE][DB] VGHF11.SA: 7.6 (last_updated=2025-06-09 12:00:38.610959)
+[PRICECACHE][DB] SPY: 599.6599 (last_updated=2025-06-09 12:00:39.226312)
+[PRICECACHE][DB] BBAS3.SA: 21.58 (last_updated=2025-06-09 12:00:39.886255)
+[PRICECACHE][DB] RAIL3.SA: 18.64 (last_updated=2025-06-09 12:00:40.525388)
+[PRICECACHE][DB] GOAU3.SA: 9.42 (last_updated=2025-06-09 12:00:41.137817)
+[PRICECACHE][DB] PRIO3.SA: 41.92 (last_updated=2025-06-09 12:00:41.803933)
+[PRICECACHE][DB] USDBRL=X: 5.5854 (last_updated=2025-06-09 12:00:42.415023)
+[PRICECACHE][DB] PETR3.SA: 31.31 (last_updated=2025-06-09 12:00:43.024627)
+[PRICECACHE][DB] A1MD34.SA: 84.76 (last_updated=2025-06-09 12:00:43.978218)
+[PRICECACHE][DB] NVDA: 144.255 (last_updated=2025-06-09 12:00:44.611870)
+[PRICECACHE][DB] NSDV11.SA: 123.29 (last_updated=2025-06-09 12:00:45.298229)
+[BATCH] Fim do batch com 46 tickers
+[PRICECACHE] Preços atualizados para 46 ativos únicos
+[PRICECACHE] Atualização concluída com sucesso às 12:00:00
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:00:33', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:01:04', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:01:04', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:01:04', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:01:04', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:01:04', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:03:29', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:03:29', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:13:24', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:14:00', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[INFO] Código atualizado pela última vez em: 2025-06-08 02:09:27
+[DIVIDENDS] Sessão atual: <SecureCookieSession {'_permanent': True, 'authenticated': True, 'last_activity': '2025-06-09T15:14:19', 'user_id': 'c72102d3-a8c0-4b48-bd80-362e0592aa28'}>
+[DIVIDENDS] Buscando dividendos para usuário c72102d3-a8c0-4b48-bd80-362e0592aa28

@@ -39,7 +39,8 @@ threads_started = False
 instance_id = str(uuid.uuid4())
 
 # Controle de última atualização para evitar atualizações muito frequentes
-last_price_update_time = datetime.now() - timedelta(hours=1)
+tz = pytz.timezone('America/Sao_Paulo')
+last_price_update_time = datetime.now(tz) - timedelta(hours=1)
 
 # Lista de tickers que foram marcados como "delisted" e devem ser ignorados
 delisted_tickers = set()
@@ -61,16 +62,22 @@ def update_prices_with_delisted_handling(app=None):
     import traceback
     
     global last_price_update_time
-    
     # Verifica se já atualizou recentemente (menos de 25 minutos atrás)
-    now = datetime.now()
-    if (now - last_price_update_time).total_seconds() < 30:  # 30 segundos para evitar requests duplicados
-        print(f"[PRICECACHE] Última atualização foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos. Pulando atualização.")
+    tz = pytz.timezone('America/Sao_Paulo')
+    now = datetime.now(tz)
+    
+    # O last_price_update_time já deve ter timezone, mas vamos garantir por segurança
+    if last_price_update_time.tzinfo is None:
+        last_price_update_time = tz.localize(last_price_update_time)
+    
+    time_diff_seconds = (now - last_price_update_time).total_seconds()
+    
+    if time_diff_seconds < 30:  # 30 segundos para evitar requests duplicados
+        print(f"[PRICECACHE] Última atualização foi há {time_diff_seconds / 60:.1f} minutos. Pulando atualização.")
         return
     
     print(f"[PRICECACHE] Iniciando atualização de preços (última atualização: {(now - last_price_update_time).total_seconds() / 60:.1f} minutos atrás).")
-    
-    # Atualizaremos o timestamp somente após sucesso na atualização
+      # Atualizaremos o timestamp somente após sucesso na atualização
     # Isso permite uma nova tentativa caso a anterior falhe
     
     # Se todos os tickers derem erro, pode ser rate limit
@@ -192,6 +199,7 @@ def update_all_portfolios(app):
     Configura e inicia o scheduler para atualização de preços a cada 30 minutos em horários fixos.
     Esta versão usa APScheduler em vez de threads para maior resiliência.
     """
+    global last_price_update_time
     logger.info("Configurando APScheduler para atualização periódica de preços")
     
     # Cria um scheduler dedicado para as atualizações a cada 30 minutos
@@ -199,9 +207,9 @@ def update_all_portfolios(app):
         'default': ThreadPoolExecutor(1),  # Só 1 job de atualização por vez
     }
     portfolio_scheduler = BackgroundScheduler(executors=executors, timezone="America/Sao_Paulo")
-    
-    # Função que será executada a cada 30 minutos
+      # Função que será executada a cada 30 minutos
     def portfolio_update_job():
+        global last_price_update_time
         try:
             current_time = datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%H:%M')
             logger.info(f"[SCHEDULER] Atualização periódica de preços iniciada às {current_time}")
@@ -223,8 +231,7 @@ def update_all_portfolios(app):
         replace_existing=True,
         coalesce=True,
     )
-    
-    # Inicia o scheduler
+      # Inicia o scheduler
     portfolio_scheduler.start()
     
     # Registra no atexit para desligar corretamente
@@ -237,9 +244,15 @@ def update_all_portfolios(app):
     print(f"[SCHEDULER] Próxima atualização de preços em {(next_run - now).total_seconds()/60:.1f} minutos (às {next_run.strftime('%H:%M')})")
     
     # Executa uma vez na inicialização se a última atualização for muito antiga (mais de 25 minutos)
-    if (now - last_price_update_time).total_seconds() > (25 * 60):  # 25 minutos
-        logger.info(f"[SCHEDULER] Executando atualização imediata (última foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos)")
-        print(f"[SCHEDULER] Executando atualização imediata (última foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos)")
+    # last_price_update_time já deve ter timezone, mas vamos verificar por segurança
+    if last_price_update_time.tzinfo is None:
+        last_price_update_time = pytz.timezone('America/Sao_Paulo').localize(last_price_update_time)
+    
+    time_diff_seconds = (now - last_price_update_time).total_seconds()
+    
+    if time_diff_seconds > (25 * 60):  # 25 minutos
+        logger.info(f"[SCHEDULER] Executando atualização imediata (última foi há {time_diff_seconds / 60:.1f} minutos)")
+        print(f"[SCHEDULER] Executando atualização imediata (última foi há {time_diff_seconds / 60:.1f} minutos)")
         portfolio_update_job()
 
 def cleanup():
@@ -254,17 +267,18 @@ def start_scheduled_tasks(app):
         app (Flask): Instância da aplicação Flask
     """
     global threads_started, last_price_update_time
-
+    
     # Removida checagem de threads_started e is_reloader para sempre iniciar as threads
     # Registra função de limpeza
     atexit.register(cleanup)
-
+    
     with app.app_context():
         print(f"Inicializando tarefas agendadas (instância {instance_id})...")
         try:
-            now = datetime.now()
+            now = datetime.now(pytz.timezone('America/Sao_Paulo'))
             if (now - last_price_update_time).total_seconds() > 600:
                 def async_price_update():
+                    global last_price_update_time
                     with app.app_context():
                         try:
                             print("[SCHEDULER] Iniciando atualização de preços em segundo plano...")
@@ -307,16 +321,19 @@ def start_scheduler(app):
     executors = {
         'default': ThreadPoolExecutor(1),  # Só 1 job de atualização por vez
     }
-    scheduler = BackgroundScheduler(executors=executors, timezone="UTC")
-
+    scheduler = BackgroundScheduler(executors=executors, timezone="America/Sao_Paulo")
+    # Função que será executada periodicamente
     def job_wrapper():
-        logger.info(f"[SCHEDULER] Iniciando atualização de preços: {datetime.now()}")
-        start = datetime.now()
+        global last_price_update_time
+        tz = pytz.timezone('America/Sao_Paulo')
+        now = datetime.now(tz)
+        logger.info(f"[SCHEDULER] Iniciando atualização de preços: {now}")
+        start = now
         try:
             with app.app_context():
                 # Passa o número de workers para a função de atualização
                 update_price_cache_for_all_tickers(app=app, num_workers=NUM_WORKERS)
-            logger.info(f"[SCHEDULER] Atualização de preços concluída em {datetime.now() - start}.")
+            logger.info(f"[SCHEDULER] Atualização de preços concluída em {datetime.now(tz) - start}.")
         except Exception as e:
             logger.error(f"[SCHEDULER] Erro na atualização de preços: {e}")
 
