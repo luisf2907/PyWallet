@@ -58,6 +58,7 @@ def update_prices_with_delisted_handling(app=None):
     """
     from models.portfolio import Portfolio
     import json
+    import traceback
     
     global last_price_update_time
     
@@ -69,9 +70,9 @@ def update_prices_with_delisted_handling(app=None):
     
     print(f"[PRICECACHE] Iniciando atualização de preços (última atualização: {(now - last_price_update_time).total_seconds() / 60:.1f} minutos atrás).")
     
-    # Atualiza o tempo da última atualização ANTES de começar para evitar múltiplas atualizações simultâneas
-    last_price_update_time = now
-        
+    # Atualizaremos o timestamp somente após sucesso na atualização
+    # Isso permite uma nova tentativa caso a anterior falhe
+    
     # Se todos os tickers derem erro, pode ser rate limit
     all_tickers_failed = False
     
@@ -79,6 +80,11 @@ def update_prices_with_delisted_handling(app=None):
         # Passa o app explicitamente para garantir contexto nas threads
         from flask import current_app
         result = update_price_cache_for_all_tickers(app=app or current_app)
+        
+        # Somente atualiza o timestamp se recebemos um resultado válido
+        if result is not None:
+            last_price_update_time = now
+            print(f"[PRICECACHE] Atualização concluída com sucesso às {now.strftime('%H:%M:%S')}")
         
         # Verificar se temos tickers com erro "possibly delisted"
         if hasattr(result, 'delisted_tickers') and result.delisted_tickers:
@@ -107,6 +113,8 @@ def update_prices_with_delisted_handling(app=None):
                 print(f"[DELISTED] {len(result.delisted_tickers)} tickers removidos do cache")
     except Exception as e:
         print(f"[ERROR] Erro ao atualizar preços com tratamento de delisted: {e}")
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
+        # Não atualiza o timestamp em caso de erro
 
 def schedule_dividends_update(app):
     """
@@ -181,33 +189,58 @@ def schedule_prices_update(app):
 
 def update_all_portfolios(app):
     """
-    Thread para atualização automática de preços religiosamente a cada 30 minutos em horários fixos (ex: 9:00, 9:30, 10:00, ...), independente do mercado estar aberto ou fechado.
+    Configura e inicia o scheduler para atualização de preços a cada 30 minutos em horários fixos.
+    Esta versão usa APScheduler em vez de threads para maior resiliência.
     """
-    tz = pytz.timezone('America/Sao_Paulo')
-    time.sleep(random.uniform(1, 8))
-    print(f"[SCHEDULER] Thread de atualização periódica (30min fixos) iniciada com ID {instance_id}")
-    while True:
+    logger.info("Configurando APScheduler para atualização periódica de preços")
+    
+    # Cria um scheduler dedicado para as atualizações a cada 30 minutos
+    executors = {
+        'default': ThreadPoolExecutor(1),  # Só 1 job de atualização por vez
+    }
+    portfolio_scheduler = BackgroundScheduler(executors=executors, timezone="America/Sao_Paulo")
+    
+    # Função que será executada a cada 30 minutos
+    def portfolio_update_job():
         try:
-            now = datetime.now(tz)
-            # Calcula o próximo horário cheio de 30 minutos
-            next_minute = 30 if now.minute < 30 else 0
-            next_hour = now.hour if now.minute < 30 else (now.hour + 1) % 24
-            next_run = now.replace(hour=next_hour, minute=next_minute, second=0, microsecond=0)
-            if next_run <= now:
-                # Se já passou, soma 30 minutos
-                next_run += timedelta(minutes=30)
-            sleep_seconds = (next_run - now).total_seconds()
-            print(f"[SCHEDULER] Próxima atualização de preços em {sleep_seconds/60:.1f} minutos (às {next_run.strftime('%H:%M')})")
-            time.sleep(sleep_seconds)
+            current_time = datetime.now(pytz.timezone('America/Sao_Paulo')).strftime('%H:%M')
+            logger.info(f"[SCHEDULER] Atualização periódica de preços iniciada às {current_time}")
+            print(f"[SCHEDULER] Atualização periódica de preços iniciada às {current_time}")
+            
             with app.app_context():
-                try:
-                    print(f"[SCHEDULER] Atualização periódica de preços iniciada às {datetime.now(tz).strftime('%H:%M')}")
-                    update_prices_with_delisted_handling(app=app)
-                except Exception as e:
-                    print(f"[ERROR] Erro ao atualizar preços: {e}")
+                update_prices_with_delisted_handling(app=app)
         except Exception as e:
-            print(f"[ERROR] Erro no loop de atualização periódica: {e}")
-            time.sleep(60)
+            logger.error(f"[ERROR] Erro na atualização periódica de preços: {e}")
+            print(f"[ERROR] Erro na atualização periódica de preços: {e}")
+    
+    # Configura o job para executar a cada 30 minutos (nos minutos 0 e 30 de cada hora)
+    portfolio_scheduler.add_job(
+        portfolio_update_job,
+        trigger='cron',
+        minute='0,30',  # Executa em XX:00 e XX:30
+        id="portfolio_price_update_job",
+        max_instances=1,
+        replace_existing=True,
+        coalesce=True,
+    )
+    
+    # Inicia o scheduler
+    portfolio_scheduler.start()
+    
+    # Registra no atexit para desligar corretamente
+    atexit.register(lambda: portfolio_scheduler.shutdown() if portfolio_scheduler.running else None)
+    
+    # Calcula e imprime próxima execução
+    next_run = portfolio_scheduler.get_jobs()[0].next_run_time
+    now = datetime.now(pytz.timezone('America/Sao_Paulo'))
+    logger.info(f"[SCHEDULER] Próxima atualização de preços em {(next_run - now).total_seconds()/60:.1f} minutos (às {next_run.strftime('%H:%M')})")
+    print(f"[SCHEDULER] Próxima atualização de preços em {(next_run - now).total_seconds()/60:.1f} minutos (às {next_run.strftime('%H:%M')})")
+    
+    # Executa uma vez na inicialização se a última atualização for muito antiga (mais de 25 minutos)
+    if (now - last_price_update_time).total_seconds() > (25 * 60):  # 25 minutos
+        logger.info(f"[SCHEDULER] Executando atualização imediata (última foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos)")
+        print(f"[SCHEDULER] Executando atualização imediata (última foi há {(now - last_price_update_time).total_seconds() / 60:.1f} minutos)")
+        portfolio_update_job()
 
 def cleanup():
     """Função de limpeza chamada quando o processo termina"""

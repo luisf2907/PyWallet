@@ -3,12 +3,17 @@ import './PortfolioImportTable.css';
 import { portfolioAPI } from '../api/portfolioAPI';
 import { FractionedTickerNote } from '../components/common';
 
-// Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
+// Função para normalizar tickers fracionados (ex: VALE3F -> VALE3) e preservar formatos de crypto (como BTC-USD)
 const normalizeTicker = (ticker) => {
   if (!ticker) return '';
   
   // Remove espaços e converte para maiúsculas
   ticker = ticker.trim().toUpperCase();
+  
+  // Se contém hífen (formato de crypto como BTC-USD), preserva o ticker sem modificações
+  if (ticker.includes('-')) {
+    return ticker;
+  }
   
   // Detecta se é um ticker fracionado (termina com F)
   if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {
