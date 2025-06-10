@@ -1,5 +1,4 @@
-// filepath: c:\Users\w10\Documents\PyWallet\frontend-react\src\components\portfolio\CompactHoldingsTable.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,12 +11,25 @@ import {
   TableRow,
   Chip,
 } from '@mui/material';
+import './animation.css'; // Importando o arquivo de animação
 
 /**
  * Compact table component to display holdings/stocks in portfolio sidebar
  * Showing only Ticker, Quantity, Average Price and Current Value
  */
 const CompactHoldingsTable = ({ holdings = [] }) => {
+  // Estado para controlar a animação
+  const [animateIn, setAnimateIn] = useState(false);
+  
+  // Ativar animação após o componente montar
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimateIn(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   // Log para debug
   console.log('CompactHoldingsTable recebeu holdings:', holdings);
   
@@ -155,9 +167,9 @@ const CompactHoldingsTable = ({ holdings = [] }) => {
   
   const sortedHoldings = processedHoldings.sort((a, b) => 
     ((b.current_value || b.valor_atual || 0) - (a.current_value || a.valor_atual || 0))
-  );
-  return (
+  );  return (
     <Box
+      className={animateIn ? 'fade-in-animation' : ''}
       sx={{
         position: 'fixed',
         right: 65, // 15 pixels do fim da página (5px extra para garantir o espaçamento)
@@ -170,7 +182,8 @@ const CompactHoldingsTable = ({ holdings = [] }) => {
         zIndex: 10,
         maxHeight: '70vh',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        opacity: animateIn ? 1 : 0, // Inicia invisível e torna-se visível com a animação
       }}
     >
       <Typography

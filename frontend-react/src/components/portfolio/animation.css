@@ -1,0 +1,10 @@
+/* Animação suave de fade-in para a tabela de holdings */
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Classe que aplica a animação fade-in */
+.fade-in-animation {
+  animation: fadeIn 0.8s ease-in-out forwards;
+}

@@ -94,8 +94,7 @@ const Dividends = () => {
     // Update month details
     updateMonthDetails(normalized, year, selectedMonth);
   };
-  
-  // Update details for a specific month (order: most recent first)
+    // Update details for a specific month (order: alfabetical by ticker)
   const updateMonthDetails = (allDividends, year, month) => {
     const normalized = allDividends.map((div, idx) => ({
       ...div,
@@ -105,15 +104,14 @@ const Dividends = () => {
       id: div.id || `${div.ticker}-${div.date}`
     }));
     const monthDivs = normalized.filter(div => {
-      const divDate = new Date(div.payment_date || div.ex_date);
+      // Usar a data ex-dividendo para filtragem
+      const divDate = new Date(div.ex_date);
       return divDate.getFullYear() === parseInt(year) && 
              divDate.getMonth() === month - 1;
     });
-    // Sort by date (most recent first)
+    // Ordenar alfabeticamente por ticker
     monthDivs.sort((a, b) => {
-      const dateA = new Date(a.payment_date || a.ex_date);
-      const dateB = new Date(b.payment_date || b.ex_date);
-      return dateB - dateA;
+      return a.ticker.localeCompare(b.ticker);
     });
     setMonthDetails(monthDivs);
   };
@@ -186,13 +184,12 @@ const Dividends = () => {
     } finally {
       setUpdating(false);
     }
-  };
-    // Update month details when selected month changes
+  };    // Update month details when selected month changes or dividends data changes
   useEffect(() => {
     if (dividends.length > 0) {
       updateMonthDetails(dividends, selectedYear, selectedMonth);
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, dividends, selectedYear]);
   
   // Load data on component mount
   useEffect(() => {

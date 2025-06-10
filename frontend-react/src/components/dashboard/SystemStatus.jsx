@@ -15,17 +15,35 @@ function formatMinutesAgoValue(minutesAgo) {
   return `${diffHr.toFixed(1)}h atrás`;
 }
 
-const SystemStatus = () => {
+const SystemStatus = ({ onPriceUpdate }) => {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
   const fetchStatus = async () => {
     setLoading(true);
     setError('');
     try {
       const res = await utilsAPI.getSystemStatus();
       setStatus(res);
+      
+      // Verificar se há uma atualização de preço recente
+      if (res && res.price_update && !res.price_update.update_in_progress) {
+        const lastUpdateMinutes = res.price_update.last_update_minutes_ago || 0;
+        const lastUpdateTimeMs = Date.now() - (lastUpdateMinutes * 60 * 1000);
+        
+        // Se a última atualização for mais recente do que a que conhecemos
+        // E se for menos de 5 minutos atrás, acionar o callback
+        if (lastUpdateTimeMs > lastUpdateTime && lastUpdateMinutes < 5) {
+          setLastUpdateTime(lastUpdateTimeMs);
+          
+          // Chamar o callback apenas se fornecido
+          if (typeof onPriceUpdate === 'function') {
+            console.log('Notificando Dashboard sobre atualização de preços');
+            onPriceUpdate();
+          }
+        }
+      }
     } catch (err) {
       setError('Erro ao consultar status do sistema');
     } finally {

@@ -23,6 +23,7 @@ import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
 import PortfolioImportTable from '../components/PortfolioImportTable';
 import './FileUpload.css';
+import '../components/portfolio/animation.css';
 
 // Função para normalizar tickers fracionados (ex: VALE3F -> VALE3)
 const normalizeTicker = (ticker) => {
