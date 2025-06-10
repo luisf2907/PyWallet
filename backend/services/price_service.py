@@ -27,10 +27,16 @@ def test_yfinance_request():
     """
     try:
         # Testa uma requisição simples ao yfinance
-        yf.Ticker("AAPL").info
+        yf.Ticker("AAPL").info.get('regularMarketPrice')
+        print("[YFINANCE] Teste de conexão com yfinance bem-sucedido.")
         return True
     except Exception as e:
-        print(f"[YFINANCE] Erro ao testar yfinance: {e}")
+        err_msg = str(e)
+        print(f"[YFINANCE] Erro ao testar yfinance: {err_msg}")
+        # Só aciona rate limit se for erro de Too Many Requests
+        if 'too many requests' in err_msg.lower():
+            from utils.cache_utils import handle_rate_limit
+            handle_rate_limit()
         return False
 
 def get_price(ticker, formatar=True, force_yfinance=False):
@@ -204,7 +210,7 @@ def update_price_cache_for_all_tickers(app=None, num_workers=6):
         
     # Testa a conectividade com o yfinance
     if not test_yfinance_request():
-        handle_rate_limit()
+        # Não chama handle_rate_limit aqui, pois já foi tratado dentro de test_yfinance_request
         return result
         
     print('[PRICECACHE] Atualizando cache de preços dos ativos únicos...')
@@ -245,9 +251,15 @@ def update_price_cache_for_all_tickers(app=None, num_workers=6):
             sys.stdout.flush()
         except Exception as e:
             sys.stdout.flush()
-            if 'possibly delisted' in str(e) or 'no price data found' in str(e):
+            err_msg = str(e)
+            if 'Too Many Requests' in err_msg.lower():
+                from utils.cache_utils import handle_rate_limit
+                handle_rate_limit()
+                print(f"[PRICECACHE] Rate limit detectado: {err_msg}")
+                return result
+            if 'possibly delisted' in err_msg or 'no price data found' in err_msg:
                 # Processa os tickers que falharam para identificar os "possibly delisted"
-                error_msg = str(e)
+                error_msg = err_msg
                 if 'Failed download:' in error_msg:
                     lines = error_msg.split('\n')
                     for line in lines:
@@ -259,11 +271,10 @@ def update_price_cache_for_all_tickers(app=None, num_workers=6):
                                 ticker_with_error = line[start_idx:end_idx]
                                 print(f"[PRICECACHE] Ticker possivelmente delisted: {ticker_with_error}")
                                 result.delisted_tickers.append(ticker_with_error)
-                
                 print(f"[PRICECACHE] YFPricesMissingError (simulado): {e}")
-            elif 'HTTP Error' in str(e):
+            elif 'HTTP Error' in err_msg:
                 print(f"[PRICECACHE] HTTPError: {e}")
-            elif 'timed out' in str(e):
+            elif 'timed out' in err_msg:
                 print(f"[PRICECACHE] Timeout: {e}")
             else:
                 print(f"[PRICECACHE] Erro inesperado no download do yfinance: {e}")

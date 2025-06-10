@@ -81,14 +81,47 @@ def portfolio_summary():
     exch_rate = get_cached_dollar_rate()
     t4 = time.perf_counter()
 
+    # --- REFORÇO: Atualizar pricecache para todos os tickers do portfólio ---
+    from services.price_service import get_price
+    tz = pytz.timezone('America/Sao_Paulo')
+    tickers_to_update = []
+    for asset in portfolio_data:
+        ticker_orig = asset['ticker'].strip().upper()
+        final_ticker = format_ticker(ticker_orig)
+        if ticker_orig not in price_cache and final_ticker not in price_cache:
+            tickers_to_update.append((ticker_orig, final_ticker))
+    if tickers_to_update:
+        print(f"[PRICECACHE][FORCE] Atualizando pricecache para: {tickers_to_update}")
+        for ticker_orig, final_ticker in tickers_to_update:
+            for ticker in [ticker_orig, final_ticker]:
+                price = get_price(ticker)
+                if price is not None:
+                    price_cache[ticker] = price
+                    obj = PriceCache.query.filter_by(ticker=ticker).first()
+                    if obj:
+                        obj.price = price
+                        obj.last_updated = datetime.now(tz)
+                        db.session.commit()
+                    else:
+                        db.session.add(PriceCache(
+                            user_id=None,
+                            ticker=ticker,
+                            price=price,
+                            last_updated=datetime.now(tz)
+                        ))
+                        db.session.commit()
     # Busca preços faltantes
     if not is_rate_limited_flag:
         update_missing_prices(portfolio_data, price_cache)
     t5 = time.perf_counter()
 
+    # --- RECARREGA O PRICECACHE DO BANCO APÓS ATUALIZAÇÃO ---
+    price_cache = {p.ticker: p.price for p in PriceCache.query.all()}
+    t6 = time.perf_counter()
+
     # Calcula performance dos ativos
     assets_performance, summary = calculate_assets_performance(portfolio_data, price_cache, exch_rate)
-    t6 = time.perf_counter()
+    t7 = time.perf_counter()
 
     # Calcula evolução do portfólio
     evolution_list = []
@@ -120,7 +153,7 @@ def portfolio_summary():
     except Exception as e:
         print(f"[ERRO] Erro ao calcular evolução do portfólio: {e}")
         evolution_list = None
-    t7 = time.perf_counter()
+    t8 = time.perf_counter()
 
     # Monta resposta final
     response_data = {
@@ -131,7 +164,7 @@ def portfolio_summary():
     
     # Salva no cache
     set_evolution_cache(cache_key, response_data)
-    print(f"[PERF] portfolio_summary: total={t7-t0:.3f}s | leitura={t2-t1:.3f}s | precos={t4-t3:.3f}s | update_precos={t5-t4:.3f}s | ativos={t6-t5:.3f}s | evolucao={t7-t6:.3f}s | resposta={t7-t0:.3f}s")
+    print(f"[PERF] portfolio_summary: total={t8-t0:.3f}s | leitura={t2-t1:.3f}s | precos={t4-t3:.3f}s | update_precos={t5-t4:.3f}s | ativos={t7-t5:.3f}s | evolucao={t8-t7:.3f}s | resposta={t8-t0:.3f}s")
     return jsonify(response_data), 200
 
 def update_missing_prices(portfolio_data, price_cache):
@@ -191,7 +224,11 @@ def calculate_assets_performance(portfolio_data, price_cache, exch_rate):
         else:
             is_us = True
         # Busca preço apenas do cache do banco
-        current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
+        # Para brasileiros, prioriza .SA; para internacionais, mantém lógica antiga
+        if final_ticker.endswith('.SA'):
+            current_price_original = price_cache.get(final_ticker) or price_cache.get(ticker_orig) or avg_price
+        else:
+            current_price_original = price_cache.get(ticker_orig) or price_cache.get(final_ticker) or avg_price
         print(f"[DASHBOARD][PRICE] {ticker_orig} (final: {final_ticker}) -> {current_price_original}", file=sys.stdout)
         price_cache[ticker_orig] = current_price_original  # Atualiza cache local
         if is_us:
