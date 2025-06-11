@@ -61,58 +61,74 @@ const Dividends = () => {
       setLoading(false);
     }
   };
-  
-  // Process dividends for a specific year
+    // Process dividends for a specific year
   const processDividendsForYear = (allDividends, year) => {
     // Normalize all dividend fields for compatibility with backend
-    const normalized = allDividends.map((div, idx) => {
+    const normalized = allDividends.map((div) => {
       return {
         ...div,
         ex_date: div.date,
         payment_date: div.payment_date || div.date,
         type: div.event_type || div.type || 'Dividendo',
-        id: div.id || `${div.ticker}-${div.date}`
+        id: div.id || `${div.ticker}-${div.date}`,
+        date_obj: new Date(div.date)
       };
     });
-    // Filter dividends for the selected year
+    
+    // Filter dividends for the selected year using a consistent date field
     const yearDividends = normalized.filter(div => {
-      const divDate = new Date(div.payment_date || div.ex_date);
-      return divDate.getFullYear() === parseInt(year);
+      return div.date_obj.getFullYear() === parseInt(year);
     });
-    // Calculate monthly totals and year total considering only RECEIVED dividends
-    const monthTotals = Array(12).fill(0);
-    yearDividends.forEach(div => {
-      if (div.received) {
-        const divDate = new Date(div.payment_date || div.ex_date);
-        const month = divDate.getMonth();
-        monthTotals[month] += div.value || 0;
-      }
-    });
-    const total = monthTotals.reduce((sum, val) => sum + val, 0);
-    setMonthlyTotals(monthTotals);
-    setYearTotal(total);
+    
+    // Recalcular totais
+    recalculateTotals(yearDividends);
+    
     // Update month details
     updateMonthDetails(normalized, year, selectedMonth);
   };
-    // Update details for a specific month (order: alfabetical by ticker)
+  
+  // Função dedicada para recalcular totais de forma consistente
+  const recalculateTotals = (yearDividends) => {
+    const monthTotals = Array(12).fill(0);
+    
+    yearDividends.forEach(div => {
+      if (div.received !== false) { // Considerando received como true por padrão
+        const month = div.date_obj.getMonth();
+        monthTotals[month] += div.value || 0;
+      }
+    });
+    
+    const total = monthTotals.reduce((sum, val) => sum + val, 0);
+    setMonthlyTotals(monthTotals);
+    setYearTotal(total);
+  };
+  // Update details for a specific month (order: alfabetical by ticker)
   const updateMonthDetails = (allDividends, year, month) => {
-    const normalized = allDividends.map((div, idx) => ({
+    // Limpar os detalhes do mês anterior ao trocar de mês
+    setMonthDetails([]);
+    
+    const normalized = allDividends.map((div) => ({
       ...div,
+      // Normalizar campos para garantir consistência
       ex_date: div.date,
       payment_date: div.payment_date || div.date,
       type: div.event_type || div.type || 'Dividendo',
-      id: div.id || `${div.ticker}-${div.date}`
+      id: div.id || `${div.ticker}-${div.date}`,
+      // Criar um objeto Date consistente para filtragem
+      date_obj: new Date(div.date)
     }));
+    
+    // Aplicar filtro rigoroso por ano e mês usando sempre a mesma referência de data
     const monthDivs = normalized.filter(div => {
-      // Usar a data ex-dividendo para filtragem
-      const divDate = new Date(div.ex_date);
-      return divDate.getFullYear() === parseInt(year) && 
-             divDate.getMonth() === month - 1;
+      return div.date_obj.getFullYear() === parseInt(year) && 
+             div.date_obj.getMonth() === month - 1;
     });
+    
     // Ordenar alfabeticamente por ticker
     monthDivs.sort((a, b) => {
       return a.ticker.localeCompare(b.ticker);
     });
+    
     setMonthDetails(monthDivs);
   };
   
@@ -128,8 +144,7 @@ const Dividends = () => {
     setSelectedYear(year);
     processDividendsForYear(dividends, year);
   };
-  
-  // Update dividend receipt status
+    // Update dividend receipt status
   const updateReceiptStatus = async (dividendId, received) => {
     try {
       setUpdating(true);
@@ -138,43 +153,44 @@ const Dividends = () => {
         dividend = dividends.find(d => d.id === dividendId);
       }
       if (!dividend) throw new Error('Dividendo não encontrado');
+      
+      // Atualizar no backend
       await dividendAPI.updateReceiptStatus({
         ticker: dividend.ticker,
-        date: dividend.ex_date || dividend.date,
+        date: dividend.date,  // Usar sempre date para consistência
         received
       });
-      // Atualizar localmente (imutável)
+      
+      // 1. Atualizar o dataset principal
       const newDividends = dividends.map(d =>
         d.id === dividendId ? { ...d, received } : d
       );
       setDividends(newDividends);
-      // Atualizar os detalhes do mês manualmente para refletir o novo status
+      
+      // 2. Atualizar os detalhes do mês atual para refletir o novo status
       const newMonthDetails = monthDetails.map(d =>
         d.id === dividendId ? { ...d, received } : d
       );
       setMonthDetails(newMonthDetails);
-      // Atualizar totais do ano (sem recarregar tudo)
+      
+      // 3. Normalizar e recalcular totais imediatamente
       const normalized = newDividends.map((div) => ({
         ...div,
         ex_date: div.date,
         payment_date: div.payment_date || div.date,
         type: div.event_type || div.type || 'Dividendo',
-        id: div.id || `${div.ticker}-${div.date}`
+        id: div.id || `${div.ticker}-${div.date}`,
+        date_obj: new Date(div.date)
       }));
-      const yearDividends = normalized.filter(div => {
-        const divDate = new Date(div.payment_date || div.ex_date);
-        return divDate.getFullYear() === parseInt(selectedYear);
-      });
-      const monthTotals = Array(12).fill(0);
-      yearDividends.forEach(div => {
-        if (div.received) {
-          const divDate = new Date(div.payment_date || div.ex_date);
-          const month = divDate.getMonth();
-          monthTotals[month] += div.value || 0;
-        }
-      });
-      setMonthlyTotals(monthTotals);
-      setYearTotal(monthTotals.reduce((sum, val) => sum + val, 0));
+      
+      // Filtrar para o ano atual
+      const yearDividends = normalized.filter(div => 
+        div.date_obj.getFullYear() === parseInt(selectedYear)
+      );
+      
+      // Recalcular totais para atualizar UI imediatamente
+      recalculateTotals(yearDividends);
+      
       showAlert(
         `Provento ${received ? 'marcado como recebido' : 'marcado como não recebido'}`,
         'success'
@@ -184,12 +200,29 @@ const Dividends = () => {
     } finally {
       setUpdating(false);
     }
-  };    // Update month details when selected month changes or dividends data changes
+  };  // Update month details when selected month changes
   useEffect(() => {
     if (dividends.length > 0) {
-      updateMonthDetails(dividends, selectedYear, selectedMonth);
+      // Limpar o estado antes de atualizar para evitar persistência incorreta
+      setMonthDetails([]);
+      // Normalizar dados e aplicar filtragem rigorosa
+      const normalized = dividends.map((div) => ({
+        ...div,
+        ex_date: div.date,
+        payment_date: div.payment_date || div.date,
+        type: div.event_type || div.type || 'Dividendo',
+        id: div.id || `${div.ticker}-${div.date}`,
+        date_obj: new Date(div.date)
+      }));
+      updateMonthDetails(normalized, selectedYear, selectedMonth);
     }
-  }, [selectedMonth, dividends, selectedYear]);
+  }, [selectedMonth]);
+    // Reprocessar dados quando o ano ou dividends mudam
+  useEffect(() => {
+    if (dividends.length > 0) {
+      processDividendsForYear(dividends, selectedYear);
+    }
+  }, [selectedYear, dividends]);
   
   // Load data on component mount
   useEffect(() => {
@@ -317,18 +350,27 @@ const Dividends = () => {
                           <TableCell align="center">Recebimento</TableCell>
                         </TableRow>
                       </TableHead>
-                      <TableBody>
-                        {monthDetails.map((dividend) => {
+                      <TableBody>                        {monthDetails.map((dividend) => {
                           let statusLabel, statusColor;
-                          if (dividend.received === true) {
+                          if (dividend.received !== false) {
                             statusLabel = 'Recebido';
                             statusColor = 'success';
                           } else {
                             statusLabel = 'Não Recebido';
                             statusColor = 'error';
                           }
+                          
+                          // Estilo para linhas de dividendos não recebidos
+                          const rowStyle = dividend.received === false ? {
+                            opacity: 0.65,
+                            color: 'text.disabled'
+                          } : {};
+                          
                           return (
-                            <TableRow key={dividend.id}>
+                            <TableRow 
+                              key={dividend.id} 
+                              sx={rowStyle}
+                            >
                               <TableCell align="center">
                                 <Typography variant="body2" fontWeight="500">
                                   {dividend.ticker}
@@ -342,20 +384,31 @@ const Dividends = () => {
                                   variant="outlined"
                                   sx={{ minWidth: 90, justifyContent: 'center' }}
                                 />
-                              </TableCell>
-                              <TableCell align="center">
-                                {dividend.value_per_share ? `R$ ${dividend.value_per_share.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : (dividend.value && dividend.quantity ? `R$ ${(dividend.value / dividend.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-')}
+                              </TableCell>                              <TableCell align="center">
+                                {(() => {
+                                  // Cálculo seguro do valor unitário
+                                  if (dividend.value_per_share) {
+                                    return formatCurrency(dividend.value_per_share);
+                                  } else if (dividend.value && dividend.quantity && dividend.quantity > 0) {
+                                    return formatCurrency(dividend.value / dividend.quantity);
+                                  } else {
+                                    return '-';
+                                  }
+                                })()}
                               </TableCell>
                               <TableCell align="center">
                                 {dividend.quantity ? dividend.quantity : '-'}
-                              </TableCell>
-                              <TableCell align="center">
+                              </TableCell>                              <TableCell align="center">
                                 <Chip
-                                  label={
-                                    dividend.value ? `R$ ${dividend.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'
-                                  }
+                                  label={dividend.value ? formatCurrency(dividend.value) : '-'}
                                   size="small"
-                                  sx={{ backgroundColor: '#22c55e', color: '#111', fontWeight: 700, minWidth: 90, justifyContent: 'center' }}
+                                  sx={{ 
+                                    backgroundColor: dividend.received === false ? '#aaaaaa' : '#22c55e', 
+                                    color: '#111', 
+                                    fontWeight: 700, 
+                                    minWidth: 90, 
+                                    justifyContent: 'center' 
+                                  }}
                                 />
                               </TableCell>
                               <TableCell align="center">
