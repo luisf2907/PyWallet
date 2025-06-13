@@ -71,7 +71,8 @@ const Dividends = () => {
         payment_date: div.payment_date || div.date,
         type: div.event_type || div.type || 'Dividendo',
         id: div.id || `${div.ticker}-${div.date}`,
-        date_obj: new Date(div.date)
+        date_obj: new Date(div.date),
+        received: !!div.received // Forçar booleano
       };
     });
     
@@ -104,9 +105,7 @@ const Dividends = () => {
   };
   // Update details for a specific month (order: alfabetical by ticker)
   const updateMonthDetails = (allDividends, year, month) => {
-    // Limpar os detalhes do mês anterior ao trocar de mês
     setMonthDetails([]);
-    
     const normalized = allDividends.map((div) => ({
       ...div,
       // Normalizar campos para garantir consistência
@@ -115,7 +114,8 @@ const Dividends = () => {
       type: div.event_type || div.type || 'Dividendo',
       id: div.id || `${div.ticker}-${div.date}`,
       // Criar um objeto Date consistente para filtragem
-      date_obj: new Date(div.date)
+      date_obj: new Date(div.date),
+      received: !!div.received // Forçar booleano
     }));
     
     // Aplicar filtro rigoroso por ano e mês usando sempre a mesma referência de data
@@ -135,6 +135,7 @@ const Dividends = () => {
   // Handle month selection from chart
   const handleMonthSelect = (month) => {
     setSelectedMonth(month);
+    // Usar sempre o array mais atualizado de dividends
     updateMonthDetails(dividends, selectedYear, month);
   };
   
@@ -157,38 +158,32 @@ const Dividends = () => {
       // Atualizar no backend
       await dividendAPI.updateReceiptStatus({
         ticker: dividend.ticker,
-        date: dividend.date,  // Usar sempre date para consistência
-        received
+        date: dividend.date,
+        received: !!received
       });
       
-      // 1. Atualizar o dataset principal
+      // Atualizar o dataset principal
       const newDividends = dividends.map(d =>
-        d.id === dividendId ? { ...d, received } : d
+        d.id === dividendId ? { ...d, received: !!received } : d
       );
       setDividends(newDividends);
-      
-      // 2. Atualizar os detalhes do mês atual para refletir o novo status
-      const newMonthDetails = monthDetails.map(d =>
-        d.id === dividendId ? { ...d, received } : d
-      );
-      setMonthDetails(newMonthDetails);
-      
-      // 3. Normalizar e recalcular totais imediatamente
+      // Atualizar os detalhes do mês atual para refletir o novo status
+      updateMonthDetails(newDividends, selectedYear, selectedMonth);
+      // Normalizar e recalcular totais imediatamente
       const normalized = newDividends.map((div) => ({
         ...div,
         ex_date: div.date,
         payment_date: div.payment_date || div.date,
         type: div.event_type || div.type || 'Dividendo',
         id: div.id || `${div.ticker}-${div.date}`,
-        date_obj: new Date(div.date)
+        date_obj: new Date(div.date),
+        received: !!div.received // Forçar booleano
       }));
       
-      // Filtrar para o ano atual
       const yearDividends = normalized.filter(div => 
         div.date_obj.getFullYear() === parseInt(selectedYear)
       );
       
-      // Recalcular totais para atualizar UI imediatamente
       recalculateTotals(yearDividends);
       
       showAlert(
@@ -203,16 +198,15 @@ const Dividends = () => {
   };  // Update month details when selected month changes
   useEffect(() => {
     if (dividends.length > 0) {
-      // Limpar o estado antes de atualizar para evitar persistência incorreta
       setMonthDetails([]);
-      // Normalizar dados e aplicar filtragem rigorosa
       const normalized = dividends.map((div) => ({
         ...div,
         ex_date: div.date,
         payment_date: div.payment_date || div.date,
         type: div.event_type || div.type || 'Dividendo',
         id: div.id || `${div.ticker}-${div.date}`,
-        date_obj: new Date(div.date)
+        date_obj: new Date(div.date),
+        received: !!div.received // Forçar booleano
       }));
       updateMonthDetails(normalized, selectedYear, selectedMonth);
     }

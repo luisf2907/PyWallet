@@ -27,7 +27,8 @@ def test_yfinance_request():
     """
     try:
         # Testa uma requisição simples ao yfinance
-        yf.Ticker("AAPL").info.get('regularMarketPrice')
+        yf.Ticker("AAPL").history(period="1d")
+        # Se a requisição passar, significa que a conexão está funcionando
         print("[YFINANCE] Teste de conexão com yfinance bem-sucedido.")
         return True
     except Exception as e:
@@ -68,7 +69,21 @@ def get_price(ticker, formatar=True, force_yfinance=False):
     tz = pytz.timezone('America/Sao_Paulo')
     try:
         ticker_yf = yf.Ticker(ticker_formatted)
-        price = ticker_yf.info.get('currentPrice') or ticker_yf.info.get('regularMarketPrice')
+        # Primeiro tenta buscar pelo histórico
+        hist = ticker_yf.history(period="5d")
+        price = None
+        if not hist.empty:
+            try:
+                price = float(hist['Close'].dropna().iloc[-1])
+            except Exception as e:
+                print(f"[get_price] Erro ao acessar preço de fechamento para {ticker}: {e}")
+        # Se não conseguiu via history, tenta buscar pelo info
+        if price is None:
+            try:
+                ticker_info = ticker_yf.info
+                price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
+            except Exception as e:
+                print(f"[get_price] Erro ao acessar info do yfinance para {ticker}: {e}")
         if price is not None:
             with pricecache_write_lock:
                 if obj:
@@ -83,24 +98,6 @@ def get_price(ticker, formatar=True, force_yfinance=False):
                     ))
                 db.session.commit()
             return price
-        else:
-            # Se não conseguiu via info, tenta buscar o último preço de fechamento
-            hist = ticker_yf.history(period="5d")
-            if not hist.empty:
-                price = float(hist['Close'].dropna().iloc[-1])
-                with pricecache_write_lock:
-                    if obj:
-                        obj.price = price
-                        obj.last_updated = datetime.now(tz)
-                    else:
-                        db.session.add(PriceCache(
-                            user_id=None,
-                            ticker=ticker_formatted,
-                            price=price,
-                            last_updated=datetime.now(tz)
-                        ))
-                    db.session.commit()
-                return price
     except Exception as e:
         print(f"[get_price] Erro ao buscar preço do yfinance para {ticker}: {e}")
     # Se falhar, retorna o valor do cache se houver
@@ -343,17 +340,31 @@ def process_yfinance_results(df, tickers, result=None, app=None):
                     if result and ticker in result.delisted_tickers:
                         continue
                     price = None
+                    # Primeiro tenta buscar pelo histórico
                     try:
-                        ticker_info = yf.Ticker(ticker).info
-                        price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
-                        if price:
-                            print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
+                        ticker_yf = yf.Ticker(ticker)
+                        hist = ticker_yf.history(period="5d")
+                        if not hist.empty:
+                            try:
+                                price = float(hist['Close'].dropna().iloc[-1])
+                                print(f"[PRICECACHE] Preço histórico usado para {ticker}: {price}")
+                            except Exception as e:
+                                print(f"[PRICECACHE] Erro ao acessar preço de fechamento para {ticker}: {e}")
+                        # Se não conseguiu via history, tenta buscar pelo info
+                        if price is None:
+                            try:
+                                ticker_info = ticker_yf.info
+                                price = ticker_info.get('currentPrice') or ticker_info.get('regularMarketPrice')
+                                if price:
+                                    print(f"[PRICECACHE] Preço em tempo real obtido para {ticker}: {price}")
+                            except Exception as e:
+                                print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
+                                if 'possibly delisted' in str(e).lower() and result is not None:
+                                    print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
+                                    local_delisted.append(ticker)
+                                    continue
                     except Exception as e:
-                        print(f"[PRICECACHE] Erro ao buscar preço em tempo real para {ticker}: {e}")
-                        if 'possibly delisted' in str(e).lower() and result is not None:
-                            print(f"[PRICECACHE] Ticker {ticker} possivelmente delisted (via info)")
-                            local_delisted.append(ticker)
-                            continue
+                        print(f"[PRICECACHE] Erro ao buscar preço do yfinance para {ticker}: {e}")
                     if price is None and df is not None:
                         close_series = None
                         if len(tickers) == 1:

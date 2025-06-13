@@ -3,7 +3,7 @@ Flask-Cors>=3.0.10
 Flask-SQLAlchemy>=2.5.1
 pandas>=1.5.0
 numpy>=1.23.0
-yfinance>=0.2.59
+yfinance
 openpyxl==3.1.2
 werkzeug==2.2.3
 requests>=2.31.0

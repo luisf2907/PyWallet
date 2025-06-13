@@ -30,6 +30,7 @@ import { useAlert } from '../hooks/useAlert';
 import useDeviceType from '../hooks/useDeviceType'; // Corrected: Import default export
 import './Dashboard.css';
 import SystemStatus from '../components/dashboard/SystemStatus';
+import SouthEastIcon from '@mui/icons-material/SouthEast';
 
 const Dashboard = () => {
   const deviceType = useDeviceType();
@@ -344,7 +345,12 @@ const Dashboard = () => {
                       fontWeight="medium"
                       sx={{ display: 'flex', alignItems: 'center' }}
                     >
-                      <TrendingUpIcon fontSize="small" sx={{ mr: 0.5 }} />                      {portfolioData.summary.worst_asset_return_pct ? 
+                      {portfolioData.summary.worst_asset_return_pct < 0 ? (
+                        <SouthEastIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      ) : (
+                        <TrendingUpIcon fontSize="small" sx={{ mr: 0.5 }} />
+                      )}
+                      {portfolioData.summary.worst_asset_return_pct ? 
                         portfolioData.summary.worst_asset_return_pct.toFixed(2) : '0,00'}%
                     </Typography>
                   </Paper>
