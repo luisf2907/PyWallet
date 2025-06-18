@@ -5,7 +5,9 @@
 - Node.js (https://nodejs.org/) (para rodar o frontend React)
 - (Opcional, mas recomendado) Git
 
-## Instalação e Execução (Windows)
+## Instalação e Execução
+
+### No Windows
 
 1. **Clone o repositório** (em qualquer pasta):
    ```powershell
@@ -38,11 +40,36 @@
 6. **Inicie o sistema (backend + frontend):**
    ```powershell
    .\run_dev.bat
-   ```
-   ou
+   ```   ou
    ```powershell
    .\run_total.bat
    ```
+
+- O backend estará em http://localhost:5000
+- O frontend React estará em http://localhost:3000
+
+### No Linux (Ubuntu/Debian/Fedora)
+
+1. **Clone o repositório** (em qualquer pasta):
+   ```bash
+   git clone <url-do-repositorio>
+   cd pywallet3
+   ```
+
+2. **Execute o script único de inicialização**:
+   ```bash
+   chmod +x run_dev.sh
+   ./run_dev.sh
+   ```
+   
+Este script único faz automaticamente:
+- Configura permissões necessárias
+- Cria e ativa o ambiente virtual Python
+- Instala dependências do backend
+- Verifica a instalação do Node.js
+- Instala dependências do frontend React (se Node.js estiver disponível)
+- Inicia o backend e o frontend
+- Gerencia o encerramento limpo dos processos
 
 - O backend estará em http://localhost:5000
 - O frontend React estará em http://localhost:3000

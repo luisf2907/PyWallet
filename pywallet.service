@@ -1,0 +1,16 @@
+[Unit]
+Description=PyWallet Application Service
+After=network.target tailscaled.service
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/caminho/para/seu/PyWallet
+ExecStartPre=/bin/bash -c "chmod +x run_dev.sh"
+ExecStart=/bin/bash -c "./run_dev.sh"
+ExecStartPost=/usr/bin/tailscale funnel --bg 3000
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
