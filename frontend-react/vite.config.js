@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],  server: {
     host: '0.0.0.0', // Adicionar esta linha
-    https: true, // Habilitar HTTPS no Vite
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
