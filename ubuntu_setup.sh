@@ -22,13 +22,14 @@ apt install -y python3 python3-pip python3-venv python3-dev build-essential libs
 echo "Verificando versão do Python:"
 python3 --version
 
-# Instala o Node.js e npm
-echo "Instalando Node.js e npm..."
-apt install -y nodejs npm
+# Instala o Node.js usando NodeSource para versão mais recente
+echo "Instalando Node.js v20.x (LTS)..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
 
 # Verifica as versões
 echo "Verificando versões do Node.js e npm:"
-nodejs --version
+node --version
 npm --version
 
 # Instala o Tailscale se não estiver instalado

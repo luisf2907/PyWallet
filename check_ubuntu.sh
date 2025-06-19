@@ -32,10 +32,17 @@ echo ""
 # Verifica o Node.js
 echo "3. Verificando Node.js:"
 if command -v node &> /dev/null; then
-    node --version
-    echo "✓ Node.js encontrado"
+    NODE_VERSION=$(node -v)
+    NODE_MAJOR=$(echo $NODE_VERSION | cut -d'v' -f2 | cut -d'.' -f1)
+    echo "Node.js versão: $NODE_VERSION"
+    
+    if [ "$NODE_MAJOR" -ge 16 ]; then
+        echo "✓ Node.js v$NODE_MAJOR encontrado (compatível com Vite)"
+    else
+        echo "⚠️ Node.js v$NODE_MAJOR é muito antigo para o Vite. Execute 'sudo ./fix_nodejs.sh'"
+    fi
 else
-    echo "⚠️ Node.js não encontrado. Instale com 'sudo apt install nodejs npm'"
+    echo "⚠️ Node.js não encontrado. Execute 'sudo ./fix_nodejs.sh' para instalar"
 fi
 echo ""
 

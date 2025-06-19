@@ -34,14 +34,23 @@ fi
 echo "Verificando/instalando dependências do backend..."
 pip install -r requirements.txt
 
-# Verifica se o Node.js está instalado
+# Verifica se o Node.js está instalado e se a versão é compatível
 if ! command -v node &> /dev/null; then
     echo "AVISO: Node.js não encontrado. Algumas funcionalidades podem não funcionar corretamente."
-    echo "Por favor, instale o Node.js usando o gerenciador de pacotes da sua distribuição:"
-    echo "  Ubuntu/Debian: sudo apt update && sudo apt install nodejs npm"
-    echo "  Fedora: sudo dnf install nodejs npm"
-    echo "  Arch Linux: sudo pacman -S nodejs npm"
+    echo "Por favor, instale o Node.js v16+ usando o NodeSource:"
+    echo "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -"
+    echo "  sudo apt install -y nodejs"
     read -p "Pressione ENTER para continuar mesmo assim ou Ctrl+C para cancelar"
+else
+    NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+    if [ "$NODE_VERSION" -lt 16 ]; then
+        echo "AVISO: A versão do Node.js ($NODE_VERSION) é muito antiga para o Vite."
+        echo "O Vite requer Node.js v16+ para funcionar corretamente."
+        echo "Por favor, atualize o Node.js usando o NodeSource:"
+        echo "  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -"
+        echo "  sudo apt install -y nodejs"
+        read -p "Pressione ENTER para continuar mesmo assim (o frontend pode falhar) ou Ctrl+C para cancelar"
+    fi
 fi
 
 # Instalar dependências do frontend React
