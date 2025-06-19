@@ -2,9 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
-  server: {
+  plugins: [react()],  server: {
     host: '0.0.0.0', // Adicionar esta linha
+    https: true, // Habilitar HTTPS no Vite
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -13,7 +13,7 @@ export default defineConfig({
       },
     },
     port: 3000,
-    allowedHosts: ['desktop-dccjd16.hair-bull.ts.net', 'prophit.hair-bull.ts.net'], // Adicionar esta linha
+    allowedHosts: ['desktop-dccjd16.hair-bull.ts.net', 'prophit.hair-bull.ts.net', 'testphit.hair-bull.ts.net'], // Adicionar esta linha
   },
   resolve: {
     alias: {
