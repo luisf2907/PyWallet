@@ -1873,3 +1873,5 @@ Buscando preços para ativos não presentes no cache: ['CMIG4', 'WEGE3']
 [INFO] Código atualizado pela última vez em: 2025-06-18 21:00:22
 [INFO] Código atualizado pela última vez em: 2025-06-18 21:00:22
 [INFO] Código atualizado pela última vez em: 2025-06-18 21:00:22
+[INFO] Código atualizado pela última vez em: 2025-06-18 21:00:22
+[INFO] Código atualizado pela última vez em: 2025-06-18 21:00:22
