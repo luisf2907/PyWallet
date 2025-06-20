@@ -1,0 +1,9 @@
+# Configuração do Cloudflare Tunnel
+# Valores reais inseridos abaixo
+tunnel: c23152f2-48f6-4a8c-9d3c-7b3e6e5ca01b
+credentials-file: /home/prophit/.cloudflared/c23152f2-48f6-4a8c-9d3c-7b3e6e5ca01b.json
+
+ingress:
+  - hostname: prophit-app.com
+    service: http://localhost:3000
+  - service: http_status:404

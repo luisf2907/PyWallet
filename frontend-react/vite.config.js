@@ -12,7 +12,7 @@ export default defineConfig({
       },
     },
     port: 3000,
-    allowedHosts: ['desktop-dccjd16.hair-bull.ts.net', 'prophit.hair-bull.ts.net', 'testphit.hair-bull.ts.net'], // Adicionar esta linha
+    allowedHosts: ['desktop-dccjd16.hair-bull.ts.net', 'prophit.hair-bull.ts.net', 'testphit.hair-bull.ts.net', 'prophit-app.com'], // Adicionar esta linha
   },
   resolve: {
     alias: {

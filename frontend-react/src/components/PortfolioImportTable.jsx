@@ -54,46 +54,57 @@ export default function PortfolioImportTable({ onSave }) {
     }
   };
   
-  // Validação de todos os tickers preenchidos
+  // Controle de quais tickers já foram validados
+  const [validatedTickers, setValidatedTickers] = useState({});
+  const [lastModifiedId, setLastModifiedId] = useState(null);
+
+  // Validação dos tickers - apenas o que foi modificado
   useEffect(() => {
-    // Não queremos fazer validações à toa - apenas para tickers modificados
-    const validateAll = async () => {
-      const newValid = { ...tickersValid };
-      const pendingValidations = rows.filter(
-        row => row.ticker && 
-        row.ticker.trim() !== '' && 
-        (tickersValid[row.id] === undefined || 
-         !('_lastValidated' in newValid) || 
-         newValid._lastValidated !== row.ticker.trim().toUpperCase())
-      );
+    if (lastModifiedId === null) return;
+    
+    const validateModifiedTicker = async () => {
+      const row = rows.find(r => r.id === lastModifiedId);
+      if (!row || !row.ticker || row.ticker.trim() === '') return;
       
-      if (pendingValidations.length === 0) return;
+      const ticker = row.ticker.trim().toUpperCase();
       
-      // Para cada ticker que precisa ser validado
-      const promises = pendingValidations.map(async (row) => {
-        const upperTicker = row.ticker.trim().toUpperCase();
-        // Marcar com "validando" temporariamente
-        newValid[row.id] = 'validating';
-        setTickersValid({...newValid});
-        
-        // Fazer a validação real
-        const isValid = await validateTicker(upperTicker);
-        newValid[row.id] = isValid;
-        newValid._lastValidated = upperTicker;
-      });
+      // Verifica se este ticker já foi validado antes
+      if (validatedTickers[ticker] !== undefined) {
+        setTickersValid(prev => ({
+          ...prev,
+          [lastModifiedId]: validatedTickers[ticker]
+        }));
+        return;
+      }
       
-      await Promise.all(promises);
-      setTickersValid({...newValid});
+      // Marcar como "validando" temporariamente
+      setTickersValid(prev => ({
+        ...prev, 
+        [lastModifiedId]: 'validating'
+      }));
+      
+      // Fazer a validação
+      const isValid = await validateTicker(ticker);
+      
+      // Atualizar os estados
+      setValidatedTickers(prev => ({
+        ...prev,
+        [ticker]: isValid
+      }));
+      
+      setTickersValid(prev => ({
+        ...prev,
+        [lastModifiedId]: isValid
+      }));
     };
     
     // Debounce para não sobrecarregar a API
     const timeoutId = setTimeout(() => {
-      validateAll();
+      validateModifiedTicker();
     }, 400);
     
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line
-  }, [rows]);
+  }, [lastModifiedId, rows, validatedTickers]);
 
   // Adiciona linhas extras conforme preenchimento
   useEffect(() => {
@@ -136,6 +147,11 @@ export default function PortfolioImportTable({ onSave }) {
         row.id === id ? { ...row, [field]: value } : row
       )
     );
+    
+    // Se o campo modificado for o ticker, marca para validação
+    if (field === 'ticker') {
+      setLastModifiedId(id);
+    }
   };
   
   // Handler para seleção de texto quando um input recebe foco
@@ -253,6 +269,7 @@ export default function PortfolioImportTable({ onSave }) {
     // Copiar o estado atual das linhas
     setRows(prevRows => {
       const newRows = [...prevRows];
+      let lastTickerRowId = null;
       
       // Preencher com os dados colados
       rows.forEach((rowStr, rowOffset) => {
@@ -268,6 +285,7 @@ export default function PortfolioImportTable({ onSave }) {
             // Se for o campo ticker, normaliza os tickers fracionados
             if (field === 'ticker' && cellValue) {
               cellValue = normalizeTicker(cellValue);
+              lastTickerRowId = newRows[rowIdx].id;
             }
             
             newRows[rowIdx] = {
@@ -277,6 +295,14 @@ export default function PortfolioImportTable({ onSave }) {
           }
         });
       });
+      
+      // Marca o último ticker modificado para validação
+      if (lastTickerRowId !== null) {
+        // Colocamos em um setTimeout para garantir que o estado das linhas seja atualizado primeiro
+        setTimeout(() => {
+          setLastModifiedId(lastTickerRowId);
+        }, 0);
+      }
       
       return newRows;
     });
@@ -333,20 +359,9 @@ export default function PortfolioImportTable({ onSave }) {
         if (overwriteMode) {
           response = await portfolioAPI.overwritePortfolio({ ativos });
         } else {
-          // No modo Aporte/Retirada, processar um por um para maior segurança
-          const promises = ativos.map(async (ativo) => {
-            const tipo = ativo.quantidade > 0 ? 'compra' : 'venda';
-            const quantidade_abs = Math.abs(ativo.quantidade);
-            
-            return portfolioAPI.updateEmpresa({
-              codigo: ativo.ticker, // ticker já está normalizado no mapeamento acima
-              preco: ativo.preco,
-              quantidade: quantidade_abs,
-              tipo_operacao: tipo
-            });
-          });
-            await Promise.all(promises);
-          response = { message: `${ativos.length} operações processadas com sucesso` };
+          // No modo Aporte/Retirada, processar em lote para mais eficiência
+          // Antes processava um por um, agora processa em uma única chamada de API
+          response = await portfolioAPI.batchUpdatePortfolio({ ativos });
         }
         
         console.log('Resposta da API:', response);

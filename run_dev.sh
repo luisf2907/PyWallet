@@ -67,45 +67,97 @@ else
 fi
 cd ..
 
-# Iniciar o backend em background
+# Iniciar o backend em uma nova aba do terminal
 echo "Iniciando o backend..."
-python run.py &
-BACKEND_PID=$!
+SCRIPT_DIR="$(pwd)"
 
-# Espera o backend subir
-sleep 5
-
-# Iniciar o frontend React em background
-echo "Iniciando o frontend React..."
-cd frontend-react
-if command -v npm &> /dev/null; then
-    npm run dev &
-    FRONTEND_PID=$!
+# Determinar qual gerenciador de terminal usar
+if command -v gnome-terminal &> /dev/null; then
+    # Gnome Terminal (Ubuntu, outros com GNOME)
+    gnome-terminal --tab --title="PyWallet Backend" --working-directory="$SCRIPT_DIR" -- bash -c "source venv/bin/activate && python run.py; exec bash"
+    
+    # Espera o backend subir
+    sleep 5
+    
+    # Iniciar o frontend React em uma nova aba
+    echo "Iniciando o frontend React..."
+    if command -v npm &> /dev/null; then
+        gnome-terminal --tab --title="PyWallet Frontend" --working-directory="$SCRIPT_DIR/frontend-react" -- bash -c "npm run dev; exec bash"
+    else
+        echo "AVISO: npm não encontrado. O frontend React não será iniciado."
+    fi
+elif command -v konsole &> /dev/null; then
+    # KDE Konsole
+    konsole --new-tab -p tabtitle="PyWallet Backend" --workdir="$SCRIPT_DIR" -e bash -c "source venv/bin/activate && python run.py; exec bash" &
+    
+    # Espera o backend subir
+    sleep 5
+    
+    # Iniciar o frontend React em uma nova aba
+    echo "Iniciando o frontend React..."
+    if command -v npm &> /dev/null; then
+        konsole --new-tab -p tabtitle="PyWallet Frontend" --workdir="$SCRIPT_DIR/frontend-react" -e bash -c "npm run dev; exec bash" &
+    else
+        echo "AVISO: npm não encontrado. O frontend React não será iniciado."
+    fi
+elif command -v xterm &> /dev/null; then
+    # xterm (fallback genérico)
+    xterm -T "PyWallet Backend" -e "cd '$SCRIPT_DIR' && source venv/bin/activate && python run.py; bash" &
+    
+    # Espera o backend subir
+    sleep 5
+    
+    # Iniciar o frontend React em uma nova aba
+    echo "Iniciando o frontend React..."
+    if command -v npm &> /dev/null; then
+        xterm -T "PyWallet Frontend" -e "cd '$SCRIPT_DIR/frontend-react' && npm run dev; bash" &
+    else
+        echo "AVISO: npm não encontrado. O frontend React não será iniciado."
+    fi
 else
-    echo "AVISO: npm não encontrado. O frontend React não será iniciado."
-    FRONTEND_PID=""
+    echo "Nenhum terminal compatível encontrado para abrir abas separadas."
+    echo "Executando serviços no terminal atual (sem abas separadas)..."
+    
+    # Fallback para o método original
+    python run.py &
+    BACKEND_PID=$!
+    
+    # Espera o backend subir
+    sleep 5
+    
+    # Iniciar o frontend React em background
+    cd frontend-react
+    if command -v npm &> /dev/null; then
+        npm run dev &
+        FRONTEND_PID=$!
+    else
+        echo "AVISO: npm não encontrado. O frontend React não será iniciado."
+        FRONTEND_PID=""
+    fi
+    cd ..
+    
+    # Função para limpar os processos quando o script for encerrado
+    cleanup() {
+        echo "Parando serviços..."
+        kill $BACKEND_PID 2>/dev/null
+        if [ ! -z "$FRONTEND_PID" ]; then
+            kill $FRONTEND_PID 2>/dev/null
+        fi
+        exit 0
+    }
+    
+    # Configura a função cleanup para ser chamada quando o script receber SIGINT (Ctrl+C)
+    trap cleanup SIGINT
+    
+    # Mantém o script rodando
+    wait
 fi
-cd ..
 
+# Mensagem final informativa
 echo ""
-echo "Servidores de desenvolvimento rodando!"
+echo "Servidores de desenvolvimento iniciados!"
 echo "Backend: http://localhost:5000"
 echo "Frontend: http://localhost:3000"
 echo ""
-echo "Pressione Ctrl+C para parar todos os serviços"
-
-# Função para limpar os processos quando o script for encerrado
-cleanup() {
-    echo "Parando serviços..."
-    kill $BACKEND_PID 2>/dev/null
-    if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null
-    fi
-    exit 0
-}
-
-# Configura a função cleanup para ser chamada quando o script receber SIGINT (Ctrl+C)
-trap cleanup SIGINT
-
-# Mantém o script rodando
-wait
+echo "Os servidores estão rodando em abas separadas do terminal."
+echo "Você pode fechar este terminal se desejar."

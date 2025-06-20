@@ -62,6 +62,12 @@ export const portfolioAPI = {
         return { isValid: false };
       }
       
+      // Tratamento especial para FIIs (terminados em 11)
+      if (ticker.match(/^[A-Z0-9]{4}11$/)) {
+        console.log(`Ticker de FII detectado: ${ticker}, considerando válido`);
+        return { isValid: true };
+      }
+      
       // Se for um ticker fracionado (termina com F), normaliza antes de validar
       let normalizedTicker = ticker;
       if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {

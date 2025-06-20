@@ -304,9 +304,16 @@ def register_transaction(user_id, tipo, ticker, preco, quantidade):
         import yfinance as yf
         from utils.ticker_utils import format_ticker
         yf_ticker = format_ticker(ticker)
-        tinfo = yf.Ticker(yf_ticker).info
-        if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
-            return {'error': 'Ticker não encontrado'}, 400
+        
+        # Tratamento especial para FIIs (ex: VGHF11) que podem ter problemas de validação
+        if ticker.endswith('11') and len(ticker) == 6:
+            print(f"Ticker de FII detectado: {ticker}, permitindo sem validação adicional")
+            # Assume que é um FII válido e pula a validação online que pode falhar
+            pass
+        else:
+            tinfo = yf.Ticker(yf_ticker).info
+            if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
+                return {'error': 'Ticker não encontrado'}, 400
     except Exception:
         return {'error': 'Ticker não encontrado'}, 400
         
@@ -404,10 +411,17 @@ def update_empresa_manual(user_id, codigo, preco, quantidade, tipo_operacao='com
         # Validar se o ticker existe
         try:
             import yfinance as yf
-            yf_ticker = format_ticker(codigo)
-            tinfo = yf.Ticker(yf_ticker).info
-            if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
-                return {'error': 'Ticker não encontrado'}, 400
+            
+            # Tratamento especial para FIIs (ex: VGHF11) que podem ter problemas de validação
+            if codigo.endswith('11') and len(codigo) == 6:
+                print(f"Ticker de FII detectado: {codigo}, permitindo sem validação adicional")
+                # Assume que é um FII válido e pula a validação online que pode falhar
+                pass
+            else:
+                yf_ticker = format_ticker(codigo)
+                tinfo = yf.Ticker(yf_ticker).info
+                if not tinfo.get('regularMarketPrice') and not tinfo.get('currentPrice'):
+                    return {'error': 'Ticker não encontrado'}, 400
         except Exception:
             # Se falhar a validação online, ainda permite atualizar
             print(f"Erro ao validar ticker {codigo}, mas permitindo atualização")
@@ -531,10 +545,16 @@ def overwrite_portfolio_manual(user_id, ativos):
             # Verificar se o ticker existe usando yfinance
             try:
                 import yfinance as yf
-                yf_ticker = format_ticker(ticker)
-                ticker_info = yf.Ticker(yf_ticker).info
-                if not ticker_info.get('regularMarketPrice') and not ticker_info.get('currentPrice'):
-                    continue  # Pular ticker inválido
+                
+                # Tratamento especial para FIIs (ex: VGHF11) que podem ter problemas de validação
+                if ticker.endswith('11') and len(ticker) == 6:
+                    print(f"Ticker de FII detectado: {ticker}, permitindo sem validação adicional")
+                    # Pula a validação online que pode falhar para FIIs
+                else:
+                    yf_ticker = format_ticker(ticker)
+                    ticker_info = yf.Ticker(yf_ticker).info
+                    if not ticker_info.get('regularMarketPrice') and not ticker_info.get('currentPrice'):
+                        continue  # Pular ticker inválido
             except Exception as e:
                 print(f"Erro ao validar ticker {ticker}: {str(e)}")
                 continue
