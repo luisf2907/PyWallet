@@ -10,6 +10,14 @@ from models.price_history_cache import PriceHistoryCache
 from datetime import date
 import pytz
 
+# Configuração global de timeouts (em segundos)
+# Para ajustar o timeout, basta alterar o valor desta variável
+# Valores recomendados: 
+# - 15-30 segundos para uso normal
+# - 45-60 segundos se estiver tendo muitos timeouts
+# - 10 segundos se quiser respostas mais rápidas mas com mais falhas
+YF_REQUEST_TIMEOUT = 30  # Timeout para requisições ao yfinance
+
 # Lock global para operações de escrita no PriceCache
 pricecache_write_lock = threading.Lock()
 
@@ -26,8 +34,8 @@ def test_yfinance_request():
         bool: True se a conexão estiver funcionando, False caso contrário
     """
     try:
-        # Testa uma requisição simples ao yfinance
-        yf.Ticker("AAPL").history(period="1d")
+        # Testa uma requisição simples ao yfinance com timeout
+        yf.Ticker("AAPL").history(period="1d", timeout=YF_REQUEST_TIMEOUT)
         # Se a requisição passar, significa que a conexão está funcionando
         print("[YFINANCE] Teste de conexão com yfinance bem-sucedido.")
         return True
@@ -70,7 +78,7 @@ def get_price(ticker, formatar=True, force_yfinance=False):
     try:
         ticker_yf = yf.Ticker(ticker_formatted)
         # Primeiro tenta buscar pelo histórico
-        hist = ticker_yf.history(period="5d")
+        hist = ticker_yf.history(period="5d", timeout=YF_REQUEST_TIMEOUT)
         price = None
         if not hist.empty:
             try:
@@ -243,7 +251,7 @@ def update_price_cache_for_all_tickers(app=None, num_workers=6):
             print("[DEBUG] Antes do yf.download")
             sys.stdout.flush()
             # Período de 30 dias para evitar problemas de série vazia
-            df = yf.download(tickers=tickers, period='30d', group_by='ticker', progress=False, threads=True)
+            df = yf.download(tickers=tickers, period='30d', group_by='ticker', progress=False, threads=True, timeout=YF_REQUEST_TIMEOUT)
             print("[DEBUG] Depois do yf.download")
             sys.stdout.flush()
         except Exception as e:
@@ -343,7 +351,7 @@ def process_yfinance_results(df, tickers, result=None, app=None):
                     # Primeiro tenta buscar pelo histórico
                     try:
                         ticker_yf = yf.Ticker(ticker)
-                        hist = ticker_yf.history(period="5d")
+                        hist = ticker_yf.history(period="5d", timeout=YF_REQUEST_TIMEOUT)
                         if not hist.empty:
                             try:
                                 price = float(hist['Close'].dropna().iloc[-1])
