@@ -16,7 +16,10 @@ import pytz
 # - 15-30 segundos para uso normal
 # - 45-60 segundos se estiver tendo muitos timeouts
 # - 10 segundos se quiser respostas mais rápidas mas com mais falhas
-YF_REQUEST_TIMEOUT = 30  # Timeout para requisições ao yfinance
+YF_REQUEST_TIMEOUT = 45  # Timeout aumentado para evitar crashes durante picos
+
+# Timeout específico para operações em lote (mais conservador)
+YF_BATCH_TIMEOUT = 60
 
 # Lock global para operações de escrita no PriceCache
 pricecache_write_lock = threading.Lock()
@@ -251,7 +254,7 @@ def update_price_cache_for_all_tickers(app=None, num_workers=6):
             print("[DEBUG] Antes do yf.download")
             sys.stdout.flush()
             # Período de 30 dias para evitar problemas de série vazia
-            df = yf.download(tickers=tickers, period='30d', group_by='ticker', progress=False, threads=True, timeout=YF_REQUEST_TIMEOUT)
+            df = yf.download(tickers=tickers, period='30d', group_by='ticker', progress=False, threads=True, timeout=YF_BATCH_TIMEOUT)
             print("[DEBUG] Depois do yf.download")
             sys.stdout.flush()
         except Exception as e:

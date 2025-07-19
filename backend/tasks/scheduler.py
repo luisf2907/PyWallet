@@ -14,9 +14,10 @@ import logging
 
 from flask import Flask
 from services.price_service import update_price_cache_for_all_tickers, get_cached_dollar_rate
-from services.dividend_service import update_dividends_cache_for_all_users
+from services.dividend_service import update_dividends_cache_for_all_users, update_dividends_for_user
 from utils.market_utils import is_market_open
 from utils.cache_utils import is_rate_limited, handle_rate_limit, reset_rate_limit
+from utils.health_monitor import health_monitor
 from extensions.database import execute_with_retry, db
 from models.price import PriceCache
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -118,36 +119,69 @@ def update_prices_with_delisted_handling(app=None):
 
 def schedule_dividends_update(app):
     """
-    Thread para atualização diária de dividendos (10:30 da manhã).
+    Thread para atualização diária de dividendos (11:00 da manhã - alterado para evitar pico).
+    Agora usa intervalos maiores e processamento em lotes para evitar sobrecarga.
     """
     tz = pytz.timezone('America/Sao_Paulo')
-    time.sleep(random.uniform(3, 10))
+    time.sleep(random.uniform(10, 30))  # Delay inicial maior para evitar concorrência
     last_update_date = datetime.now(tz).date() - timedelta(days=1)
+    
     while True:
         now = datetime.now(tz)
         if now.date() == last_update_date:
-            next_run = now.replace(hour=10, minute=30, second=0, microsecond=0) + timedelta(days=1)
+            # Já executou hoje, aguarda até amanhã
+            next_run = now.replace(hour=11, minute=0, second=0, microsecond=0) + timedelta(days=1)
             sleep_seconds = (next_run - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 3600:.1f} horas")
             time.sleep(min(sleep_seconds, 3600))
             continue
-        target_time = now.replace(hour=10, minute=30, second=0, microsecond=0)
+            
+        # Horário alvo: 11:00 (evita pico de 10:30)
+        target_time = now.replace(hour=11, minute=0, second=0, microsecond=0)
+        
         if now >= target_time:
             try:
+                start_time = health_monitor.log_operation_start("Atualização diária de dividendos")
                 print('[DIVIDENDS] Atualização diária programada iniciada.')
+                
+                # Processamento em lotes com delays para evitar rate limiting
                 with app.app_context():
-                    execute_with_retry(update_dividends_cache_for_all_users)
+                    from models.user import User
+                    users = User.query.all()
+                    
+                    for i, user in enumerate(users):
+                        try:
+                            print(f"[DIVIDENDS] Processando usuário {i+1}/{len(users)}: {user.email}")
+                            update_dividends_for_user(user)
+                            
+                            # Delay entre usuários para evitar rate limiting
+                            if i < len(users) - 1:  # Não delay no último
+                                time.sleep(random.uniform(2, 5))
+                                
+                        except Exception as e:
+                            print(f'[DIVIDENDS] Erro ao processar {user.email}: {e}')
+                            continue
+                    
                     last_update_date = now.date()
+                    print('[DIVIDENDS] Atualização diária concluída.')
+                
+                health_monitor.log_operation_end("Atualização diária de dividendos", start_time)
+                    
             except Exception as e:
                 print(f'[DIVIDENDS] Erro na atualização diária programada: {e}')
-            next_run = now.replace(hour=10, minute=30, second=0, microsecond=0) + timedelta(days=1)
+                logging.error(f'[DIVIDENDS] Erro crítico na atualização: {e}')
+                health_monitor.log_operation_end("Atualização diária de dividendos (ERRO)", start_time)
+                
+            # Próxima execução: amanhã às 11:00
+            next_run = now.replace(hour=11, minute=0, second=0, microsecond=0) + timedelta(days=1)
             sleep_seconds = (next_run - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 3600:.1f} horas")
             time.sleep(min(sleep_seconds, 3600))
         else:
+            # Ainda não chegou no horário
             sleep_seconds = (target_time - now).total_seconds()
             print(f"[DIVIDENDS] Próxima atualização em {sleep_seconds / 60:.1f} minutos")
-            time.sleep(min(sleep_seconds, 1800))
+            time.sleep(min(sleep_seconds, 1800))  # Max 30 minutos de sleep
 
 def schedule_prices_update(app):
     """
@@ -265,6 +299,10 @@ def start_scheduled_tasks(app):
     # Registra função de limpeza
     atexit.register(cleanup)
 
+    # Inicia monitoramento de saúde
+    from utils.health_monitor import start_health_monitoring
+    start_health_monitoring(app)
+
     with app.app_context():
         print(f"Inicializando tarefas agendadas (instância {instance_id})...")
         try:
@@ -273,8 +311,10 @@ def start_scheduled_tasks(app):
                 def async_price_update():
                     with app.app_context():
                         try:
+                            start_time = health_monitor.log_operation_start("Atualização inicial de preços")
                             print("[SCHEDULER] Iniciando atualização de preços em segundo plano...")
                             execute_with_retry(lambda: update_prices_with_delisted_handling(app=app))
+                            health_monitor.log_operation_end("Atualização inicial de preços", start_time)
                             print("[SCHEDULER] Atualização de preços em segundo plano concluída.")
                         except Exception as e:
                             print(f"[SCHEDULER] Erro na atualização de preços em segundo plano: {e}")
@@ -285,8 +325,10 @@ def start_scheduled_tasks(app):
             def async_dividend_update():
                 with app.app_context():
                     try:
+                        start_time = health_monitor.log_operation_start("Atualização inicial de dividendos")
                         print("[SCHEDULER] Iniciando atualização de dividendos em segundo plano...")
                         execute_with_retry(update_dividends_cache_for_all_users)
+                        health_monitor.log_operation_end("Atualização inicial de dividendos", start_time)
                         print("[SCHEDULER] Atualização de dividendos em segundo plano concluída.")
                     except Exception as e:
                         print(f"[SCHEDULER] Erro na atualização de dividendos em segundo plano: {e}")

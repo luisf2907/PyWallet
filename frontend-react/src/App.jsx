@@ -4,6 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from './hooks/useAuth';
 
 // Importar as páginas usando React.lazy para code splitting
+const LandingPage = React.lazy(() => import('./pages/LandingPage'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const FileUpload = React.lazy(() => import('./pages/FileUpload'));
@@ -35,7 +36,7 @@ const ProtectedRoute = ({ children }) => {
   
   // Apenas redireciona se não estiver autenticado e não estiver carregando
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
@@ -45,7 +46,8 @@ function App() {
   return (
     <Suspense fallback={<LoadingPage />}>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"
           element={
