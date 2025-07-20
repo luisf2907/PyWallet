@@ -22,6 +22,7 @@ import { Layout, Alert, FileUpload, FractionedTickerNote } from '../components/c
 import { portfolioAPI } from '../api/portfolioAPI';
 import { useAlert } from '../hooks/useAlert';
 import PortfolioImportTable from '../components/PortfolioImportTable';
+import CryptoImportTable from '../components/CryptoImportTable';
 import './FileUpload.css';
 import '../components/portfolio/animation.css';
 
@@ -183,6 +184,27 @@ const FileUploadPage = () => {
           <PortfolioImportTable 
             onSave={() => {
               showAlert('Portfólio atualizado com sucesso!', 'success');
+              setTimeout(() => navigate('/dashboard'), 1500);
+            }} 
+          />
+        </Paper>
+
+        {/* 1.2. IMPORTAR CRIPTOMOEDAS - Nova seção */}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 0,
+            borderRadius: 2,
+            overflow: 'hidden',
+            mb: 4,
+            bgcolor: 'transparent',  // Fundo transparente para não interferir
+            width: '100%',
+            boxShadow: 'none'  // Sem sombra adicional
+          }}
+        >
+          <CryptoImportTable 
+            onSave={() => {
+              showAlert('Criptomoedas atualizadas com sucesso!', 'success');
               setTimeout(() => navigate('/dashboard'), 1500);
             }} 
           />

@@ -108,5 +108,69 @@ export const portfolioAPI = {
       console.error('Erro ao obter portfólio:', error);
       throw error;
     }
+  },
+
+  // ===== MÉTODOS PARA CRIPTOMOEDAS =====
+  
+  // Validar criptomoeda
+  validateCrypto: async (crypto) => {
+    try {
+      if (!crypto || crypto.length < 2) {
+        return { isValid: false };
+      }
+      
+      const response = await fetchAPI('/crypto/validate', 'POST', { crypto });
+      return {
+        isValid: response.isValid,
+        symbol: response.symbol,
+        name: response.name,
+        coingecko_id: response.coingecko_id,
+        auto_recognized: response.auto_recognized,
+        current_price: response.current_price
+      };
+    } catch (error) {
+      return { isValid: false, error };
+    }
+  },
+
+  // Estimar preço médio de criptomoeda
+  estimateCryptoPrice: async (crypto, days = 30) => {
+    try {
+      const response = await fetchAPI('/crypto/estimate-price', 'POST', { crypto, days });
+      return response;
+    } catch (error) {
+      console.error('Erro ao estimar preço de cripto:', error);
+      throw error;
+    }
+  },
+
+  // Atualizar carteira de criptomoedas em lote (modo Aporte/Retirada)
+  batchUpdateCryptoPortfolio: async (data) => {
+    try {
+      return await fetchAPI('/crypto/batch-update', 'POST', data);
+    } catch (error) {
+      console.error('Erro no batch update de criptomoedas:', error);
+      throw error;
+    }
+  },
+
+  // Sobrescrever carteira de criptomoedas completamente
+  overwriteCryptoPortfolio: async (data) => {
+    try {
+      return await fetchAPI('/crypto/overwrite', 'POST', data);
+    } catch (error) {
+      console.error('Erro ao sobrescrever carteira de criptomoedas:', error);
+      throw error;
+    }
+  },
+
+  // Limpar cache de criptomoedas (útil para desenvolvimento)
+  cleanupCryptoCache: async () => {
+    try {
+      return await fetchAPI('/crypto/cleanup-cache', 'POST');
+    } catch (error) {
+      console.error('Erro ao limpar cache de criptomoedas:', error);
+      throw error;
+    }
   }
 };

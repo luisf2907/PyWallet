@@ -416,3 +416,137 @@ input:checked + .toggle-slider:before {
     box-shadow: none;
   }
 }
+
+/* ===== ESTILOS ESPECÍFICOS PARA CRIPTOMOEDAS ===== */
+
+.crypto-info {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.crypto-info h3 {
+  color: #ffc107;
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.crypto-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.crypto-info li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 193, 7, 0.1);
+}
+
+.crypto-info li:last-child {
+  border-bottom: none;
+}
+
+.crypto-examples {
+  background: rgba(255, 193, 7, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.crypto-examples h4 {
+  color: #ffc107;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.example-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.example-input {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  min-width: 60px;
+  text-align: center;
+}
+
+.example-price {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 60px;
+  text-align: center;
+}
+
+.example-qty {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  padding: 4px 8px;
+  border-radius: 4px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.example-desc {
+  color: #9e9e9e;
+  font-style: italic;
+  font-family: inherit;
+}
+
+.crypto-note {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  color: #ffc107;
+}
+
+.crypto-note strong {
+  color: #fff;
+}
+
+/* Indicadores visuais específicos para validação de criptomoedas */
+.cell-valid.crypto-cell {
+  border-left: 3px solid #ffc107;
+}
+
+.cell-invalid.crypto-cell {
+  border-left: 3px solid #f44336;
+}
+
+.cell-validating.crypto-cell {
+  border-left: 3px solid #2196f3;
+}
+
+/* Animação específica para normalização de criptomoedas */
+.crypto-normalized {
+  animation: crypto-normalized-flash 1.2s ease;
+}
+
+@keyframes crypto-normalized-flash {
+  0% {
+    background-color: rgba(255, 193, 7, 0.1);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.5);
+  }
+  50% {
+    background-color: rgba(255, 193, 7, 0.3);
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.8);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}

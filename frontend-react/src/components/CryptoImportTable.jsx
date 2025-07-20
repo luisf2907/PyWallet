@@ -1,98 +1,148 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PortfolioImportTable.css';
 import { portfolioAPI } from '../api/portfolioAPI';
-import { FractionedTickerNote } from '../components/common';
 
-// Função para normalizar tickers fracionados (ex: VALE3F -> VALE3) e preservar formatos de crypto (como BTC-USD)
-const normalizeTicker = (ticker) => {
-  if (!ticker) return '';
-  
-  // Remove espaços e converte para maiúsculas
-  ticker = ticker.trim().toUpperCase();
-  
-  // Se contém hífen (formato de crypto como BTC-USD), preserva o ticker sem modificações
-  if (ticker.includes('-')) {
-    return ticker;
-  }
-  
-  // Detecta se é um ticker fracionado (termina com F)
-  if (ticker.match(/^[A-Z0-9]{4,6}F$/)) {
-    // Remove o F final para converter para a versão normal do ticker
-    return ticker.slice(0, -1);
-  }
-  
-  return ticker;
+// Lista das 10 maiores criptomoedas para reconhecimento automático
+const TOP_10_CRYPTOS = {
+  // Sigla -> Nome completo
+  'BTC': 'Bitcoin',
+  'ETH': 'Ethereum', 
+  'USDT': 'Tether',
+  'BNB': 'Binance Coin',
+  'XRP': 'XRP',
+  'SOL': 'Solana',
+  'USDC': 'USD Coin',
+  'ADA': 'Cardano',
+  'DOGE': 'Dogecoin',
+  'AVAX': 'Avalanche'
 };
 
-// Gerar linhas iniciais
-const initialRows = (n) => Array.from({ length: n }, (_, idx) => ({ 
-  id: idx, 
-  ticker: '', 
-  preco: '', 
-  quantidade: '' 
-}));
+// Criar mapa reverso: Nome completo -> Sigla
+const CRYPTO_NAME_TO_SYMBOL = {};
+Object.entries(TOP_10_CRYPTOS).forEach(([symbol, name]) => {
+  CRYPTO_NAME_TO_SYMBOL[name.toUpperCase()] = symbol;
+});
 
-export default function PortfolioImportTable({ onSave }) {  
+// Função para normalizar input de criptomoedas
+const normalizeCrypto = (input) => {
+  if (!input) return '';
+  
+  // Remove espaços e converte para maiúsculas
+  input = input.trim().toUpperCase();
+  
+  // Se é uma das siglas conhecidas, retorna a sigla
+  if (TOP_10_CRYPTOS[input]) {
+    return input;
+  }
+  
+  // Se é um nome completo conhecido, converte para sigla
+  if (CRYPTO_NAME_TO_SYMBOL[input]) {
+    return CRYPTO_NAME_TO_SYMBOL[input];
+  }
+  
+  // Se não é reconhecida automaticamente, retorna como está para validação via API
+  return input;
+};
+
+// Gerar linhas iniciais vazias (sem exemplos fixos)
+const initialRows = (n) => {
+  return Array.from({ length: n }, (_, idx) => ({ 
+    id: idx, 
+    ticker: '', 
+    preco: '', 
+    quantidade: '' 
+  }));
+};
+
+export default function CryptoImportTable({ onSave }) {  
   const [rows, setRows] = useState(initialRows(10));
-  const [tickersValid, setTickersValid] = useState({});
+  const [cryptosValid, setCryptosValid] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [error, setError] = useState('');
   const [overwriteMode, setOverwriteMode] = useState(false);
   
-  
-  // Validação do ticker em tempo real utilizando a API
-  const validateTicker = async (ticker) => {
-    if (!ticker || ticker.trim().length < 3) return false;
+  // Validação da criptomoeda em tempo real utilizando a API
+  const validateCrypto = async (crypto) => {
+    if (!crypto || crypto.trim().length < 2) return false;
+    
     try {
-      // Normaliza o ticker antes de validar
-      const normalizedTicker = normalizeTicker(ticker);
-      const result = await portfolioAPI.validateTicker(normalizedTicker);
+      // Primeiro, tenta normalizar (reconhecimento automático das top 10)
+      const normalizedCrypto = normalizeCrypto(crypto);
+      
+      // Se foi reconhecida automaticamente, é válida
+      if (TOP_10_CRYPTOS[normalizedCrypto]) {
+        return true;
+      }
+      
+      // Se não foi reconhecida, valida via API CoinGecko
+      const result = await portfolioAPI.validateCrypto(normalizedCrypto);
       return result.isValid;
     } catch {
       return false;
     }
   };
   
-  // Controle de quais tickers já foram validados
-  const [validatedTickers, setValidatedTickers] = useState({});
+  // Controle de quais criptos já foram validadas
+  const [validatedCryptos, setValidatedCryptos] = useState({
+    // Cache das top 10 para evitar validações desnecessárias
+    'BTC': true,
+    'BITCOIN': true,
+    'ETH': true,
+    'ETHEREUM': true,
+    'USDT': true,
+    'TETHER': true,
+    'BNB': true,
+    'BINANCE COIN': true,
+    'XRP': true,
+    'SOL': true,
+    'SOLANA': true,
+    'USDC': true,
+    'USD COIN': true,
+    'ADA': true,
+    'CARDANO': true,
+    'DOGE': true,
+    'DOGECOIN': true,
+    'AVAX': true,
+    'AVALANCHE': true
+  });
   const [lastModifiedId, setLastModifiedId] = useState(null);
 
-  // Validação dos tickers - apenas o que foi modificado
+  // Validação das criptomoedas - apenas o que foi modificado
   useEffect(() => {
     if (lastModifiedId === null) return;
     
-    const validateModifiedTicker = async () => {
+    const validateModifiedCrypto = async () => {
       const row = rows.find(r => r.id === lastModifiedId);
       if (!row || !row.ticker || row.ticker.trim() === '') return;
       
-      const ticker = row.ticker.trim().toUpperCase();
+      const crypto = row.ticker.trim().toUpperCase();
       
-      // Verifica se este ticker já foi validado antes
-      if (validatedTickers[ticker] !== undefined) {
-        setTickersValid(prev => ({
+      // Verifica se esta cripto já foi validada antes
+      if (validatedCryptos[crypto] !== undefined) {
+        setCryptosValid(prev => ({
           ...prev,
-          [lastModifiedId]: validatedTickers[ticker]
+          [lastModifiedId]: validatedCryptos[crypto]
         }));
         return;
       }
       
       // Marcar como "validando" temporariamente
-      setTickersValid(prev => ({
+      setCryptosValid(prev => ({
         ...prev, 
         [lastModifiedId]: 'validating'
       }));
       
       // Fazer a validação
-      const isValid = await validateTicker(ticker);
+      const isValid = await validateCrypto(crypto);
       
       // Atualizar os estados
-      setValidatedTickers(prev => ({
+      setValidatedCryptos(prev => ({
         ...prev,
-        [ticker]: isValid
+        [crypto]: isValid
       }));
       
-      setTickersValid(prev => ({
+      setCryptosValid(prev => ({
         ...prev,
         [lastModifiedId]: isValid
       }));
@@ -100,11 +150,11 @@ export default function PortfolioImportTable({ onSave }) {
     
     // Debounce para não sobrecarregar a API
     const timeoutId = setTimeout(() => {
-      validateModifiedTicker();
+      validateModifiedCrypto();
     }, 400);
     
     return () => clearTimeout(timeoutId);
-  }, [lastModifiedId, rows, validatedTickers]);
+  }, [lastModifiedId, rows, validatedCryptos]);
 
   // Adiciona linhas extras conforme preenchimento
   useEffect(() => {
@@ -112,21 +162,30 @@ export default function PortfolioImportTable({ onSave }) {
     if (rows.length < filled + 5) {
       setRows(prevRows => [
         ...prevRows,
-        ...initialRows(5).map((row, i) => ({ ...row, id: prevRows.length + i }))
+        ...Array.from({ length: 5 }, (_, i) => ({ 
+          id: prevRows.length + i,
+          ticker: '', 
+          preco: '', 
+          quantidade: '' 
+        }))
       ]);
     }
-  }, [rows]);  // Validação de preço e quantidade
+  }, [rows]);
+
+  // Validação de preço e quantidade
   const validateRow = (row) => {
-    // Validar ticker - deve existir e ser válido
-    if (!row.ticker || tickersValid[row.id] === false) return false;
+    // Validar cripto - deve existir e ser válida
+    if (!row.ticker || cryptosValid[row.id] === false) return false;
     
-    // Validar preço - deve ser um número positivo
-    let preco = String(row.preco || '').replace(',', '.');
-    if (!preco || isNaN(Number(preco)) || Number(preco) <= 0) return false;
-    
-    // Validar quantidade
+    // Validar quantidade - deve ser um número positivo
     let quantidade = row.quantidade;
-    if (!quantidade || isNaN(Number(quantidade)) || !Number.isInteger(Number(quantidade))) return false;
+    if (!quantidade || isNaN(Number(quantidade)) || Number(quantidade) <= 0) return false;
+    
+    // Preço é opcional - se vazio, será estimado automaticamente
+    if (row.preco && row.preco.trim() !== '') {
+      let preco = String(row.preco).replace(',', '.');
+      if (isNaN(Number(preco)) || Number(preco) <= 0) return false;
+    }
     
     // Regras específicas de cada modo:
     if (overwriteMode) {
@@ -161,6 +220,7 @@ export default function PortfolioImportTable({ onSave }) {
       e.target.select();
     }
   };
+
   // Navegar células com Tab, Enter e setas do teclado (como no Excel)
   const handleKeyDown = (e, rowId, field, rowIndex, colIndex) => {
     const columns = ['ticker', 'preco', 'quantidade'];
@@ -181,12 +241,12 @@ export default function PortfolioImportTable({ onSave }) {
       }
       
       // Encontrar o próximo elemento para focar
-      const nextRowElement = document.querySelector(`#row-${nextRow}-col-${nextCol}`);
+      const nextRowElement = document.querySelector(`#crypto-row-${nextRow}-col-${nextCol}`);
       if (nextRowElement) {
         nextRowElement.focus();
       }
     }
-      // Navegação com teclas de seta
+    // Navegação com teclas de seta
     else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
       // Comportamento especial para setas esquerda/direita 
       // quando o cursor está no início ou fim do texto
@@ -215,7 +275,6 @@ export default function PortfolioImportTable({ onSave }) {
           if (colIndex > 0) {
             nextCol = colIndex - 1;
           } else if (rowIndex > 0) {
-            // Ir para a última coluna da linha anterior
             nextRow = rowIndex - 1;
             nextCol = columns.length - 1;
           }
@@ -224,7 +283,6 @@ export default function PortfolioImportTable({ onSave }) {
           if (colIndex < columns.length - 1) {
             nextCol = colIndex + 1;
           } else if (rowIndex < rows.length - 1) {
-            // Ir para a primeira coluna da próxima linha
             nextRow = rowIndex + 1;
             nextCol = 0;
           }
@@ -232,20 +290,17 @@ export default function PortfolioImportTable({ onSave }) {
       }
       
       // Encontrar o próximo elemento para focar
-      const nextRowElement = document.querySelector(`#row-${nextRow}-col-${nextCol}`);
+      const nextRowElement = document.querySelector(`#crypto-row-${nextRow}-col-${nextCol}`);
       if (nextRowElement) {
         nextRowElement.focus();
         
         // Posiciona o cursor adequadamente baseado na direção
         if (e.key === 'ArrowLeft') {
-          // Cursor no final quando vem da esquerda
           const length = nextRowElement.value.length;
           nextRowElement.setSelectionRange(length, length);
         } else if (e.key === 'ArrowRight') {
-          // Cursor no início quando vem da direita
           nextRowElement.setSelectionRange(0, 0);
         } else {
-          // Para navegação vertical, seleciona todo o texto
           nextRowElement.select();
         }
       }
@@ -269,7 +324,7 @@ export default function PortfolioImportTable({ onSave }) {
     // Copiar o estado atual das linhas
     setRows(prevRows => {
       const newRows = [...prevRows];
-      let lastTickerRowId = null;
+      let lastCryptoRowId = null;
       
       // Preencher com os dados colados
       rows.forEach((rowStr, rowOffset) => {
@@ -282,10 +337,10 @@ export default function PortfolioImportTable({ onSave }) {
           if (colIdx < columns.length && rowIdx < newRows.length) {
             const field = columns[colIdx];
             
-            // Se for o campo ticker, normaliza os tickers fracionados
+            // Se for o campo ticker, normaliza as criptomoedas
             if (field === 'ticker' && cellValue) {
-              cellValue = normalizeTicker(cellValue);
-              lastTickerRowId = newRows[rowIdx].id;
+              cellValue = normalizeCrypto(cellValue);
+              lastCryptoRowId = newRows[rowIdx].id;
             }
             
             newRows[rowIdx] = {
@@ -296,21 +351,22 @@ export default function PortfolioImportTable({ onSave }) {
         });
       });
       
-      // Marca o último ticker modificado para validação
-      if (lastTickerRowId !== null) {
-        // Colocamos em um setTimeout para garantir que o estado das linhas seja atualizado primeiro
+      // Marca a última cripto modificada para validação
+      if (lastCryptoRowId !== null) {
         setTimeout(() => {
-          setLastModifiedId(lastTickerRowId);
+          setLastModifiedId(lastCryptoRowId);
         }, 0);
       }
       
       return newRows;
     });
-  };  // Salvar
+  };
+
+  // Salvar
   const handleSave = async () => {
     setError('');
     if (!rows.some(validateRow)) {
-      setError('Preencha pelo menos um ativo válido.');
+      setError('Preencha pelo menos uma criptomoeda válida.');
       return;
     }
     
@@ -332,36 +388,35 @@ export default function PortfolioImportTable({ onSave }) {
     setIsSaving(true);
     setError('');
     try {
-      // Filtrar apenas as linhas válidas e limpar possíveis dados problemáticos
-      const ativos = rows.filter(validateRow).map(row => {
-        // Garantir que ticker não tenha espaços ou caracteres especiais
-        // Converter versões fracionadas (ex: VALE3F) para versão normal (VALE3)
-        const ticker = normalizeTicker(row.ticker);
+      // Filtrar apenas as linhas válidas e normalizar dados
+      const criptos = rows.filter(validateRow).map(row => {
+        // Normalizar criptomoeda
+        const crypto = normalizeCrypto(row.ticker);
         
-        // Converter preço para número garantindo formato correto
-        const precoStr = String(row.preco || '').replace(',', '.').trim();
-        const preco = Number(precoStr);
+        // Converter preço para número (pode ser null se vazio - será estimado)
+        let preco = null;
+        if (row.preco && row.preco.trim() !== '') {
+          const precoStr = String(row.preco).replace(',', '.').trim();
+          preco = Number(precoStr);
+        }
         
-        // Converter quantidade para número inteiro
-        const quantidade = parseInt(row.quantidade, 10);
+        // Converter quantidade para número
+        const quantidade = Number(row.quantidade);
         
-        return { ticker, preco, quantidade };
+        return { crypto, preco, quantidade };
       });
       
       // Log para depuração
-      console.log(`Enviando ${ativos.length} ativos no modo ${overwriteMode ? 'Sobrescrever' : 'Aporte/Retirada'}`);
-      console.log('Dados enviados:', ativos);
-      console.log('API utilizada:', overwriteMode ? 'overwritePortfolio' : 'batchUpdatePortfolio');
+      console.log(`Enviando ${criptos.length} criptomoedas no modo ${overwriteMode ? 'Sobrescrever' : 'Aporte/Retirada'}`);
+      console.log('Dados enviados:', criptos);
       
       // Chama a API diferente dependendo do modo
       let response;
       try {
         if (overwriteMode) {
-          response = await portfolioAPI.overwritePortfolio({ ativos });
+          response = await portfolioAPI.overwriteCryptoPortfolio({ criptos });
         } else {
-          // No modo Aporte/Retirada, processar em lote para mais eficiência
-          // Antes processava um por um, agora processa em uma única chamada de API
-          response = await portfolioAPI.batchUpdatePortfolio({ ativos });
+          response = await portfolioAPI.batchUpdateCryptoPortfolio({ criptos });
         }
         
         console.log('Resposta da API:', response);
@@ -380,7 +435,6 @@ export default function PortfolioImportTable({ onSave }) {
       } else if (e.toString().includes('401')) {
         setError(`Erro de autenticação (401). Por favor, faça login novamente.`);
       } else if (e.toString().includes('TypeError')) {
-        // Mensagem específica para o erro de tipo
         setError(`Erro de comunicação com a API. Por favor, tente novamente ou atualize a página.`);
         console.error('Detalhes do erro de tipo:', e);
       } else {
@@ -390,10 +444,29 @@ export default function PortfolioImportTable({ onSave }) {
       setIsSaving(false);
     }
   };
+
+  // Componente de nota explicativa para criptomoedas
+  const CryptoNote = () => (
+    <div 
+      style={{
+        backgroundColor: '#2e502f',
+        color: 'white',
+        borderLeft: '4px solid #4caf50',
+        padding: '12px',
+        margin: '15px 0',
+        borderRadius: '4px',
+        fontSize: '14px'
+      }}
+    >
+      <strong>Nota:</strong> Criptomoedas podem ser inseridas por nome completo (ex: Bitcoin) ou sigla (ex: BTC). 
+      Sistema reconhece automaticamente as principais moedas.
+    </div>
+  );
+
   return (
     <div className="portfolio-import-table-dark">
       <div className="header-with-toggle">
-        <h2>{overwriteMode ? 'Importar Ativos (Sobrescreve Carteira)' : 'Alterar Posições de Mercado (Compra/Venda)'}</h2>
+        <h2>{overwriteMode ? 'Importar Criptomoedas (Sobrescreve Carteira)' : 'Alterar Posições de Criptomoedas (Compra/Venda)'}</h2>
         <div className="toggle-container">
           <span className={!overwriteMode ? 'active-mode' : ''}>Aporte/Retirada</span>
           <label className="toggle-switch">
@@ -407,49 +480,53 @@ export default function PortfolioImportTable({ onSave }) {
           <span className={overwriteMode ? 'active-mode' : ''}>Sobrescrever</span>
         </div>
       </div>
-        {overwriteMode ? (
+
+      {overwriteMode ? (
         <p className="warning">
-          <strong>Modo Sobrescrever:</strong> Esta ação irá substituir completamente sua carteira atual. 
+          <strong>Modo Sobrescrever:</strong> Esta ação irá substituir completamente sua carteira de criptomoedas atual. 
           Todos os dados anteriores, incluindo históricos de compras/vendas, serão perdidos.
-          Neste modo, todas as quantidades devem ser positivas.
+          Neste modo, todas as quantidades devem ser positivas. Se não souber o preço médio, deixe em branco.
         </p>
       ) : (
         <p className="info">
-          <strong>Modo Aporte/Retirada:</strong> Neste modo você pode adicionar ou remover posições individuais.
+          <strong>Modo Aporte/Retirada:</strong> Neste modo você pode adicionar ou remover posições de criptomoedas.
           Valores positivos serão registrados como compras e valores negativos como vendas.
+          Preços devem ser informados em USD. Se não souber o preço médio, deixe em branco.
           Seus dados históricos serão mantidos, apenas as posições serão atualizadas.
-        </p>      )}
+        </p>
+      )}
       
       <div className="excel-table-container">
         <table className="excel-table">
           <thead>
             <tr>
-              <th>Ticker</th>
-              <th>Preço Médio</th>
+              <th>Criptomoeda</th>
+              <th>Preço Médio (USD)</th>
               <th>Quantidade</th>
             </tr>
           </thead>
-          <tbody>            {rows.map((row, rowIndex) => (
-              <tr key={row.id}>                <td className={`excel-cell ${
+          <tbody>
+            {rows.map((row, rowIndex) => (
+              <tr key={row.id}>
+                <td className={`excel-cell ${
                     row.ticker ? (
-                      tickersValid[row.id] === true ? 'cell-valid' : 
-                      tickersValid[row.id] === false ? 'cell-invalid' :
-                      tickersValid[row.id] === 'validating' ? 'cell-validating' : ''
+                      cryptosValid[row.id] === true ? 'cell-valid' : 
+                      cryptosValid[row.id] === false ? 'cell-invalid' :
+                      cryptosValid[row.id] === 'validating' ? 'cell-validating' : ''
                     ) : ''
-                  }`}>                  <input 
-                    id={`row-${rowIndex}-col-0`}
+                  }`}>
+                  <input 
+                    id={`crypto-row-${rowIndex}-col-0`}
                     type="text"
                     value={row.ticker || ''}
                     onChange={(e) => {
-                      // Converter para maiúsculo e normalizar ticker fracionado
-                      const inputValue = e.target.value.toUpperCase();
-                      const normalizedTicker = normalizeTicker(inputValue);
+                      // Normalizar criptomoeda durante a digitação
+                      const inputValue = e.target.value;
+                      const normalizedCrypto = normalizeCrypto(inputValue);
                       
-                      // Se for detectado um ticker fracionado, substitui automaticamente
-                      // pela versão normal e mostra um indicador visual
-                      if (inputValue !== normalizedTicker && inputValue.endsWith('F')) {
-                        // Fornece feedback visual temporário que o ticker foi normalizado
-                        const element = document.getElementById(`row-${rowIndex}-col-0`);
+                      // Se foi detectada normalização automática, mostra feedback visual
+                      if (inputValue.toUpperCase() !== normalizedCrypto && TOP_10_CRYPTOS[normalizedCrypto]) {
+                        const element = document.getElementById(`crypto-row-${rowIndex}-col-0`);
                         if (element) {
                           element.classList.add('ticker-normalized');
                           setTimeout(() => {
@@ -458,80 +535,87 @@ export default function PortfolioImportTable({ onSave }) {
                         }
                       }
                       
-                      handleCellChange(row.id, 'ticker', normalizedTicker);
+                      handleCellChange(row.id, 'ticker', normalizedCrypto);
                     }}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'ticker', rowIndex, 0)}
                     onFocus={handleFocus}
                     onPaste={(e) => handlePaste(e, rowIndex, 0)}
-                    placeholder="PETR4"
+                    placeholder="BTC"
                     className="excel-input"
                     spellCheck="false"
                     autoComplete="off"
                     autoCapitalize="characters"
                   />
-                  {row.ticker && tickersValid[row.id] === 'validating' && (
+                  {row.ticker && cryptosValid[row.id] === 'validating' && (
                     <div className="validating-indicator"></div>
                   )}
-                  {row.ticker && tickersValid[row.id] === false && (
-                    <div className="error-tooltip">Ticker inválido</div>
+                  {row.ticker && cryptosValid[row.id] === false && (
+                    <div className="error-tooltip">Criptomoeda inválida</div>
                   )}
                 </td>
-                <td className="excel-cell">                  <input
-                    id={`row-${rowIndex}-col-1`}
+                <td className="excel-cell">
+                  <input
+                    id={`crypto-row-${rowIndex}-col-1`}
                     type="text"
                     value={row.preco || ''}
                     onChange={(e) => handleCellChange(row.id, 'preco', e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'preco', rowIndex, 1)}
                     onFocus={handleFocus}
-                    placeholder="29,90"
+                    placeholder="57000"
                     className="excel-input"
                     spellCheck="false"
                     autoComplete="off"
                     inputMode="decimal"
                   />
                 </td>
-                <td className="excel-cell">                  <input
-                    id={`row-${rowIndex}-col-2`}
+                <td className="excel-cell">
+                  <input
+                    id={`crypto-row-${rowIndex}-col-2`}
                     type="text"
                     value={row.quantidade || ''}
                     onChange={(e) => handleCellChange(row.id, 'quantidade', e.target.value)}
                     onKeyDown={(e) => handleKeyDown(e, row.id, 'quantidade', rowIndex, 2)}
                     onFocus={handleFocus}
-                    placeholder="100"
+                    placeholder="0.063628"
                     className="excel-input"
                     spellCheck="false"
                     autoComplete="off"
-                    inputMode="numeric"
+                    inputMode="decimal"
                   />
                 </td>
               </tr>
             ))}
-          </tbody>        </table>      </div>
-        {error && <div className="error-msg">{error}</div>}
+          </tbody>
+        </table>
+      </div>
+
+      {error && <div className="error-msg">{error}</div>}
       
-      <FractionedTickerNote />
+      <CryptoNote />
       
       <button className="save-btn" onClick={handleSave} disabled={isSaving}>
         {isSaving ? 'Salvando...' : overwriteMode ? 'Sobrescrever Carteira' : 'Aplicar Alterações'}
       </button>
-        {showWarning && (
+
+      {showWarning && (
         <div className="modal">
           <div className="modal-content">
-            <h3>{overwriteMode ? '⚠️ ATENÇÃO: SOBRESCREVER CARTEIRA' : 'Confirmar Alterações'}</h3>
+            <h3>{overwriteMode ? '⚠️ ATENÇÃO: SOBRESCREVER CARTEIRA DE CRIPTOMOEDAS' : 'Confirmar Alterações'}</h3>
             {overwriteMode ? (
               <div>
                 <p className="warning modal-warning">
-                  <strong>Você está prestes a sobrescrever toda a sua carteira!</strong>
+                  <strong>Você está prestes a sobrescrever toda a sua carteira de criptomoedas!</strong>
                 </p>
                 <p>Esta ação não pode ser desfeita e substituirá completamente seus dados atuais.</p>
                 <p>Todos os históricos de transações anteriores serão perdidos.</p>
               </div>
             ) : (
               <div>
-                <p>Confirma a aplicação das alterações abaixo na sua carteira?</p>
+                <p>Confirma a aplicação das alterações abaixo na sua carteira de criptomoedas?</p>
                 <p className="info modal-info">
                   Quantidades positivas serão registradas como compras.<br />
-                  Quantidades negativas serão registradas como vendas.
+                  Quantidades negativas serão registradas como vendas.<br />
+                  Preços vazios serão estimados automaticamente.
                 </p>
               </div>
             )}
