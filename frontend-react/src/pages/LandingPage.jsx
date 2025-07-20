@@ -479,9 +479,9 @@ const MobileLandingPage = ({ navigate }) => {
             </Typography>
           </Box>
 
-          <Grid container spacing={6} alignItems="center">
+          <Grid container spacing={4} justifyContent="center">
             {/* Dashboard Principal */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Paper
                 elevation={12}
                 sx={{
@@ -545,61 +545,9 @@ const MobileLandingPage = ({ navigate }) => {
                 </Box>
               </Paper>
             </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                  Dashboard Completo
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>
-                  Acompanhe todos os seus investimentos em uma única tela. Veja o valor total da carteira, 
-                  retorno, melhores e piores ativos, tudo atualizado em tempo real.
-                </Typography>
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Visão consolidada de todos os investimentos</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Métricas de performance em tempo real</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Gráficos interativos de evolução</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            </Grid>
 
             {/* Dividendos */}
-            <Grid item xs={12} md={6} sx={{ order: { xs: 0, md: 1 } }}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                  Controle de Dividendos
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>
-                  Monitore todos os dividendos recebidos e projete rendimentos futuros. 
-                  Veja o histórico completo organizado por mês e ano.
-                </Typography>
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Histórico completo de dividendos</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Projeções de rendimentos futuros</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Análise por período e ativo</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={6} sx={{ order: { xs: 1, md: 0 } }}>
+            <Grid item xs={12} md={4}>
               <Paper
                 elevation={12}
                 sx={{
@@ -661,7 +609,7 @@ const MobileLandingPage = ({ navigate }) => {
             </Grid>
 
             {/* Gestão de Portfólio */}
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Paper
                 elevation={12}
                 sx={{
@@ -701,7 +649,7 @@ const MobileLandingPage = ({ navigate }) => {
                       </Typography>
                       
                       {/* Headers */}
-                      <Grid container spacing={1} sx={{ mb: 1 }}>
+                      <Grid container spacing={11} sx={{ mb: 1 }}>
                         <Grid item xs={4}>
                           <Typography variant="caption" color="text.secondary">Ativo</Typography>
                         </Grid>
@@ -715,7 +663,7 @@ const MobileLandingPage = ({ navigate }) => {
                       
                       {/* Linhas simuladas */}
                       {['PETR4', 'VALE3', 'ITSA3'].map((ticker, index) => (
-                        <Grid container spacing={1} key={ticker} sx={{ py: 0.5 }}>
+                        <Grid container spacing={9} key={ticker} sx={{ py: 1.2 }}>
                           <Grid item xs={4}>
                             <Typography variant="body2">{ticker}</Typography>
                           </Grid>
@@ -733,32 +681,6 @@ const MobileLandingPage = ({ navigate }) => {
                   </Box>
                 </Box>
               </Paper>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                  Gestão Inteligente
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>
-                  Gerencie sua carteira de forma simples e rápida. Adicione, remova ou altere posições 
-                  com poucos cliques, mantendo seu portfólio sempre atualizado.
-                </Typography>
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Operações de compra e venda simplificadas</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Upload de planilhas para atualização em lote</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main', mr: 2 }} />
-                    <Typography>Histórico completo de transações</Typography>
-                  </Box>
-                </Stack>
-              </Box>
             </Grid>
           </Grid>
         </Container>
@@ -1099,7 +1021,7 @@ const DesktopLandingPage = ({ navigate }) => {
                   sx={{ mb: 5, fontWeight: 400, lineHeight: 1.6 }}
                 >
                   Esqueça as planilhas complicadas. Uma plataforma simples, intuitiva e poderosa 
-                  para você acompanhar seus investimentos senza dor de cabeça.
+                  para você acompanhar seus investimentos sem dor de cabeça.
                 </Typography>
                 <Stack direction="row" spacing={3}>
                   <Button 
@@ -1176,9 +1098,9 @@ const DesktopLandingPage = ({ navigate }) => {
             </Typography>
           </Box>
 
-          <Grid container spacing={8} alignItems="center">
+          <Grid container spacing={6} justifyContent="center">
             {/* Dashboard Principal */}
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} lg={4}>
               <Paper
                 elevation={16}
                 sx={{
@@ -1206,25 +1128,25 @@ const DesktopLandingPage = ({ navigate }) => {
                   </Box>
                   
                   {/* Conteúdo simulando o dashboard */}
-                  <Box sx={{ p: 4 }}>
-                    <Typography variant="h5" color="primary.main" sx={{ mb: 3, fontWeight: 600 }}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography variant="h6" color="primary.main" sx={{ mb: 2, fontWeight: 600 }}>
                       Visão Geral
                     </Typography>
                     
                     {/* Cards de métricas */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-                          <Typography variant="body2" color="text.secondary">VALOR TOTAL</Typography>
-                          <Typography variant="h5" color="primary.main" sx={{ fontWeight: 600 }}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                          <Typography variant="caption" color="text.secondary">VALOR TOTAL</Typography>
+                          <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
                             R$ 23.946,76
                           </Typography>
                         </Paper>
                       </Grid>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-                          <Typography variant="body2" color="text.secondary">RETORNO</Typography>
-                          <Typography variant="h5" color="error.main" sx={{ fontWeight: 600 }}>
+                        <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                          <Typography variant="caption" color="text.secondary">RETORNO</Typography>
+                          <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
                             -1,43%
                           </Typography>
                         </Paper>
@@ -1232,9 +1154,9 @@ const DesktopLandingPage = ({ navigate }) => {
                     </Grid>
                     
                     {/* Gráfico simulado */}
-                    <Paper sx={{ p: 4, bgcolor: 'background.default', borderRadius: 2, textAlign: 'center' }}>
-                      <TrendingUpIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-                      <Typography variant="h6" color="text.secondary">
+                    <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1, textAlign: 'center' }}>
+                      <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
                         Evolução da Carteira
                       </Typography>
                     </Paper>
@@ -1242,61 +1164,9 @@ const DesktopLandingPage = ({ navigate }) => {
                 </Box>
               </Paper>
             </Grid>
-            
-            <Grid item xs={12} lg={6}>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
-                  Dashboard Completo
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
-                  Acompanhe todos os seus investimentos em uma única tela. Veja o valor total da carteira, 
-                  retorno, melhores e piores ativos, tudo atualizado em tempo real.
-                </Typography>
-                <Stack spacing={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Visão consolidada de todos os investimentos</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Métricas de performance em tempo real</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Gráficos interativos de evolução</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            </Grid>
 
             {/* Dividendos */}
-            <Grid item xs={12} lg={6} sx={{ order: { xs: 0, lg: 1 } }}>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
-                  Controle de Dividendos
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
-                  Monitore todos os dividendos recebidos e projete rendimentos futuros. 
-                  Veja o histórico completo organizado por mês e ano.
-                </Typography>
-                <Stack spacing={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Histórico completo de dividendos</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Projeções de rendimentos futuros</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Análise por período e ativo</Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} lg={6} sx={{ order: { xs: 1, lg: 0 } }}>
+            <Grid item xs={12} lg={4}>
               <Paper
                 elevation={16}
                 sx={{
@@ -1324,29 +1194,29 @@ const DesktopLandingPage = ({ navigate }) => {
                   </Box>
                   
                   {/* Conteúdo */}
-                  <Box sx={{ p: 4 }}>
-                    <Typography variant="h4" color="primary.main" sx={{ mb: 2, fontWeight: 700 }}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography variant="h5" color="primary.main" sx={{ mb: 1, fontWeight: 700 }}>
                       Proventos acumulados para o ano 2024: 
                     </Typography>
-                    <Typography variant="h3" color="success.main" sx={{ mb: 4, fontWeight: 700 }}>
+                    <Typography variant="h4" color="success.main" sx={{ mb: 3, fontWeight: 700 }}>
                       R$ 2.583,33
                     </Typography>
                     
                     {/* Gráfico de barras simulado */}
-                    <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-                      <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+                    <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Distribuição Mensal de Proventos
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'end', gap: 1, height: 80 }}>
-                        {[20, 15, 30, 18, 45, 35, 8, 42, 25, 28, 32, 60].map((height, index) => (
+                      <Box sx={{ display: 'flex', alignItems: 'end', gap: 1, height: 105 }}>
+                        {[20, 15, 30, 18, 45, 35, 20, 42, 25, 28, 52, 90].map((height, index) => (
                           <Box 
                             key={index}
                             sx={{ 
                               flex: 1, 
                               height: `${height}%`, 
                               bgcolor: 'primary.main', 
-                              borderRadius: 1,
-                              minHeight: 6
+                              borderRadius: 0.5,
+                              minHeight: 4
                             }} 
                           />
                         ))}
@@ -1358,7 +1228,7 @@ const DesktopLandingPage = ({ navigate }) => {
             </Grid>
 
             {/* Gestão de Portfólio */}
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} lg={4}>
               <Paper
                 elevation={16}
                 sx={{
@@ -1386,41 +1256,41 @@ const DesktopLandingPage = ({ navigate }) => {
                   </Box>
                   
                   {/* Conteúdo */}
-                  <Box sx={{ p: 4 }}>
+                  <Box sx={{ p: 3 }}>
                     <Typography variant="h6" color="primary.main" sx={{ mb: 3, fontWeight: 600 }}>
                       Alterar Posições (Compra/Venda)
                     </Typography>
                     
                     {/* Tabela simulada */}
-                    <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-                      <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+                    <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Seus Ativos
                       </Typography>
                       
                       {/* Headers */}
-                      <Grid container spacing={2} sx={{ mb: 2 }}>
+                      <Grid container spacing={12} sx={{ mb: 1 }}>
                         <Grid item xs={4}>
-                          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>Ativo</Typography>
+                          <Typography variant="caption" color="text.secondary">Ativo</Typography>
                         </Grid>
                         <Grid item xs={3}>
-                          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>Qtd</Typography>
+                          <Typography variant="caption" color="text.secondary">Qtd</Typography>
                         </Grid>
                         <Grid item xs={5}>
-                          <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>Valor</Typography>
+                          <Typography variant="caption" color="text.secondary">Valor</Typography>
                         </Grid>
                       </Grid>
                       
                       {/* Linhas simuladas */}
                       {['PETR4', 'VALE3', 'ITSA3'].map((ticker, index) => (
-                        <Grid container spacing={2} key={ticker} sx={{ py: 1.5 }}>
+                        <Grid container spacing={10} key={ticker} sx={{ py: 1.2 }}>
                           <Grid item xs={4}>
-                            <Typography variant="h6">{ticker}</Typography>
+                            <Typography variant="body2">{ticker}</Typography>
                           </Grid>
                           <Grid item xs={3}>
-                            <Typography variant="h6">{[100, 250, 124][index]}</Typography>
+                            <Typography variant="body2">{[100, 250, 124][index]}</Typography>
                           </Grid>
                           <Grid item xs={5}>
-                            <Typography variant="h6" color="primary.main">
+                            <Typography variant="body2" color="primary.main">
                               R$ {['2.557', '1.910', '1.290'][index]}
                             </Typography>
                           </Grid>
@@ -1430,32 +1300,6 @@ const DesktopLandingPage = ({ navigate }) => {
                   </Box>
                 </Box>
               </Paper>
-            </Grid>
-
-            <Grid item xs={12} lg={6}>
-              <Box>
-                <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
-                  Gestão Inteligente
-                </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ mb: 4, lineHeight: 1.7 }}>
-                  Gerencie sua carteira de forma simples e rápida. Adicione, remova ou altere posições 
-                  com poucos cliques, mantendo seu portfólio sempre atualizado.
-                </Typography>
-                <Stack spacing={3}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Operações de compra e venda simplificadas</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Upload de planilhas para atualização em lote</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'primary.main', mr: 3 }} />
-                    <Typography variant="h6">Histórico completo de transações</Typography>
-                  </Box>
-                </Stack>
-              </Box>
             </Grid>
           </Grid>
         </Container>
