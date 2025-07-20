@@ -44,184 +44,8 @@ const ProductShowcase = ({ isMobile = false }) => {
   ];
 
   if (isMobile) {
-    return (
-      <Box 
-        sx={{
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '100%',
-          maxWidth: 400,
-          height: 'auto',
-          mx: 'auto'
-        }}
-      >
-        <Paper
-          elevation={20}
-          sx={{
-            width: '100%',
-            height: 280,
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            border: '1px solid',
-            borderColor: 'divider',
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 32,
-              background: 'linear-gradient(90deg, #ffc107 0%, #ffd54f 100%)',
-              opacity: 0.9
-            }
-          }}
-        >
-          <img 
-            src={ProphitLogo} 
-            alt="Prophit Dashboard" 
-            style={{ 
-              width: 80,
-              height: 80,
-              objectFit: 'contain',
-              marginTop: 16,
-              filter: 'drop-shadow(0 5px 15px rgba(255, 193, 7, 0.3))'
-            }}
-          />
-          <Typography 
-            variant="h6" 
-            color="text.primary" 
-            sx={{ mt: 2, fontWeight: 600 }}
-          >
-            Dashboard Prophit!
-          </Typography>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ mt: 1, textAlign: 'center', px: 3 }}
-          >
-            Gerencie seus investimentos com facilidade
-          </Typography>
-        </Paper>
-        
-        {/* Efeito de brilho */}
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '90%',
-            height: '90%',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 193, 7, 0.15) 0%, transparent 70%)',
-            filter: 'blur(30px)',
-            zIndex: -1
-          }}
-        />
-      </Box>
-    );
+    
   }
-
-  return (
-    <Box 
-      sx={{
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: 500
-      }}
-    >
-      {/* Mockup principal do dashboard */}
-      <Paper
-        elevation={24}
-        sx={{
-          width: '100%',
-          maxWidth: 600,
-          height: 400,
-          borderRadius: 3,
-          background: 'linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          border: '1px solid',
-          borderColor: 'divider',
-          position: 'relative',
-          overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 40,
-            background: 'linear-gradient(90deg, #ffc107 0%, #ffd54f 100%)',
-            opacity: 0.8
-          }
-        }}
-      >
-        {/* Header do mockup */}
-        <Box sx={{ p: 2, pt: 6 }}>
-          <Typography variant="h5" color="primary.main" sx={{ fontWeight: 700 }}>
-            Dashboard
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Visão Geral
-          </Typography>
-        </Box>
-        
-        {/* Conteúdo do mockup */}
-        <Box sx={{ flex: 1, p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* Cards de métricas */}
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
-              <Paper sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">VALOR TOTAL</Typography>
-                <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
-                  R$ 23.946,76
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={6}>
-              <Paper sx={{ p: 1.5, bgcolor: 'background.paper', borderRadius: 1 }}>
-                <Typography variant="body2" color="text.secondary">RETORNO</Typography>
-                <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
-                  -1,43%
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-          
-          {/* Gráfico simulado */}
-          <Paper sx={{ flex: 1, p: 2, bgcolor: 'background.paper', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <EqualizerIcon sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-              <Typography variant="body2" color="text.secondary">
-                Evolução da Carteira
-              </Typography>
-            </Box>
-          </Paper>
-        </Box>
-      </Paper>
-      
-      {/* Elementos decorativos */}
-      <Box 
-        sx={{
-          position: 'absolute',
-          width: '120%',
-          height: '120%',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 193, 7, 0.1) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          zIndex: -1
-        }}
-      />
-    </Box>
-  );
 };
 
 const FeatureCard = ({ icon, title, description }) => (
@@ -422,14 +246,15 @@ const MobileLandingPage = ({ navigate }) => {
                     WebkitTextFillColor: 'transparent',
                   }}
                 >
-                  Seus investimentos, organizados de um jeito que faz sentido
+                  Finalmente, seus investimentos organizados de verdade
                 </Typography>
                 <Typography 
                   variant="h6" 
                   color="text.secondary" 
                   sx={{ mb: 4, fontWeight: 400, lineHeight: 1.6 }}
                 >
-                  Chega de planilhas confusas! Acompanhe, analise e otimize sua carteira de investimentos de forma simples e descomplicada.
+                  Esqueça as planilhas complicadas. Uma plataforma simples, intuitiva e poderosa 
+                  para você acompanhar seus investimentos sem dor de cabeça.
                 </Typography>
                 <Button 
                   component={Link}
@@ -517,7 +342,7 @@ const MobileLandingPage = ({ navigate }) => {
                     {/* Cards de métricas */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 3.2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary">VALOR TOTAL</Typography>
                           <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
                             R$ 23.946,76
@@ -525,21 +350,45 @@ const MobileLandingPage = ({ navigate }) => {
                         </Paper>
                       </Grid>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 3.2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary">RETORNO</Typography>
-                          <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
-                            -1,43%
+                          <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
+                            +1,43%
                           </Typography>
                         </Paper>
                       </Grid>
                     </Grid>
                     
-                    {/* Gráfico simulado */}
-                    <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1, textAlign: 'center' }}>
-                      <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
+                    {/* Gráfico de linha simulado */}
+                    <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Evolução da Carteira
                       </Typography>
+                      <Box sx={{ position: 'relative', height: 60, display: 'flex', alignItems: 'end' }}>
+                        {/* Pontos do gráfico de linha */}
+                        <svg width="100%" height="100%" viewBox="0 0 220 60" style={{ position: 'absolute', top: 0, left: 0 }}>
+                          <polyline
+                            points="5,45 11,47 17,49 23,50 29,48 35,46 41,44 47,41 53,39 59,37 65,35 71,33 77,36 83,39 89,41 95,43 101,45 107,47 113,44 119,41 125,38 131,35 137,32 143,29 149,26 155,23 161,20 167,22 173,25 179,28 185,31 191,34 197,37 203,40 209,43 215,46 221,49 227,52"
+                            fill="none"
+                            stroke="#ffc107"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          {[5,11,17,23,29,35,41,47,53,59,65,71,77,83,89,95,101,107,113,119,125,131,137,143,149,155,161,167,173,179,185,191,197,203,209,215,221,227].map((x, index) => {
+                            const y = [45,47,49,50,48,46,44,41,39,37,35,33,36,39,41,43,45,47,44,41,38,35,32,29,26,23,20,22,25,28,31,34,37,40,43,46,49,52][index];
+                            return (
+                              <circle
+                                key={index}
+                                cx={x}
+                                cy={y}
+                                r="1.5"
+                                fill="#ffc107"
+                              />
+                            );
+                          })}
+                        </svg>
+                      </Box>
                     </Paper>
                   </Box>
                 </Box>
@@ -668,7 +517,7 @@ const MobileLandingPage = ({ navigate }) => {
                             <Typography variant="body2">{ticker}</Typography>
                           </Grid>
                           <Grid item xs={3}>
-                            <Typography variant="body2">{[100, 250, 124][index]}</Typography>
+                            <Typography variant="body2">{[100, 250, '    124'][index]}</Typography>
                           </Grid>
                           <Grid item xs={5}>
                             <Typography variant="body2" color="primary.main">
@@ -698,13 +547,13 @@ const MobileLandingPage = ({ navigate }) => {
               color: 'primary.main' 
             }}
           >
-            Recursos
+            Recursos poderosos
           </Typography>            <Typography 
               variant="h6" 
               color="text.secondary" 
               sx={{ maxWidth: 700, mx: 'auto' }}
             >
-              Tudo o que você precisa para cuidar dos seus investimentos, sem complicação
+              Tudo o que você precisa para tomar decisões inteligentes sobre seus investimentos
             </Typography>
         </Box>
         
@@ -736,7 +585,7 @@ const MobileLandingPage = ({ navigate }) => {
           <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
             <FeatureCard 
               icon={<TrendingUpIcon sx={{ fontSize: 32 }} />}
-              title="Análise de Desempenho"
+              title="Análise de Performance"
               description="Gráficos bonitos que mostram se você está ganhando ou perdendo dinheiro."
             />
           </Grid>
@@ -792,14 +641,15 @@ const MobileLandingPage = ({ navigate }) => {
                   color: 'primary.main'
                 }}
               >
-                Pronto para otimizar seus investimentos?
+                Pronto para começar a investir melhor?
               </Typography>
               <Typography 
                 variant="body1" 
                 color="text.secondary" 
                 sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
               >
-                Comece agora mesmo a usar o Prophit! e descubra como é fácil acompanhar e analisar seus investimentos de forma eficiente.
+                Junte-se a milhares de investidores que já descobriram uma forma mais simples 
+                de organizar seus investimentos. É grátis para começar!
               </Typography>
               <Button 
                 component={Link}
@@ -812,7 +662,7 @@ const MobileLandingPage = ({ navigate }) => {
                   fontWeight: 600
                 }}
               >
-                Acessar a plataforma
+                Criar conta gratuita
               </Button>
             </Box>
           </Paper>
@@ -969,7 +819,7 @@ const DesktopLandingPage = ({ navigate }) => {
               borderRadius: 2
             }}
           >
-            Entrar
+            Sign In
           </Button>
         </Stack>
       </Box>
@@ -1068,7 +918,48 @@ const DesktopLandingPage = ({ navigate }) => {
               </Box>
             </Grid>
             <Grid item xs={12} lg={6}>
-              <ProductShowcase isMobile={false} />
+              <Box 
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  position: 'relative'
+                }}
+              >
+                <Box
+                  sx={{
+                    position: 'relative',
+                    maxWidth: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '10%',
+                      left: '10%',
+                      right: '10%',
+                      bottom: '10%',
+                      background: 'radial-gradient(circle, rgba(255, 193, 7, 0.2) 0%, transparent 70%)',
+                      filter: 'blur(40px)',
+                      zIndex: -1
+                    }
+                  }}
+                >
+                  <img 
+                    src="/main_dashboard.png" 
+                    alt="Dashboard Principal do Prophit" 
+                    style={{ 
+                      width: '100%',
+                      height: 'auto',
+                      maxWidth: 800,
+                      borderRadius: 12,
+                      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 193, 7, 0.2)',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </Box>
+              </Box>
             </Grid>
           </Grid>
         </Container>
@@ -1146,19 +1037,43 @@ const DesktopLandingPage = ({ navigate }) => {
                       <Grid item xs={6}>
                         <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary">RETORNO</Typography>
-                          <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
-                            -1,43%
+                          <Typography variant="h6" color="success.main" sx={{ fontWeight: 600 }}>
+                            +1,43%
                           </Typography>
                         </Paper>
                       </Grid>
                     </Grid>
                     
-                    {/* Gráfico simulado */}
-                    <Paper sx={{ p: 3, bgcolor: 'background.default', borderRadius: 1, textAlign: 'center' }}>
-                      <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                      <Typography variant="body2" color="text.secondary">
+                    {/* Gráfico de linha simulado */}
+                    <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Evolução da Carteira
                       </Typography>
+                      <Box sx={{ position: 'relative', height: 60, display: 'flex', alignItems: 'end' }}>
+                        {/* Pontos do gráfico de linha */}
+                        <svg width="100%" height="100%" viewBox="0 0 220 60" style={{ position: 'absolute', top: 0, left: 0 }}>
+                          <polyline
+                            points="5,45 11,47 17,49 23,50 29,48 35,46 41,44 47,41 53,39 59,37 65,35 71,33 77,36 83,39 89,41 95,43 101,45 107,47 113,44 119,41 125,38 131,35 137,32 143,29 149,26 155,23 161,20 167,22 173,25 179,28 185,31 191,34 197,37 203,40 209,43 215,46 221,49 227,52"
+                            fill="none"
+                            stroke="#ffc107"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          {[5,11,17,23,29,35,41,47,53,59,65,71,77,83,89,95,101,107,113,119,125,131,137,143,149,155,161,167,173,179,185,191,197,203,209,215,221,227].map((x, index) => {
+                            const y = [45,47,49,50,48,46,44,41,39,37,35,33,36,39,41,43,45,47,44,41,38,35,32,29,26,23,20,22,25,28,31,34,37,40,43,46,49,52][index];
+                            return (
+                              <circle
+                                key={index}
+                                cx={x}
+                                cy={y}
+                                r="1.5"
+                                fill="#ffc107"
+                              />
+                            );
+                          })}
+                        </svg>
+                      </Box>
                     </Paper>
                   </Box>
                 </Box>
@@ -1402,7 +1317,7 @@ const DesktopLandingPage = ({ navigate }) => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                Bora começar a investir melhor?
+                Pronto para começar a investir melhor?
               </Typography>
               <Typography 
                 variant="h6" 
