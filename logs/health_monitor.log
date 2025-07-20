@@ -1,0 +1,136 @@
+2025-07-20 01:15:19,025 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:15:19,026 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:15:19,026 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:15:19,042 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:15:19,043 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:15:19,043 - INFO - Scheduler started
+2025-07-20 01:15:19,056 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.25:5000
+2025-07-20 01:15:19,056 - INFO - [33mPress CTRL+C to quit[0m
+2025-07-20 01:15:19,076 - INFO - [SCHEDULER] Próxima atualização de preços em 14.7 minutos (às 01:30)
+2025-07-20 01:15:19,078 - INFO - [SCHEDULER] Executando atualização imediata (última foi há 60.0 minutos)
+2025-07-20 01:15:19,078 - INFO - [SCHEDULER] Atualização periódica de preços iniciada às 01:15
+2025-07-20 01:15:35,833 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:15:35,834 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:15:35,835 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:15:35,855 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:15:35,855 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:15:35,855 - INFO - Scheduler started
+2025-07-20 01:15:35,861 - INFO - Scheduler has been shut down
+2025-07-20 01:15:45,495 - INFO - OPERAÇÃO CONCLUÍDA: Atualização inicial de dividendos em 26.47s
+2025-07-20 01:15:46,760 - INFO - 127.0.0.1 - - [20/Jul/2025 01:15:46] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:16:03,356 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:03] "[33mGET / HTTP/1.1[0m" 404 -
+2025-07-20 01:16:11,460 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:11] "[33mGET /api/ HTTP/1.1[0m" 404 -
+2025-07-20 01:16:33,465 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:33] "GET /api/status HTTP/1.1" 200 -
+2025-07-20 01:16:52,031 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:52] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:16:56,543 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:56] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:16:58,910 - INFO - 127.0.0.1 - - [20/Jul/2025 01:16:58] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:18:24,815 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:18:24,816 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:18:24,816 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:18:24,826 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:18:24,826 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:18:24,826 - INFO - Scheduler started
+2025-07-20 01:18:24,839 - INFO - Scheduler has been shut down
+2025-07-20 01:18:33,062 - INFO - 127.0.0.1 - - [20/Jul/2025 01:18:33] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:19:50,484 - INFO - 127.0.0.1 - - [20/Jul/2025 01:19:50] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:20:25,628 - INFO - Status: CPU 0.1%, RAM 26.0%, Conexões 17
+2025-07-20 01:20:48,839 - INFO - 127.0.0.1 - - [20/Jul/2025 01:20:48] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:22:05,027 - INFO - 127.0.0.1 - - [20/Jul/2025 01:22:05] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:22:06,346 - INFO - 127.0.0.1 - - [20/Jul/2025 01:22:06] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:22:37,406 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:22:37,407 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:22:37,408 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:22:37,423 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:22:37,424 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:22:37,424 - INFO - Scheduler started
+2025-07-20 01:22:37,435 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.25:5000
+2025-07-20 01:22:37,435 - INFO - [33mPress CTRL+C to quit[0m
+2025-07-20 01:22:37,459 - INFO - [SCHEDULER] Próxima atualização de preços em 7.4 minutos (às 01:30)
+2025-07-20 01:22:37,460 - INFO - [SCHEDULER] Executando atualização imediata (última foi há 60.0 minutos)
+2025-07-20 01:22:37,461 - INFO - [SCHEDULER] Atualização periódica de preços iniciada às 01:22
+2025-07-20 01:23:06,077 - INFO - OPERAÇÃO CONCLUÍDA: Atualização inicial de dividendos em 28.67s
+2025-07-20 01:23:23,127 - INFO - 127.0.0.1 - - [20/Jul/2025 01:23:23] "HEAD /api/status HTTP/1.1" 200 -
+2025-07-20 01:26:13,752 - INFO - 127.0.0.1 - - [20/Jul/2025 01:26:13] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:29:39,489 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:39] "POST /api/login HTTP/1.1" 200 -
+2025-07-20 01:29:40,186 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:40] "GET /api/exchange-rate HTTP/1.1" 200 -
+2025-07-20 01:29:40,189 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:40] "GET /api/portfolio-distribution HTTP/1.1" 200 -
+2025-07-20 01:29:40,191 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:40] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:29:45,221 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:45] "GET /api/portfolio-summary?start_date=2024-07-20&end_date=2025-07-20 HTTP/1.1" 200 -
+2025-07-20 01:29:56,041 - INFO - 127.0.0.1 - - [20/Jul/2025 01:29:56] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:30:00,000 - INFO - Running job "update_all_portfolios.<locals>.portfolio_update_job (trigger: cron[minute='0,30'], next run at: 2025-07-20 01:30:00 -03)" (scheduled at 2025-07-20 01:30:00-03:00)
+2025-07-20 01:30:00,001 - INFO - [SCHEDULER] Atualização periódica de preços iniciada às 01:30
+2025-07-20 01:30:11,049 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:11] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:30:13,034 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "GET /api/user HTTP/1.1" 200 -
+2025-07-20 01:30:13,036 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:30:13,502 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "GET /api/exchange-rate HTTP/1.1" 200 -
+2025-07-20 01:30:13,506 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:30:13,510 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "GET /api/portfolio-summary?start_date=2024-07-20&end_date=2025-07-20 HTTP/1.1" 200 -
+2025-07-20 01:30:13,513 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:13] "GET /api/portfolio-distribution HTTP/1.1" 200 -
+2025-07-20 01:30:29,045 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:29] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:30:30,064 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:30:30,065 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:30:30,065 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:30:30,075 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:30:30,075 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:30:30,076 - INFO - Scheduler started
+2025-07-20 01:30:30,096 - INFO - Scheduler has been shut down
+2025-07-20 01:30:44,046 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:44] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:30:47,208 - INFO - Status: CPU 0.2%, RAM 26.9%, Conexões 14
+2025-07-20 01:30:54,709 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:30:54,710 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:30:54,710 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:30:54,719 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:30:54,720 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:30:54,720 - INFO - Scheduler started
+2025-07-20 01:30:54,738 - INFO - Scheduler has been shut down
+2025-07-20 01:30:59,038 - INFO - 127.0.0.1 - - [20/Jul/2025 01:30:59] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:31:02,416 - INFO - OPERAÇÃO CONCLUÍDA: Atualização inicial de preços em 505.01s
+2025-07-20 01:31:02,417 - WARNING - ALERTA: Operação Atualização inicial de preços demorou 505.0s (>5min)
+2025-07-20 01:31:07,298 - ERROR - $X: possibly delisted; no price data found  (period=5d)
+2025-07-20 01:31:12,888 - INFO - Job "update_all_portfolios.<locals>.portfolio_update_job (trigger: cron[minute='0,30'], next run at: 2025-07-20 02:00:00 -03)" executed successfully
+2025-07-20 01:31:14,051 - INFO - 127.0.0.1 - - [20/Jul/2025 01:31:14] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:31:29,049 - INFO - 127.0.0.1 - - [20/Jul/2025 01:31:29] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:32:16,057 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:16] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:32:29,639 - INFO - OPERAÇÃO INICIADA: Atualização inicial de preços
+2025-07-20 01:32:29,640 - INFO - OPERAÇÃO INICIADA: Atualização inicial de dividendos
+2025-07-20 01:32:29,640 - INFO - Configurando APScheduler para atualização periódica de preços
+2025-07-20 01:32:29,654 - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-07-20 01:32:29,655 - INFO - Added job "update_all_portfolios.<locals>.portfolio_update_job" to job store "default"
+2025-07-20 01:32:29,655 - INFO - Scheduler started
+2025-07-20 01:32:29,672 - INFO - Scheduler has been shut down
+2025-07-20 01:32:38,497 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:38] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:32:42,933 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:42] "GET /api/user HTTP/1.1" 200 -
+2025-07-20 01:32:43,295 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:43] "GET /api/exchange-rate HTTP/1.1" 200 -
+2025-07-20 01:32:43,297 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:43] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:32:43,302 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:43] "GET /api/portfolio-distribution HTTP/1.1" 200 -
+2025-07-20 01:32:44,510 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:44] "GET /api/portfolio-summary?start_date=2024-07-20&end_date=2025-07-20 HTTP/1.1" 200 -
+2025-07-20 01:32:49,409 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:49] "GET /api/user HTTP/1.1" 200 -
+2025-07-20 01:32:59,886 - INFO - 127.0.0.1 - - [20/Jul/2025 01:32:59] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:39:52,030 - INFO - 127.0.0.1 - - [20/Jul/2025 01:39:52] "GET /api/user HTTP/1.1" 200 -
+2025-07-20 01:39:52,034 - INFO - 127.0.0.1 - - [20/Jul/2025 01:39:52] "[31m[1mGET /api/user HTTP/1.1[0m" 401 -
+2025-07-20 01:40:57,861 - INFO - Status: CPU 0.2%, RAM 27.5%, Conexões 10
+2025-07-20 01:43:00,001 - WARNING - ALERTA: Muitas conexões externas: 124
+2025-07-20 01:50:07,403 - INFO - Status: CPU 1.3%, RAM 31.1%, Conexões 15
+2025-07-20 01:57:09,393 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:09] "GET /api/user HTTP/1.1" 200 -
+2025-07-20 01:57:15,707 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:15] "POST /api/login HTTP/1.1" 200 -
+2025-07-20 01:57:15,980 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:15] "GET /api/exchange-rate HTTP/1.1" 200 -
+2025-07-20 01:57:15,982 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:15] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:57:15,987 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:15] "GET /api/portfolio-distribution HTTP/1.1" 200 -
+2025-07-20 01:57:17,148 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/portfolio-summary?start_date=2024-07-20&end_date=2025-07-20 HTTP/1.1" 200 -
+2025-07-20 01:57:17,553 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/dividends HTTP/1.1" 200 -
+2025-07-20 01:57:17,856 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/portfolio-summary?start_date=2024-07-20&end_date=2025-07-20 HTTP/1.1" 200 -
+2025-07-20 01:57:17,858 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/exchange-rate HTTP/1.1" 200 -
+2025-07-20 01:57:17,860 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/system-status HTTP/1.1" 200 -
+2025-07-20 01:57:17,862 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:17] "GET /api/portfolio-distribution HTTP/1.1" 200 -
+2025-07-20 01:57:18,631 - INFO - 127.0.0.1 - - [20/Jul/2025 01:57:18] "GET /api/portfolio-summary HTTP/1.1" 200 -
+2025-07-20 02:00:00,000 - INFO - Running job "update_all_portfolios.<locals>.portfolio_update_job (trigger: cron[minute='0,30'], next run at: 2025-07-20 02:30:00 -03)" (scheduled at 2025-07-20 02:00:00-03:00)
+2025-07-20 02:00:00,001 - INFO - [SCHEDULER] Atualização periódica de preços iniciada às 02:00
+2025-07-20 02:00:07,338 - ERROR - $X: possibly delisted; no price data found  (period=5d)
+2025-07-20 02:00:12,548 - INFO - Job "update_all_portfolios.<locals>.portfolio_update_job (trigger: cron[minute='0,30'], next run at: 2025-07-20 02:30:00 -03)" executed successfully
+2025-07-20 02:00:18,034 - INFO - Status: CPU 0.0%, RAM 31.5%, Conexões 20

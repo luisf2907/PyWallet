@@ -300,7 +300,7 @@ const MobileLandingPage = ({ navigate }) => {
               color="text.secondary" 
               sx={{ maxWidth: 700, mx: 'auto' }}
             >
-              Veja como é fácil gerenciar seus investimentos na prática
+              Ficou fácil gerenciar seus investimentos na prática
             </Typography>
           </Box>
 
@@ -985,7 +985,7 @@ const DesktopLandingPage = ({ navigate }) => {
               color="text.secondary" 
               sx={{ maxWidth: 800, mx: 'auto', lineHeight: 1.6 }}
             >
-              Veja como é fácil gerenciar seus investimentos na prática
+              Ficou fácil gerenciar seus investimentos na prática
             </Typography>
           </Box>
 

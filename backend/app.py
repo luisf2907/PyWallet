@@ -9,6 +9,8 @@ from config import get_config
 # Extensões
 from extensions import init_extensions
 from extensions.database import db
+# Middleware
+from middleware.cache_control import setup_cache_control
 # Serviços
 from services.price_service import load_dollar_from_db
 from services.auth_service import create_test_user
@@ -44,6 +46,9 @@ def create_app(config_name='default'):
     
     # Inicializar extensões
     init_extensions(app)
+    
+    # Configurar controle de cache
+    setup_cache_control(app)
     
     # Registrar blueprints
     register_blueprints(app)
