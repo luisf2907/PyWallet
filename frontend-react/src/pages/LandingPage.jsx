@@ -517,7 +517,7 @@ const MobileLandingPage = ({ navigate }) => {
                     {/* Cards de métricas */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Paper sx={{ p: 3.2, bgcolor: 'background.default', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary">VALOR TOTAL</Typography>
                           <Typography variant="h6" color="primary.main" sx={{ fontWeight: 600 }}>
                             R$ 23.946,76
@@ -525,7 +525,7 @@ const MobileLandingPage = ({ navigate }) => {
                         </Paper>
                       </Grid>
                       <Grid item xs={6}>
-                        <Paper sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                        <Paper sx={{ p: 3.2, bgcolor: 'background.default', borderRadius: 1 }}>
                           <Typography variant="caption" color="text.secondary">RETORNO</Typography>
                           <Typography variant="h6" color="error.main" sx={{ fontWeight: 600 }}>
                             -1,43%
