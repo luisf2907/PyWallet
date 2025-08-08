@@ -38,7 +38,11 @@ def create_app(config_name='default'):
     Returns:
         Flask: Instância da aplicação Flask configurada
     """
-    app = Flask(__name__, static_folder='static')
+    # Evita que Flask registre rota estática na raiz (que causava 404 em /login, /dashboard etc.)
+    app = Flask(__name__, static_folder=None)
+    
+    # Diretório do build do frontend
+    app.config['FRONTEND_DIST_DIR'] = os.path.abspath(os.path.join(os.path.dirname(__file__), '../frontend-react/dist'))
     
     # Carregar configuração
     config = get_config(config_name)
@@ -95,6 +99,38 @@ def init_app():
 
 # Aplicação global
 app = init_app()
+
+# Servir arquivos estáticos do build do Vite (assets)
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    dist_dir = app.config.get('FRONTEND_DIST_DIR')
+    assets_dir = os.path.join(dist_dir, 'assets')
+    return send_from_directory(assets_dir, filename)
+
+# Favicon (opcional)
+@app.route('/favicon.ico')
+def favicon():
+    dist_dir = app.config.get('FRONTEND_DIST_DIR')
+    try:
+        return send_from_directory(dist_dir, 'favicon.ico')
+    except Exception:
+        # Se não existir, retorna 404 padrão
+        from flask import abort
+        abort(404)
+
+# Rota para servir o frontend React
+@app.route('/')
+@app.route('/<path:path>')
+def serve_frontend(path=''):
+    """Serve o frontend React para todas as rotas que não são API."""
+    if path.startswith('api/'):
+        # Se for uma rota de API que não existe, retorna 404
+        from flask import abort
+        abort(404)
+    
+    # Para todas as outras rotas, serve o index.html do React
+    dist_dir = app.config.get('FRONTEND_DIST_DIR')
+    return send_from_directory(dist_dir, 'index.html')
 
 # Rota direta de backup para o template
 @app.route('/api/template-download-direct', methods=['GET'])

@@ -23,11 +23,26 @@ def setup_cache_control(app):
     """
     @app.after_request
     def after_request(response):
-        # Para arquivos estáticos (.js, .css, .html), não usar cache em desenvolvimento
-        if response.headers.get('Content-Type', '').startswith(('text/html', 'application/javascript', 'text/css')):
-            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            response.headers['Pragma'] = 'no-cache'
-            response.headers['Expires'] = '0'
+        # Cache inteligente baseado no tipo de conteúdo e ambiente
+        content_type = response.headers.get('Content-Type', '')
+        
+        # Arquivos estáticos (JS, CSS, imagens) - cache longo
+        if content_type.startswith(('application/javascript', 'text/css', 'image/', 'font/')):
+            response.headers['Cache-Control'] = 'public, max-age=31536000'  # 1 ano
+        # HTML - cache curto para permitir atualizações
+        elif content_type.startswith('text/html'):
+            response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minutos
+        # APIs JSON - cache muito curto
+        elif content_type.startswith('application/json'):
+            response.headers['Cache-Control'] = 'public, max-age=60'  # 1 minuto
+        # Outros arquivos - sem cache apenas se for desenvolvimento
+        else:
+            if app.debug:
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            else:
+                response.headers['Cache-Control'] = 'public, max-age=3600'  # 1 hora
         
         # CORS headers
         response.headers['Access-Control-Allow-Origin'] = '*'

@@ -5,5 +5,5 @@ credentials-file: /home/prophit/.cloudflared/c23152f2-48f6-4a8c-9d3c-7b3e6e5ca01
 
 ingress:
   - hostname: prophit-app.com
-    service: http://localhost:3000
+    service: http://localhost:5000
   - service: http_status:404
